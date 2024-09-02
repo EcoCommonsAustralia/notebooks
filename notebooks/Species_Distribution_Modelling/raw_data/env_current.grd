@@ -1,0 +1,25 @@
+[general]
+creator=R package 'raster'
+created=2018-10-24 21:16:54
+[georeference]
+nrows=900
+ncols=2160
+xmin=-180
+ymin=-60
+xmax=180
+ymax=90
+projection=+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0
+[data]
+datatype=FLT4S
+byteorder=little
+nbands=2
+bandorder=BIL
+minvalue=-225:0
+maxvalue=295:955
+nodatavalue=-3.4e+38
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=tmin:precip
