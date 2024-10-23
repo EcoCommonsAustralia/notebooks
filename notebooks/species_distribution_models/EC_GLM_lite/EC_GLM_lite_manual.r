@@ -1,7 +1,5 @@
 # Set Workspace as the current working directory
 Workspace <- getwd() 
-#Workspace <- "/DIR"      #change directory
-
 #The cat function in useful for displaying messages and debugging information.
 cat("Workspace:", Workspace, "\n")
 
