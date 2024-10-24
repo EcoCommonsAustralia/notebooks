@@ -3,7 +3,7 @@
     <a align="center" href="" target="_blank">
       <img
         width="850"
-        src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner.png" alt="Banner"
+        src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner"
       >
     </a>
   </p>
