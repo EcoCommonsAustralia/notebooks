@@ -29,7 +29,7 @@ NOTEBOOK_LINK_PATTERN = "[{}]({}/{})"
 OPEN_IN_COLAB_BADGE_PATTERN = "[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/{}/{})"
 OPEN_IN_KAGGLE_BADGE_PATTERN = "[![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src={}/{})"
 OPEN_IN_SAGEMAKER_LAB_PATTERN = "[![SageMaker](https://raw.githubusercontent.com/roboflow-ai/notebooks/main/assets/badges/sage-maker.svg)](https://studiolab.sagemaker.aws/import/github/roboflow-ai/notebooks/blob/main/notebooks/{})"
-ROBOFLOW_BADGE_PATTERN = "[![Roboflow](https://raw.githubusercontent.com/roboflow-ai/notebooks/main/assets/badges/roboflow-blogpost.svg)]({})"
+ECONOTEBOOK_BADGE_PATTERN = "[![EcoNotebooks Blog](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner.png)]({})"
 YOUTUBE_BADGE_PATTERN = "[![YouTube](https://badges.aleen42.com/src/youtube.svg)]({})"
 GITHUB_BADGE_PATTERN = "[![GitHub](https://badges.aleen42.com/src/github.svg)]({})"
 ARXIV_BADGE_PATTERN = "[![arXiv](https://img.shields.io/badge/arXiv-{}-b31b1b.svg)](https://arxiv.org/abs/{})"
@@ -58,7 +58,7 @@ class READMESection(Enum):
 class TableEntry:
     display_name: str
     notebook_name: str
-    roboflow_blogpost_path: Optional[str]
+    econotebook_blogpost_path: Optional[str]
     youtube_video_path: Optional[str]
     github_repository_path: Optional[str]
     arxiv_index: Optional[str]
@@ -77,7 +77,7 @@ class TableEntry:
         return TableEntry(
             display_name=csv_fields[0],
             notebook_name=csv_fields[1],
-            roboflow_blogpost_path=csv_fields[2],
+            econotebook_blogpost_path=csv_fields[2],
             youtube_video_path=csv_fields[3],
             github_repository_path=csv_fields[4],
             arxiv_index=csv_fields[5],
@@ -90,11 +90,11 @@ class TableEntry:
         open_in_colab_badge = OPEN_IN_COLAB_BADGE_PATTERN.format(NOTEBOOKS_COLAB_ROOT_PATH, self.notebook_name)
         open_in_kaggle_badge = OPEN_IN_KAGGLE_BADGE_PATTERN.format(NOTEBOOKS_ROOT_PATH, self.notebook_name)
         open_in_sagemaker_lab_badge = OPEN_IN_SAGEMAKER_LAB_PATTERN.format(self.notebook_name) if self.should_open_in_sagemaker_labs else ""
-        roboflow_badge = ROBOFLOW_BADGE_PATTERN.format(self.roboflow_blogpost_path) if self.roboflow_blogpost_path else ""
+        econotebook_badge = ECONOTEBOOK_BADGE_PATTERN.format(self.econotebook_blogpost_path) if self.econotebook_blogpost_path else ""
         youtube_badge = YOUTUBE_BADGE_PATTERN.format(self.youtube_video_path) if self.youtube_video_path else ""
         github_badge = GITHUB_BADGE_PATTERN.format(self.github_repository_path) if self.github_repository_path else ""
         arxiv_badge = ARXIV_BADGE_PATTERN.format(self.arxiv_index, self.arxiv_index) if self.arxiv_index else ""
-        return f"| {notebook_link} | {open_in_colab_badge} {open_in_kaggle_badge} {open_in_sagemaker_lab_badge} | {roboflow_badge} {youtube_badge} | {github_badge} {arxiv_badge}|"
+        return f"| {notebook_link} | {open_in_colab_badge} {open_in_kaggle_badge} {open_in_sagemaker_lab_badge} | {econotebook_badge} {youtube_badge} | {github_badge} {arxiv_badge}|"
 
 
 def read_lines_from_file(path: str) -> List[str]:
