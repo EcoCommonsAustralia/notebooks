@@ -9,12 +9,12 @@
   </p>
   <br>
 
-[notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks)
+[📔Notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks)
 \|
-[blog](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site)
-\| [EcoCommons Platform](https://www.ecocommons.org.au) \|
+[🗒️Blog](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site)
+\| [🌿EcoCommons Platform](https://www.ecocommons.org.au) \|
 [X](https://twitter.com/EcoCommonsAus) \|
-[linkedin](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
+[⏰LinkedIn](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
 
 <br>
 
@@ -36,7 +36,7 @@ platform](https://www.ecocommons.org.au/).
    HEAD OVER TO CONTRIBUTING.MD FOR MORE DETAILS ON HOW TO MAKE CHANGES PROPERLY.
 -->
 ## 🐨 Species Distribution Modelling (6 notebooks)
-| **notebook** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |
+| **Notebook** | **Open in Google Colab / ARDC Jupyter Notebook Service** | **Complementary materials** | **Repository / Paper** |
 |:------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|
 | [GLM](https://github.com/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks/) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks/) [![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks/)  | [![EcoNotebooks Blog](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebook_icon.png)](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site/glm.qmd)  |  |
 | [Maxent](https://github.com/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks/) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks/) [![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks/)  | [![EcoNotebooks Blog](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebook_icon.png)](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site/maxent.qmd)  | [![GitHub](https://badges.aleen42.com/src/github.svg)](https://github.com/ultralytics/ultralytics) |
