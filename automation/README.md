@@ -1,4 +1,4 @@
-## Don't change Roboflow Notebooks list in README.md manually!
+## Don't change EcoCommons Notebooks list in README.md manually!
 
 1. Add new notebook file `.ipynb` to `notebooks` directory.
 2. Add new entry to `automation/notebooks-table-data.csv` file.
