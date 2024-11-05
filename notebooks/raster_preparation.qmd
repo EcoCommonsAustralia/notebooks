@@ -1,0 +1,357 @@
+---
+title: "EcoCommons Australia – A Collaborative Commons for Ecological and Environmental Modelling"
+bibliography: reference.bib  # Path to your citation file
+csl: apa.csl  # Optional: specify a citation style
+format:
+  html:
+    toc: true
+    toc-title: "Contents"
+    toc-depth: 3
+---
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Species Distribution Analysis - Environmental Data Preparation (Rasters)
+
+Author details: Xiang Zhao Editor details: Contact details: support\@ecocommons.org.au Copyright statement: This script is the product of the EcoCommons platform.\
+Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
+
+# Script and data info:
+
+This notebook, developed by the EcoCommons team, showcases how to download, and process both conitunous and categorical environmental datasets that in the format of rasters to be used for SDM.
+
+**Workflow Overview**:
+
+-   Initial Setup: Set the working directory and load necessary R packages (dismo, ggplot2, raster, googledrive, sp, dplyr, terra). Create directories to store raw data files.
+
+-   Data Download: Download continous enviromental datasets from WorldClime. Download categocial environmental dataset from our google drive.
+
+-   Data Processing: Reproject environmental datasets to the crs your desire. Crop and mask enviromental datasets to the extent of your study area. Resample enviromental datasets to a same resolution.
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
+
+If you have any corrections or suggestions to improve the effeciengy, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+# Introduction
+
+## 1. Environmental variables
+
+text text text text
+
+## 2. Raster
+
+text text text text
+
+## 3. Categorical and Continuous data
+
+text text text text
+
+# Practice
+
+## 1. Set working directory and make a folder to store data.
+
+```{r setup_workspace}
+# Set Workspace as the current working directory
+workspace <- getwd()
+
+# Define directory for storing environmental data
+env_data_dir <- file.path(workspace, "env_data")
+
+# Create 'env_data' directory if it doesn't exist
+if (!dir.exists(env_data_dir)) {
+  dir.create(env_data_dir, recursive = TRUE)
+  cat("Directory 'env_data' created successfully.\n")
+} else {
+  cat("Directory 'env_data' already exists.\n")
+}
+```
+
+## 2. Install and load essential libraries.
+
+```{r install_libraries}
+# List of packages to check, install if needed, and load
+packages <- c("dplyr", "terra", "sf", "googledrive", "ggplot2")
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!pkg %in% installed.packages()[, "Package"]) {
+    install.packages(pkg)
+  }
+  library(pkg, character.only = TRUE)
+}
+
+# De-authenticate Google Drive to access public files
+drive_deauth()
+```
+
+## 3. Download Environmental Data
+
+Environmental variables are downloaded from both WorldClim and Google Drive, and stored in GeoTIFF format.
+
+```{r download_data}
+library(googledrive)
+drive_deauth()  # Access public files without authentication
+
+
+# Define Google Drive file IDs and corresponding local file paths for environmental variables
+file_ids <- list(
+  env_var_1 = "1EA_lberXjNI3_RRM0mbAdDvVDTFL2tW3", # Continuous Environmental Variable 1, Bioclim 01
+  env_var_2 = "1PO1TAQp-ND4olSgIQ29wjexMOQnhXkku", # Continuous Environmental Variable 2, Bioclim 02
+  env_var_3 = "1BSEuphUV-qqR-gnA9HPZ1qKGLyJfLagC", # Continuous Environmental Variable 3, Bioclim 03
+  env_var_4 = "1fCI5D_AGg2nhU75A-9WX7MspcrQYMp7f", # Continuous Environmental Variable 4, Bioclim 04
+  env_var_5 = "1yWmJ9fKFPZQoV_XTRIWABV_gaF-wexzZ", # Continuous Environmental Variable 5, Bioclim 05
+  env_var_cat_1 = "1WzBKghFdG67C_LMeOmi9a1A12wjrd9wo" # Categorical Environmental Variable 1, Land use of Australia
+)
+
+
+# Define local file paths for each environmental variable
+file_paths <- list(
+  env_var_1 = file.path(workspace, "env_data", "env_var_1.tif"),
+  env_var_2 = file.path(workspace, "env_data", "env_var_2.tif"),
+  env_var_3 = file.path(workspace, "env_data", "env_var_3.tif"),
+  env_var_4 = file.path(workspace, "env_data", "env_var_4.tif"),
+  env_var_5 = file.path(workspace, "env_data", "env_var_5.tif"),
+  env_var_cat_1 = file.path(workspace, "env_data", "env_var_cat_1.tif")
+)
+
+# Function to download individual files with progress messages
+download_file <- function(file_id, file_path) {
+  cat("Downloading:", basename(file_path), "...\n")
+  drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
+  cat("Downloaded:", basename(file_path), "\n")
+}
+
+# Download each environmental variable file
+cat("Downloading environmental variable files...\n")
+invisible(mapply(download_file, file_ids, file_paths))
+
+# Confirm the files have been downloaded
+downloaded_files <- list.files(file.path(workspace, "env_data"), recursive = TRUE)
+cat("Downloaded files:\n", downloaded_files, "\n")
+
+```
+
+## 4. Load and Process Environmental Data
+
+All raster files are loaded and reprojected if necessary to ensure consistency.
+
+```{r load_rasters}
+# Load all rasters and store in a list
+rasters <- lapply(file_paths, rast)
+
+
+# Sometimes, when you upload a raster file (such as a GeoTIFF) to Google Drive and then open it in Google Colab, it may lose its categorical (factor) properties due to how terra or other spatial libraries interpret the file upon reloading. Rasters saved as categorical may be stored with integer values rather than explicit factor levels in the file, meaning they need to be redefined as factors when reloaded.
+
+rasters[[6]] <- as.factor(rasters[[6]])
+
+# Check if each raster is categorical or continuous
+for (i in seq_along(rasters)) {
+  if (is.factor(rasters[[i]])) {
+    cat("Raster", i, "is categorical.\n")
+  } else {
+    cat("Raster", i, "is continuous.\n")
+  }
+}
+```
+
+## 5. Download and Load Australian Boundary Shapefile
+
+```{r download_shapefile}
+
+library(googledrive)
+
+# De-authenticate Google Drive to access public files
+drive_deauth()
+
+# Folder ID for the Australian polygon shapefile
+aus_folder_id <- "1rzNHthnQQXVulocKkB5i7v2dObqKMP11"
+
+# Define the local directory to save the shapefile components
+shapefile_dir <- file.path(workspace, "env_data", "aus_shapefile")
+dir.create(shapefile_dir, showWarnings = FALSE, recursive = TRUE)
+
+# List all files in the shapefile folder on Google Drive
+files_in_folder <- drive_ls(as_id(aus_folder_id))
+
+# Download each file in the folder
+cat("Downloading shapefile components...\n")
+for (i in 1:nrow(files_in_folder)) {
+  file_name <- files_in_folder$name[i]
+  cat("Downloading:", file_name, "...\n")
+  drive_download(files_in_folder$id[i], path = file.path(shapefile_dir, file_name), overwrite = TRUE)
+}
+
+cat("Shapefile components downloaded to:", shapefile_dir, "\n")
+
+# Load necessary library for handling shapefiles
+library(terra)
+
+# Load the shapefile using the components in the downloaded directory
+shapefile_path <- list.files(shapefile_dir, pattern = "\\.shp$", full.names = TRUE)
+
+# Load the Australian boundary as an sf object and convert to EPSG 4326
+australia_boundary <- st_read(shapefile_path)
+australia_boundary <- st_transform(australia_boundary, crs = 4326)
+
+class(australia_boundary)
+
+```
+
+## 6. Plot Australian Boundary
+
+```{r plot_boundary}
+library(ggplot2)
+
+ggplot(data = australia_boundary) +
+  geom_sf(fill = "#61c6fa", color = "black") +  # Fill with light blue and outline in black
+  labs(title = "Map of Australia") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 18, face = "bold"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5))
+```
+
+## 7. Show Resolution, Extent, and CRS of Raster and Study Are
+
+```{r show_properties}
+
+# Get and print the extent of the Australian boundary vector
+australia_extent <- ext(australia_boundary)
+cat("Extent of Australia boundary:\n")
+print(australia_extent)
+
+# Get and print the CRS of the Australian boundary vector
+australia_crs <- crs(australia_boundary)
+cat("CRS of Australia boundary:\n")
+print(australia_crs)
+
+# Iterate over the rasters to show resolution, extent, and CRS
+for (i in seq_along(rasters)) {
+  cat("\nRaster", i, ":\n")
+
+  # Show the resolution
+  res_val <- res(rasters[[i]])
+  cat("Resolution (x, y):", res_val[1], ",", res_val[2], "\n")
+
+  # Show the extent - Modified to handle S4 object
+  ext_val <- ext(rasters[[i]])
+  cat("Extent:", as.character(ext_val), "\n") # Convert ext_val to character
+
+  # Show the CRS
+  crs_val <- crs(rasters[[i]])
+  cat("CRS:", crs_val, "\n")
+}
+```
+
+## 8. Reproject Raster to WGS 84 if Needed
+
+```{r reproject_rasters}
+
+library(terra)
+
+# Function to check CRS and reproject to WGS 84 if needed
+reproject_if_needed <- function(raster, is_categorical = FALSE) {
+  wgs84_crs <- "EPSG:4326"  # Define WGS 84 CRS using EPSG code
+
+  # Check if the CRS is already WGS 84
+  if (!identical(crs(raster), wgs84_crs)) {
+    # Choose the appropriate method based on raster type
+    method <- if (is_categorical) "near" else "bilinear"
+    message("Reprojecting raster to WGS 84 using method: ", method)
+
+    # Reproject raster to WGS 84 CRS
+    raster <- project(raster, wgs84_crs, method = method)
+
+    # Convert to factor again if categorical to ensure category levels are preserved
+    if (is_categorical) {
+      raster <- as.factor(raster)
+    }
+  }
+
+  return(raster)
+}
+
+# Define the categorical raster indices
+categorical_indices <- c(6)  # Adjust if there are other categorical rasters
+
+# Apply the function to each raster in the list
+rasters_reprojected <- lapply(seq_along(rasters), function(i) {
+  is_categorical <- i %in% categorical_indices
+  reproject_if_needed(rasters[[i]], is_categorical = is_categorical)
+})
+
+# Print the CRS of each reprojected raster to verify
+for (i in seq_along(rasters_reprojected)) {
+  cat("\nRaster", i, "CRS:\n")
+  print(crs(rasters_reprojected[[i]]))
+}
+```
+
+## 9. Resample Rasters to Match the Finest Resolution
+
+```{r resample_rasters}
+
+# Determine the finest resolution among the reprojected rasters
+resolutions <- sapply(rasters_reprojected, function(r) res(r)[1] * res(r)[2])
+finest_index <- which.min(resolutions)
+finest_raster <- rasters_reprojected[[finest_index]]
+
+# Resample each raster to match the finest resolution
+rasters_resampled <- lapply(seq_along(rasters_reprojected), function(i) {
+  raster <- rasters_reprojected[[i]]
+
+  # Determine resampling method based on the type of raster (categorical vs continuous)
+  if (i == 6) {  # the 6th raster is the categorical one
+    message("Resampling categorical raster to match the finest resolution using 'nearest' method.")
+    raster <- resample(raster, finest_raster, method = "near")  # Use 'near' for categorical data
+  } else {
+    message("Resampling continuous raster to match the finest resolution using 'bilinear' method.")
+    raster <- resample(raster, finest_raster, method = "bilinear")  # Use 'bilinear' for continuous data
+  }
+
+  return(raster)
+})
+
+```
+
+## 10. Crop and Mask Raster to Study Area
+
+```{r crop_mask_rasters}
+# Reproject the Australian boundary vector to WGS 84
+wgs84_crs <- "EPSG:4326"
+
+australia_boundary_vect <- vect(australia_boundary)
+
+australia_boundary_vect_wgs84 <- project(australia_boundary_vect, wgs84_crs)
+
+# Crop and mask each resampled raster to the extent of Australia
+cropped_masked_rasters <- lapply(rasters_resampled, function(raster) {
+  # Crop the raster to the extent of Australia
+  cropped_raster <- crop(raster, australia_boundary_vect_wgs84)
+  # Mask the raster with the Australia boundary to keep only data within Australia
+  masked_raster <- mask(cropped_raster, australia_boundary_vect_wgs84)
+  return(masked_raster)
+})
+```
+
+### 11. Stack and Save Raster
+
+```{r stack_save_rasters}
+
+# Stack the cropped and masked rasters together
+raster_stack <- do.call(c, cropped_masked_rasters)
+
+# Print summary to verify the stack
+print(raster_stack)
+
+# Plot each layer to visually verify the raster stack
+plot(raster_stack)
+
+# Save the raster stack to a GeoTIFF file
+writeRaster(raster_stack, filename = "stacked_raster.tif", overwrite = TRUE)
+```
