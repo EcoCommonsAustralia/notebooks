@@ -82,7 +82,7 @@ class TableEntry:
     def format(self) -> str:
         notebook_link_ipynb = NOTEBOOK_LINK_PATTERN.format(f"{self.display_name} (ipynb)", NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}.ipynb")
         notebook_link_qmd = NOTEBOOK_LINK_PATTERN.format(f"{self.display_name} (qmd)", NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}.qmd")
-        open_in_colab_badge = OPEN_IN_COLAB_BADGE_PATTERN.format(NOTEBOOKS_COLAB_ROOT_PATH, f"{self.notebook_name}.ipynb")
+        open_in_colab_badge = OPEN_IN_COLAB_BADGE_PATTERN.format(NOTEBOOKS_COLAB_ROOT_PATH, self.notebook_name)
         econotebook_badge = ECONOTEBOOK_BADGE_PATTERN.format(self.econotebook_blogpost_path) if self.econotebook_blogpost_path else ""
         youtube_badge = YOUTUBE_BADGE_PATTERN.format(self.youtube_video_path) if self.youtube_video_path else ""
         github_badge = GITHUB_BADGE_PATTERN.format(self.github_repository_path) if self.github_repository_path else ""
