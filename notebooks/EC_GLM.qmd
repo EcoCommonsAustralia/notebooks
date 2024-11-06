@@ -153,7 +153,7 @@ cat("Shapefile components downloaded to:", shapefile_dir, "\n")
 
 All raster files are loaded and reprojected if necessary to ensure consistency.
 
-```{r srudyarea}
+```{r studyarea}
 
 library(sf)
 library(terra)
