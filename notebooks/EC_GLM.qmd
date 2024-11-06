@@ -47,8 +47,6 @@ Some house-keeping before we start. This process might take some time (30mins) a
 ```{r setup_workspace}
 # Set Workspace as the current working directory
 
-setwd("/Users/zhaoxiang/Documents/tmp/zhao_dev/notebooks/notebooks/tmp")
-
 workspace <- getwd()
 
 raw_data_dir <- file.path(workspace, "raw_data")
