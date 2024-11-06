@@ -1,0 +1,675 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Species Distribution Analysis - Generalized Linear Model (GLM)
+
+Author details: Abhimanyu Raj Singh and Xiang Zhao
+
+Editor details: Dr Sebastian Lopez Marcano
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
+
+Date: Oct 2024
+
+# Script and data info:
+
+This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental dataset that in the format of raster to be used for SDM.
+
+**Workflow Overview**:
+
+-   Initial Setup: Set the working directory and load necessary R packages (dismo, ggplot2, raster, googledrive, sp, dplyr, terra). Create directories to store raw data files.
+
+-   Data Download: Download continuous environmental dataset from WorldClim. Download categorical environmental dataset from our Google Drive.
+
+-   Data Processing: Reproject environmental datasets to the crs your desire. Crop and mask environmental dataset to the extent of your study area. Resample environmental dataset to a same resolution.
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
+
+If you have any corrections or suggestions to improve the effeciency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ec_breaker_nobackgoundcolor.png)
+
+# Examplary Species: Koala (*Phascolarctos cinereus*)
+
+## Summary
+
+The koala (Phascolarctos cinereus), sometimes called the koala bear, is an arboreal herbivorous marsupial native to Australia. It is the only extant representative of the family Phascolarctidae. Its closest living relatives are the wombats. The koala is found in coastal areas of the island's eastern and southern regions, inhabiting Queensland, New South Wales, Victoria, and South Australia. It is easily recognisable by its stout, tailless body and large head with round, fluffy ears and large, dark nose. The koala has a body length of 60–85 cm (24–33 in) and weighs 4–15 kg (8.8–33.1 lb). Fur colour ranges from silver grey to chocolate brown. Koalas from the northern populations are typically smaller and lighter in colour than their counterparts further south. These populations possibly are separate subspecies, but this is disputed.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ec_breaker_nobackgoundcolor.png)
+
+# A. Environment, Packages and Dependencies
+
+Some house-keeping before we start. This process might take some time (30mins) as many packages needed to be installed.
+
+## 1. Set working directory and make a folder to store data.
+
+```{r setup_workspace}
+# Set Workspace as the current working directory
+
+setwd("/Users/zhaoxiang/Documents/tmp/zhao_dev/notebooks/notebooks/tmp")
+
+workspace <- getwd()
+
+raw_data_dir <- file.path(workspace, "raw_data")
+
+# Create the 'raw_data' directory if it doesn't exist
+if (!dir.exists(raw_data_dir)) {
+  dir.create(raw_data_dir, recursive = TRUE)
+  cat("Directory 'raw_data' created successfully.\n")
+} else {
+  cat("Directory 'raw_data' already exists.\n")
+}
+
+# Increase the plot size by changing the options for the plot dimensions
+options(repr.plot.width = 16, repr.plot.height = 8)  # This will make the plot larger in the notebook output
+
+```
+
+## 2. Install and load essential libraries.
+
+```{r install_libraries}
+# List of packages to check, install if needed, and load
+packages <- c("dplyr", "terra", "sf", "googledrive", "ggplot2", "corrplot", "pROC")
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+  library(pkg, character.only = TRUE)
+}
+```
+
+# B. Data
+
+## 1. Get data from EcoCommons Public Google drive
+
+```{r download_env_data}
+
+library(googledrive)
+
+# De-authenticate Google Drive to access public files
+drive_deauth()
+
+# Define Google Drive file IDs and corresponding local file paths for environmental variables
+file_ids <- list(
+  csv = "13wnlQvnAqtml-_MUY6iIZe7LabrrhQCX", # Koala data
+  env_var_stack = "1ES0UbTDKSKyQ7PpM8eFN59R8xOYuDgrC" # environmental variables
+)
+
+# Define local file paths for each environmental variable
+file_paths <- list(
+  csv = file.path(workspace, "raw_data", "koala.csv"),
+  env_var_stack = file.path(workspace, "raw_data", "env_var_stack.tif")
+)
+
+# Function to download individual files with progress messages
+download_file <- function(file_id, file_path) {
+  cat("Downloading:", basename(file_path), "...\n")
+  drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
+  cat("Downloaded:", basename(file_path), "\n")
+}
+
+# Download each environmental variable file
+cat("Downloading environmental variable files...\n")
+invisible(mapply(download_file, file_ids, file_paths))
+
+# Confirm the files have been downloaded
+downloaded_files <- list.files(file.path(workspace, "raw_data"), recursive = TRUE)
+cat("Downloaded files:\n", downloaded_files, "\n")
+
+
+```
+
+```{r download_studyarea_data}
+
+library(googledrive)
+
+# De-authenticate Google Drive to access public files
+drive_deauth()
+
+# Folder ID for the Australian polygon shapefile
+aus_folder_id <- "1rzNHthnQQXVulocKkB5i7v2dObqKMP11"
+
+# Define the local directory to save the shapefile components
+shapefile_dir <- file.path(workspace, "raw_data", "aus_shapefile")
+dir.create(shapefile_dir, showWarnings = FALSE, recursive = TRUE)
+
+# List all files in the shapefile folder on Google Drive
+files_in_folder <- drive_ls(as_id(aus_folder_id))
+
+# Download each file in the folder
+cat("Downloading shapefile components...\n")
+for (i in 1:nrow(files_in_folder)) {
+  file_name <- files_in_folder$name[i]
+  cat("Downloading:", file_name, "...\n")
+  drive_download(files_in_folder$id[i], path = file.path(shapefile_dir, file_name), overwrite = TRUE)
+}
+
+cat("Shapefile components downloaded to:", shapefile_dir, "\n")
+
+```
+
+## 2. Define Study Area
+
+All raster files are loaded and reprojected if necessary to ensure consistency.
+
+```{r srudyarea}
+
+library(sf)
+library(terra)
+library(ggplot2)
+
+# Define the path to the Australian shapefile's .shp component
+shapefile_path <- file.path(workspace, "raw_data", "aus_shapefile", "AUS_2021_AUST_GDA2020.shp")
+
+# Load the Australian boundary as an sf object and convert to EPSG 4326
+australia_boundary <- st_read(shapefile_path)
+australia_boundary <- st_transform(australia_boundary, crs = 4326)
+
+# Convert the sf object to a SpatVector for terra operations, if needed
+australia_boundary_vect <- vect(australia_boundary)
+
+# Plot the Australia boundary using ggplot2
+ggplot(data = australia_boundary) +
+  geom_sf(fill = "#61c6fa", color = "black") +  # Fill with light blue and outline in black
+  labs(title = "Map of Australia") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 18, face = "bold"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5))
+
+```
+
+## 3. Species Occurrence Data Prep and check
+
+```{r species_data}
+
+# Load required libraries
+library(sf)
+library(dplyr)
+
+# Read the koala data
+koala_path <- file.path(workspace, "raw_data", "koala.csv")
+koala_data <- read.csv(koala_path)
+
+# Filter rows without missing values in coordinates
+koala_data_clean <- koala_data %>%
+  filter(!is.na(decimalLongitude), !is.na(decimalLatitude))
+
+# Convert the koala data to an sf object using "decimalLongitude" and "decimalLatitude"
+koala_sf <- st_as_sf(koala_data_clean, coords = c("decimalLongitude", "decimalLatitude"), crs = 4326)
+
+# Define the bounding box
+bbox <- st_bbox(c(xmin = 96.81695, ymin = -43.7405, xmax = 167.998, ymax = -9.142163), crs = st_crs(koala_sf))
+
+# Convert the bbox to an sfc object
+bbox_sfc <- st_as_sfc(bbox)
+
+# Filter koala points that fall within the bounding box
+koala_sf_au <- koala_sf[st_within(koala_sf, bbox_sfc, sparse = FALSE), ]
+
+# View filtered points
+print(koala_sf_au)
+
+# Replace "PRESENT" with 1 and "ABSENT" with 0 in the occurrenceStatus column
+koala_sf_au$occurrenceStatus <- ifelse(koala_sf_au$occurrenceStatus == "PRESENT", 1, 0)
+
+# Convert occurrenceStatus to a factor
+koala_sf_au$occurrenceStatus <- factor(koala_sf_au$occurrenceStatus, levels = c(0, 1))
+
+# View updated koala data
+print(koala_sf_au)
+```
+
+```{r classification_01}
+
+library(ggplot2)
+library(dplyr)
+
+# Calculate counts for presence and absence
+koala_counts <- koala_sf_au %>%
+  dplyr::count(occurrenceStatus)
+
+# Create labels for the legend that include counts
+legend_labels <- c(
+  "0" = paste0("ABSENT: ", koala_counts$n[koala_counts$occurrenceStatus == 0]),
+  "1" = paste0("PRESENT: ", koala_counts$n[koala_counts$occurrenceStatus == 1])
+)
+```
+
+```{r plotting}
+# Plotting
+ggplot(data = australia_boundary) +
+  geom_sf(fill = "#61c6fa", color = "black") +  # Australia map fill and outline color
+  geom_sf(data = koala_sf_au, aes(color = occurrenceStatus), size = 2) +  # Koala presences and absences points
+  scale_color_manual(values = c("0" = "#f6aa70", "1" = "#11aa96"),  # Colors for absence (0) and presence (1)
+                     labels = legend_labels) +  # Labels for legend including counts
+  labs(title = "Koala Presences and Absences in Australia", color = "Occurrence Status") +  # Title and legend title
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.text = element_text(size = 12),
+    panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5),
+    legend.position.inside = c(0.8, 0.2),  # Adjusted legend position for full map
+    legend.justification = c(0, 1)
+  )
+```
+
+## 4. Environmental Variables Prep and check
+
+Since the extents of the enviromental variables 1 to 5 are world wide, we need to crop it to the extent of our study area, that is Australia. And we want to make sure the coordinate system of each of the variable is EPSG:4326.
+
+```{r read_raster}
+
+stack_file_path <- file.path(workspace, "raw_data", "env_var_stack.tif")
+
+raster_stack <- rast(stack_file_path)
+
+print(names(raster_stack))
+
+# Load the raster stack
+stack_file_path <- file.path(workspace, "raw_data", "env_var_stack.tif")
+raster_stack <- rast(stack_file_path)
+
+# Assign new names to the first five layers
+layer_names <- c(
+  "env_var_1", #   "Bioclim 01: Annual Mean Temperature",
+  "env_var_2", #   "Bioclim 02: Mean Diurnal Range",
+  "env_var_3", #   "Bioclim 03: Isothermality",
+  "env_var_4", #   "Bioclim 04: Temperature Seasonality",
+  "env_var_5", #   "Bioclim 05: ",
+  "env_cat_var_1" # "Six class of land use of Australia",
+)
+
+names(raster_stack)[1:6] <- layer_names
+
+# Factorize the sixth raster layer
+raster_stack[[6]] <- as.factor(raster_stack[[6]])
+
+# Verify the names
+print(raster_stack)
+
+```
+
+```{r plot_env1}
+
+# Plot the masked raster
+plot(raster_stack[[1]],
+     main = "Bioclim 01: Annual Mean Temperature",
+     col = terrain.colors(20),
+     xlab = "Longitude",
+     ylab = "Latitude",
+     cex.main = 1.5,
+     cex.lab = 1.2,
+     cex.axis = 1)
+```
+
+```{r plot_env2}
+
+# Plot the masked raster
+plot(raster_stack[[2]],
+     main = "Bioclim 02: Mean Diurnal Range",
+     col = terrain.colors(20),
+     xlab = "Longitude",
+     ylab = "Latitude",
+     cex.main = 1.5,
+     cex.lab = 1.2,
+     cex.axis = 1)
+```
+
+```{r plot_env3}
+
+# Plot the masked raster
+plot(raster_stack[[3]],
+     main = "Bioclim 03: Isothermality",
+     col = terrain.colors(20),
+     xlab = "Longitude",
+     ylab = "Latitude",
+     cex.main = 1.5,
+     cex.lab = 1.2,
+     cex.axis = 1)
+
+```
+
+```{r plot_env4}
+# Plot the masked raster
+plot(raster_stack[[4]],
+     main = "Bioclim 04: Temperature Seasonality",
+     col = terrain.colors(20),
+     xlab = "Longitude",
+     ylab = "Latitude",
+     cex.main = 1.5,
+     cex.lab = 1.2,
+     cex.axis = 1)
+```
+
+```{r plot_env5}
+
+# Plot the masked raster
+plot(raster_stack[[5]],
+     main = "Bioclim 05: Max Temperature of Warmest Month",
+     col = terrain.colors(20),
+     xlab = "Longitude",
+     ylab = "Latitude",
+     cex.main = 1.5,
+     cex.lab = 1.2,
+     cex.axis = 1)
+```
+
+```{r plot_env_cat_1}
+
+# Set color palette and categories
+color_palette <- c("#CA7AF5", "#FFFFBE", "#FFAA00", "#734C00", "#FF0000", "#0000FF")
+color_category <- c("Conservation",
+                    "Production Natural",
+                    "Dryland Agriculture",
+                    "Irrigated Agriculture",
+                    "Intensive Uses",
+                    "Water")
+
+# Set up layout with more space for the main plot and a smaller area for the legend
+layout(matrix(c(1, 2), nrow = 1), widths = c(7, 3))  # Allocate 7:3 space for the main plot and legend
+
+# Increase the plot size by changing the options for the plot dimensions
+options(repr.plot.width = 16, repr.plot.height = 8)  # This will make the plot larger in the notebook output
+
+# Increase the margins for the main plot to make it visually balanced
+par(mar = c(5, 4, 4, 1), cex.axis = 1.5, cex.lab = 1.5, cex.main = 2)  # Adjust margin and text sizes
+
+# Plot the reclassified raster without the legend or color bar
+plot(raster_stack[[6]], col = color_palette, main = "Land Use of Australia",
+     legend = FALSE, axes = TRUE, xlab = "Longitude", ylab = "Latitude")
+
+# Set margins for the legend plot area and create enough space to avoid overlap
+par(mar = c(5, 1, 4, 1))  # Minimal margins for the legend area
+plot.new()  # Create a blank plot for the legend
+
+# Add a custom legend with colors and category labels, placed on the left
+legend("left", legend = color_category, fill = color_palette,
+       title = "Land Use Categories", cex = 1.2, bty = "n", xpd = TRUE)
+
+```
+
+## 5. Combine data for the model
+
+```{r combine_data_1}
+
+# For the fisrt five continuous environmental variables, we extract their values and combine them with the species presence and absence data
+
+# Convert occurrence points to a SpatVector to work with terra package
+occurrence_points <- vect(koala_sf_au)
+
+# Initialize an empty list to store the extracted values for the first five raster layers
+extracted_values_list <- list()
+
+# Extract values for the first five environmental layers
+for (i in 1:5) {
+  # Extract values from the current raster layer
+  extracted_values <- extract(raster_stack[[i]], occurrence_points)[, 2]  # Extracts values, removes ID column
+  # Append the extracted values to the list
+  extracted_values_list[[i]] <- extracted_values
+}
+```
+
+```{r combine_data_2}
+
+# Combine all extracted values into a dataframe
+extracted_values_df <- as.data.frame(extracted_values_list)
+
+# Set appropriate column names for the extracted environmental variables
+names(extracted_values_df) <- paste0("env_var_", 1:5)
+
+# Combine coordinates and occurrence data with the extracted values
+coordinates <- st_coordinates(koala_sf_au)
+occurrence_data <- as.data.frame(koala_sf_au)
+
+# Combine all into a single dataframe
+model_data_df <- data.frame(coordinates, occurrence_data, extracted_values_df)
+
+# Rename columns for better readability
+names(model_data_df)[1:2] <- c("Longitude", "Latitude")
+
+# View the first few rows of the resulting dataframe
+head(model_data_df)
+```
+
+```{r combine_data_3}
+
+# Extract values for the sixth environmental variable
+env_var_6_values <- extract(raster_stack[[6]], occurrence_points)[, 2]  # Extracts values, removes ID column
+
+# Convert the extracted values to a factor (if not already)
+env_var_6_values <- as.factor(env_var_6_values)
+
+```
+
+```{r combine_data_4}
+
+# Add the extracted factor variable to model_data_df
+model_data_df$env_cat_var_1 <- env_var_6_values
+
+model_data_df <- na.omit(model_data_df) # we need to remove rows containing NA
+
+# View the first few rows of the resulting dataframe
+head(model_data_df)
+```
+
+The number of absence of koala is 1958, the number of presence of koala is 242516, which is very unbalanced. We want to use oversampling method to make some pesudo absence data to add to the koala data to make 0 and 1 balanced.
+
+Number of Additional Absence Records Needed: 242 , 516 − 1 , 958 = 240 , 558 242,516−1,958=240,558
+
+## 6. Test Collinearity among continuous variables
+
+Testing for collinearity among continuous variables is an important step in many modeling processes, particularly in species distribution modeling and other regression-based analyses. Collinearity occurs when two or more predictor variables in a dataset are highly correlated, which can lead to unstable estimates of regression coefficients and make it difficult to interpret the results.
+
+There are two common methods for testing collinearity among continous variables.
+
+Before fitting the mode, we can use **correlation matrix**
+
+```{r corrplot}
+
+# Load necessary library
+library(corrplot)
+
+# Calculate the correlation matrix for the first five continuous variables
+cor_matrix <- cor(model_data_df[, c("env_var_1", "env_var_2", "env_var_3", "env_var_4", "env_var_5")],
+                  use = "complete.obs", method = "pearson")
+print(cor_matrix)
+
+# Visualize the correlation matrix using corrplot
+corrplot(cor_matrix,
+         method = "color",          # Use colored squares to represent correlation strength
+         type = "upper",            # Only show the upper triangle of the matrix
+         order = "hclust",          # Reorder the variables based on hierarchical clustering
+         addCoef.col = "black",     # Add correlation coefficients in black
+         tl.col = "black",          # Text labels color
+         tl.srt = 45,               # Rotate text labels for better readability
+         diag = FALSE)              # Hide the diagonal
+```
+
+**From the above corrplot, we can find:**
+
+There are some strong correlations present, notably between env_var_1 and env_var_5 (0.878) and env_var_2 and env_var_3 (0.817). This indicates potential collinearity, which could be problematic for certain modeling approaches, as it can affect the stability of model parameters.
+
+**We don't have to include env_var_2 and env_var_5 in model anymore.**
+
+```{r remove_env_var}
+
+# Remove "env_var_2" and "env_var_5" by specifying their negative index
+model_data_df <- model_data_df[, !names(model_data_df) %in% c("env_var_2", "env_var_5")]
+```
+
+## 7. Dealing with unbalanced dataset
+
+Since our koala absences are too few comparing with the presences, we need to use resamping tehniques to increase the koala absences in the dataset to make it even.
+
+```{r calculate_0_1}
+
+# Calculate counts for presence and absence
+print(koala_counts)
+
+```
+
+```{r ROSE}
+
+# we can use R package called "ROSE" to do the oversampling
+
+install.packages("ROSE")
+library(ROSE)
+```
+
+```{r oversampling}
+
+# Balance the dataset using oversampling for absences
+balanced_data <- ovun.sample(
+  occurrenceStatus ~ env_var_1 + env_var_3 + env_var_4 + env_cat_var_1,
+  data = model_data_df,
+  method = "over",
+  N = 2 * 242516  # Total desired sample size: equal number of 0 and 1
+)$data
+
+# Verify the balance of the dataset
+table(balanced_data$occurrenceStatus)
+
+```
+
+Now, our 0s and 1s look very even.
+
+## 8. Split data into training dataset (80%) and testing dataset (20%)
+
+```{r data_split}
+
+## 80% of the species occurrence data
+smp_size <- floor(0.8 * nrow(balanced_data))
+
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(balanced_data)), size = smp_size)
+
+training_df <- balanced_data[train_ind, ]
+testing_df <- balanced_data[-train_ind, ]
+```
+
+# C. Generalised Logistic Regression (GLM)
+
+## 1. Model Configuration
+
+We are fitting a logistic regression model using 3 continuous environmental variables and one categorical variable as predictors with the **testing dataset**.
+
+```{r null_model}
+
+# Let's make a null model as a benchmark
+
+# Fit a null model with only the intercept
+null_model <- glm(occurrenceStatus ~ 1,
+                  data = training_df,
+                  family = binomial(link = "logit"))
+
+summary(null_model)
+
+```
+
+```{r model_fit}
+
+# Fit a logistic regression model with presence (binary response)
+glm_model <- glm(occurrenceStatus ~ env_var_1 + env_var_3 + env_var_4 + env_cat_var_1,
+                 data = training_df,
+                 family = binomial(link = "logit")) #in the Generalized Linear Model (GLM), setting family = binomial(link = "logit") is appropriate when dealing with binary outcomes such as presence (1) and absence (0) of an event, which, in this case, is the occurrence of tree kangaroos.
+
+# Summary of the model to view the results
+summary(glm_model)
+```
+
+```{r model_compare}
+
+# Let's compare the performance of our model to a null model
+
+# Compare null model with full model using the analysis of deviance (Likelihood Ratio Test)
+anova(null_model, glm_model, test = "Chisq")
+
+# Compare the AIC of the null model and the full model
+AIC(null_model, glm_model)
+
+# Get the null deviance and residual deviance from the full model
+null_deviance <- glm_model$null.deviance
+residual_deviance <- glm_model$deviance
+
+# Calculate the deviance explained
+deviance_explained <- (null_deviance - residual_deviance) / null_deviance
+
+# Print the deviance explained as a percentage
+deviance_explained_percent <- deviance_explained * 100
+cat("Deviance Explained:", deviance_explained_percent, "%\n")
+
+```
+
+### Summary of Interpretation
+
+The **Likelihood Ratio Test (ANOVA)** shows that adding the predictors significantly improved the model's fit compared to the null model, as indicated by the high deviance reduction and a p-value of 0.
+
+The **AIC** for the full model is much lower than the null model, further indicating a better fit when balancing model complexity.
+
+The **Deviance Explained** of 25.34% suggests that the full model explains about a quarter of the variability in koala presence/absence, indicating that while the predictors contribute useful information, there is still substantial unexplained variability that may require further investigation or additional predictors.
+
+## 2. Model evaluation
+
+Now, we use the **testing dataset** to evaluate the model performance.
+
+```{r POC}
+
+# Predict on the testing data
+predicted_probs <- predict(glm_model, newdata = testing_df, type = "response")
+
+# Convert probabilities to binary predictions (using a threshold of 0.5)
+predicted_classes <- ifelse(predicted_probs > 0.5, 1, 0)
+
+library(pROC)
+
+# Create an ROC curve and compute AUC
+roc_curve <- roc(testing_df$occurrenceStatus, predicted_probs)
+auc_value <- auc(roc_curve)
+print(auc_value)
+
+# Plot the ROC curve
+plot(roc_curve, main = paste("ROC Curve (AUC =", round(auc_value, 2), ")"))
+```
+
+# D. Predictions
+
+## 1. Predictions on Current Environment
+
+```{r prediction}
+
+# Predict the presence probability across the entire raster extent
+predicted_raster <- predict(raster_stack, glm_model, type = "response")
+
+# Plot the predicted raster to visualize the results
+plot(predicted_raster, main = "Predicted Probability of Presence")
+```
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+EcoCommons Australia partners with the Australian Research Data Commons (ARDC), which is supported by funding from the National Collaborative Research Infrastructure Strategy (NCRIS) [https://doi.org/10.47486/PL108.](https://doi.org/10.47486/PL108)
+
+::: {align="center"}
+**Our partner**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.47486/PL108>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
