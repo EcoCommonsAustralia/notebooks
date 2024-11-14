@@ -1,4 +1,5 @@
-<p><a href="" target="_blank"> <img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner" width="850"/> </a></p>
+::: {align="center"}
+<p><a align="center" href="" target="_blank"> <img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner" width="850"/> </a></p>
 
 <br>
 
@@ -50,3 +51,4 @@ If you use EcoCommons in your research, please cite the platform as follows:
 > EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
 
 You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
+:::
