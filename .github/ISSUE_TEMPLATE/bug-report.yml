@@ -16,7 +16,7 @@ body:
       options:
         - label: >
           I have searched the EcoCommons Notebooks [issues](https://github.com/EcoCommons-Australia-2024-2026/notebooks/issues) and found no similar bug report.
-          required: true
+        required: true
 
   - type: textarea
     attributes:
