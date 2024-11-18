@@ -1,34 +1,32 @@
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
 
-# Species Distribution Analysis - Import Species Records from Big Open Access Datasets
+# Species Distribution Analysis - Import Species Records from Open Access Date Portals
 
 Author details: Xiang Zhao
 
-Editor details:
+Contact details: support\@ecocommons.org.au
 
-Contact details: support@ecocommons.org.au
+Copyright statement: This script is the product of the EcoCommons platform.\
+For more details, please visit the EcoCommons website: https://www.ecocommons.org.au/
 
-Copyright statement: This script is the product of the EcoCommons platform.   
-                     Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
-
-Date: Nov 2024  
+Date: Nov 2024
 
 # Script and data info:
 
-This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental dataset that in the format of rasters to be used for SDM.
+This notebook, developed by the EcoCommons team, showcases how to download species data from three biodiversity data portals and highlights the key differences between them.
 
 **Workflow Overview**:
 
--   Initial Setup: Set the working directory and load necessary R packages (dismo, ggplot2, raster, googledrive, sp, dplyr, terra). Create directories to store raw data files.
+-   Initial Setup: Set the working directory and load necessary R packages. Create directories to store raw data files.
 
--   Open source species dataset introduction:
+-   Open source species data portals introduction:
 
 <br>
 
 <blockquote>
 
 | Database | Acronym | R Package | Registration requirement |
-|:--------------|--------------:|:-------------------:|:-------------------:|
+|:----------------|----------------:|:------------------:|:------------------:|
 | the Global Biodiversity Information Facility | GBIF | rgbif | Yes |
 | the Atlas of Living Australia | ALA | galah | Yes |
 | eBird | \- | auk | Yes |
@@ -36,14 +34,14 @@ This notebook, developed by the EcoCommons team, showcases how to download, and 
 <br> <!-- Adding this line for spacing -->
 
 | Database | Pros | Cons |
-|:---------------------|:---------------:|:-------------------------------:|
+|:---------------------|:----------------:|:------------------------------:|
 | the Global Biodiversity Information Facility | \- Global Coverage<br>- Open Access<br>- Standardized Data<br>- Broad Taxonomic Coverage<br>- Rich Metadata | \- Data Quality Concerns<br>- Limited Real-time Updates<br>- Less Targeted Search |
 | the Atlas of Living Australia | \- Australian Focus<br>- Integrated Tools<br>- Collaboration<br>- Detailed Metadata | \- Limited Geographic Coverage<br>- Less Diverse Taxonomy<br>- Data Quality Issues |
 | eBird | \- Citizen Science Contributions<br>- High Data Density<br>- Standardized Protocols<br>- Interactive Visualizations<br>- Mobile App Support | \- Bird-specific Data<br>- Data Quality Dependence on User Expertise<br>- Bias Toward Accessible Areas<br>- Restricted Data Access |
 
 </blockquote>
 
--   Data downloaded from each datasets and comparision
+-   Data downloaded from each dataset and comparison
 
 In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
 
@@ -95,7 +93,7 @@ Portals like eBird encourage public participation, making biodiversity data coll
 
 The existence of multiple biodiversity data portals reflects the complexity and diversity of global biodiversity itself. Each portal contributes uniquely by focusing on different regions, species groups, or community engagement strategies. Together, they create a comprehensive network that enhances our understanding of biodiversity, supports conservation efforts, and fosters global collaboration among scientists, policymakers, and the public.
 
-## 1. Set working directory and make a folder to store data.
+## 1. Set the working directory and make a folder to store data.
 
 ```{r set_up}
 # Set Workspace as the current working directory
@@ -129,19 +127,19 @@ for (pkg in packages) {
 
 ```
 
-## 3. Open source species dataset introducation
+## 3. Open source species data portals introduction
 
-We will introduce four most popular and largest biodiversity datasets that allow people to download their data via their platforms or via serveral R packages. Please be noted, exploring those datasets on their own platforms are always the best way of downloading their data.
+We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages. Please note, exploring these datasets on their own platforms is always the most effective method for accessing their data.
 
-**Examplar species: Splendid Fairy-Wren (*Malurus splendens*)**
+**Exemplar species: Splendid Fairy-Wren (*Malurus splendens*)**
 
 <img src="https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ala_sfw.jpeg" alt="ALA Image" width="400"/>
 
-We are going to use a beautiful bird species - Splendid Fairy-Wren (*Malurus splendens*) as an examplar case to compare the data you can get from the four datasets.(Photographer: pimelea, more copyright information [here](https://biocache.ala.org.au/occurrences/a87e9029-e829-4e10-9988-1e74614af81b))
+We are going to use a beautiful bird species - Splendid Fairy-Wren (Malurus splendens) as a representative example to compare the data you can get from the three datasets. (Photographer: pimelea, more copyright information [here](https://biocache.ala.org.au/occurrences/a87e9029-e829-4e10-9988-1e74614af81b))
 
 ## 3.1 GBIF - the Global Biodiversity Information Facility
 
-GBIF—the Global Biodiversity Information Facility—is an international network and data infrastructure funded by the world's governments and aimed at providing anyone, anywhere, open access to data about all types of life on Earth.
+GBIF—the Global Biodiversity Information Facility—is an international network and data infrastructure funded by the world's governments. It aims to provide anyone, anywhere, open access to data about all types of life on Earth.
 
 **You need to register with GBIF to get "username", "password", and "registered email address" to access their dataset via their R package "rgbif".**
 
@@ -390,7 +388,7 @@ ggplot() +
 colnames(ALA_data)
 ```
 
-There is no "year" column in the ALA data, however, there is an "eventDate" formatted as "YYYY-MM-DD time", (ie. "1991-06-01 00:00:00"), to get the information of year, we need to extrat the year out and make a new column.
+The ALA data does not have a "year" column, but it does have an "eventDate" formatted as "YYYY-MM-DD time" (e.g., "1991-06-01 00:00:00"). We need to extract the year and create a new column.
 
 ```{r data_ala_2}
 install.packages("lubridate")
@@ -433,11 +431,11 @@ print(ALA_hist_plot)
 
 ## 3.3 eBird
 
-To access and download the eBird Basic Dataset updated on the 15th of each month, you are required to request access by submitting a form via [eBird Data Access](https://ebird.org/data/download?_ga=2.68545554.288689875.1731287369-1776978368.1731287369&_gl=1*u5ha8k*_gcl_au*NDc4OTIxNDIxLjE3MzEyODczNjk.*_ga*MTc3Njk3ODM2OC4xNzMxMjg3MzY5*_ga_QR4NVXZ8BM*MTczMTQ2Nzg3MC44LjEuMTczMTQ2OTYzNy41Ni4wLjA.).
+To access and download the eBird Basic Dataset (EBD), updated on the 15th of each month, you need to complete a data request form via [eBird Data Access](https://ebird.org/data/download?_ga=2.68545554.288689875.1731287369-1776978368.1731287369&_gl=1*u5ha8k*_gcl_au*NDc4OTIxNDIxLjE3MzEyODczNjk.*_ga*MTc3Njk3ODM2OC4xNzMxMjg3MzY5*_ga_QR4NVXZ8BM*MTczMTQ2Nzg3MC44LjEuMTczMTQ2OTYzNy41Ni4wLjA.).
 
-This session will be updated when we are granted the access of eBird data.
+This session will be updated once access to the eBird data has been granted.
 
-# 4. Compare the Malurus splendens data downloaded from three data protals.
+# 4. Compare the Malurus splendens data downloaded from three data portals.
 
 ## 4.1 Amount
 
