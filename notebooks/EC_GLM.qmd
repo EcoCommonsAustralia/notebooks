@@ -14,7 +14,7 @@ Date: Oct 2024
 
 # Script and data info:
 
-This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental dataset that in the format of raster to be used for SDM.
+This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental datasets that in the format of raster to be used for SDM.
 
 **Workflow Overview**:
 
@@ -26,7 +26,7 @@ This notebook, developed by the EcoCommons team, showcases how to download, and 
 
 In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
 
-If you have any corrections or suggestions to improve the effeciency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ec_breaker_nobackgoundcolor.png)
 
@@ -34,7 +34,7 @@ If you have any corrections or suggestions to improve the effeciency, please [co
 
 ## Summary
 
-The koala (Phascolarctos cinereus), sometimes called the koala bear, is an arboreal herbivorous marsupial native to Australia. It is the only extant representative of the family Phascolarctidae. Its closest living relatives are the wombats. The koala is found in coastal areas of the island's eastern and southern regions, inhabiting Queensland, New South Wales, Victoria, and South Australia. It is easily recognisable by its stout, tailless body and large head with round, fluffy ears and large, dark nose. The koala has a body length of 60–85 cm (24–33 in) and weighs 4–15 kg (8.8–33.1 lb). Fur colour ranges from silver grey to chocolate brown. Koalas from the northern populations are typically smaller and lighter in colour than their counterparts further south. These populations possibly are separate subspecies, but this is disputed.
+The koala (*Phascolarctos cinereus*), sometimes called the koala bear, is an arboreal herbivorous marsupial native to Australia. The species was selected as an example for this analysis due to its ecological significance and conservation status.
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ec_breaker_nobackgoundcolor.png)
 
@@ -84,9 +84,6 @@ for (pkg in packages) {
 ## 1. Get data from EcoCommons Public Google drive
 
 ```{r download_env_data}
-
-library(googledrive)
-
 # De-authenticate Google Drive to access public files
 drive_deauth()
 
@@ -653,7 +650,6 @@ predicted_raster <- predict(raster_stack, glm_model, type = "response")
 # Plot the predicted raster to visualize the results
 plot(predicted_raster, main = "Predicted Probability of Presence")
 ```
-
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
 

@@ -1,3 +1,4 @@
 /.quarto/
 .Rhistory
 .DS_Store
+notebooks/.vdoc.r
