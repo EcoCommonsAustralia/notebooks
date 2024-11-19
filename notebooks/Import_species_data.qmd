@@ -1,0 +1,576 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Species Distribution Analysis - Import Species Records from Open Access Date Portals
+
+Author details: Xiang Zhao
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform.\
+For more details, please visit the EcoCommons website: https://www.ecocommons.org.au/
+
+Date: Nov 2024
+
+# Script and data info:
+
+This notebook, developed by the EcoCommons team, showcases how to download species data from three biodiversity data portals and highlights the key differences between them.
+
+**Workflow Overview**:
+
+-   Initial Setup: Set the working directory and load necessary R packages. Create directories to store raw data files.
+
+-   Open source species data portals introduction:
+
+<br>
+
+<blockquote>
+
+| Database | Acronym | R Package | Registration requirement |
+|:----------------|----------------:|:------------------:|:------------------:|
+| the Global Biodiversity Information Facility | GBIF | rgbif | Yes |
+| the Atlas of Living Australia | ALA | galah | Yes |
+| eBird | \- | auk | Yes |
+
+<br> <!-- Adding this line for spacing -->
+
+| Database | Pros | Cons |
+|:---------------------|:----------------:|:------------------------------:|
+| the Global Biodiversity Information Facility | \- Global Coverage<br>- Open Access<br>- Standardized Data<br>- Broad Taxonomic Coverage<br>- Rich Metadata | \- Data Quality Concerns<br>- Limited Real-time Updates<br>- Less Targeted Search |
+| the Atlas of Living Australia | \- Australian Focus<br>- Integrated Tools<br>- Collaboration<br>- Detailed Metadata | \- Limited Geographic Coverage<br>- Less Diverse Taxonomy<br>- Data Quality Issues |
+| eBird | \- Citizen Science Contributions<br>- High Data Density<br>- Standardized Protocols<br>- Interactive Visualizations<br>- Mobile App Support | \- Bird-specific Data<br>- Data Quality Dependence on User Expertise<br>- Bias Toward Accessible Areas<br>- Restricted Data Access |
+
+</blockquote>
+
+-   Data downloaded from each dataset and comparison
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
+
+If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+# **Introduction**
+
+There are multiple biodiversity data portals like **GBIF** (Global Biodiversity Information Facility), **ALA** (Atlas of Living Australia), and **eBird** because they serve different purposes, focus on various regions or taxonomic groups, and are operated by different organizations. Here's why these and other portals coexist.
+
+------------------------------------------------------------------------
+
+<img src="https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/main/images/ALA_Logo_Inline_RGB.png" alt="ALA Logo" width="400"/>
+
+### **Regional Focus:**
+
+**ALA** specifically targets biodiversity data within Australia. It aggregates data from various Australian institutions, providing detailed information relevant to the country's ecosystems and species.
+
+Other Regional Portals: Many countries or regions have their own portals to address local conservation needs, policies, and educational goals.
+
+------------------------------------------------------------------------
+
+<img src="https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/main/images/ebird_725pxw.png" alt="ALA Logo" width="200"/>
+
+### **Taxonomic Specialization:**
+
+**eBird**: Focuses exclusively on bird species. Managed by the Cornell Lab of Ornithology, it leverages citizen science by allowing birdwatchers worldwide to contribute observations, providing real-time data on bird distribution and migration patterns.
+
+Specialized Portals: Similar platforms exist for other taxonomic groups, like reptiles, insects, or plants, catering to specific research communities.
+
+------------------------------------------------------------------------
+
+<img src="https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/main/images/Gbif-full-green-logo.svg" alt="ALA Logo" width="400"/>
+
+### **Global Aggregation vs. Specialized Data**:
+
+**GBIF**: Acts as a global aggregator, compiling biodiversity data from numerous sources, including regional portals like ALA and specialized databases like eBird. Its broad scope facilitates large-scale biodiversity analyses and policy-making. Specialized Databases: Offer more detailed or niche datasets that might not be fully represented in global aggregators. Organizational Mandates and Funding:
+
+Different organizations have unique missions, funding sources, and stakeholders. They create portals aligned with their objectives, whether it's academic research, conservation, education, or citizen science engagement.
+
+------------------------------------------------------------------------
+
+**Community Engagement and Citizen Science**:
+
+Portals like eBird encourage public participation, making biodiversity data collection more inclusive and extensive. This engagement fosters environmental awareness and education among the general public.
+
+### **In Summary:**
+
+The existence of multiple biodiversity data portals reflects the complexity and diversity of global biodiversity itself. Each portal contributes uniquely by focusing on different regions, species groups, or community engagement strategies. Together, they create a comprehensive network that enhances our understanding of biodiversity, supports conservation efforts, and fosters global collaboration among scientists, policymakers, and the public.
+
+## 1. Set the working directory and make a folder to store data.
+
+```{r set_up}
+# Set Workspace as the current working directory
+workspace <- getwd()
+
+env_data_dir <- file.path(workspace, "env_data")
+
+# Create the 'raw_data' directory if it doesn't exist
+if (!dir.exists(env_data_dir)) {
+  dir.create(env_data_dir, recursive = TRUE)
+  cat("Directory 'env_data' created successfully.\n")
+} else {
+  cat("Directory 'env_data' already exists.\n")
+}
+
+```
+
+## 2. Install and load essential libraries.
+
+```{r load_libraries}
+# List of packages to check, install if needed, and load
+packages <- c("dplyr", "sf", "ggplot2", "rnaturalearth", "rnaturalearthdata")
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!pkg %in% installed.packages()[, "Package"]) {
+    install.packages(pkg)
+  }
+  library(pkg, character.only = TRUE)
+}
+
+```
+
+## 3. Open source species data portals introduction
+
+We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages. Please note, exploring these datasets on their own platforms is always the most effective method for accessing their data.
+
+**Exemplar species: Splendid Fairy-Wren (*Malurus splendens*)**
+
+<img src="https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ala_sfw.jpeg" alt="ALA Image" width="400"/>
+
+We are going to use a beautiful bird species - Splendid Fairy-Wren (Malurus splendens) as a representative example to compare the data you can get from the three datasets. (Photographer: pimelea, more copyright information [here](https://biocache.ala.org.au/occurrences/a87e9029-e829-4e10-9988-1e74614af81b))
+
+## 3.1 GBIF - the Global Biodiversity Information Facility
+
+GBIF—the Global Biodiversity Information Facility—is an international network and data infrastructure funded by the world's governments. It aims to provide anyone, anywhere, open access to data about all types of life on Earth.
+
+**You need to register with GBIF to get "username", "password", and "registered email address" to access their dataset via their R package "rgbif".**
+
+```{r load_libraries_3}
+# Install the "rgbif" R package
+
+install.packages("rgbif") # CRAN version
+
+library(rgbif)
+```
+
+```{r GBIF_cre_1}
+# Setting GBIF credentials
+Sys.setenv(GBIF_USER = "your_user_name",
+           GBIF_PWD = "your_password",
+           GBIF_EMAIL = "your_email_address")
+
+```
+
+```{r GBIF_cre_2}
+# Check if environment variables are set
+Sys.getenv("GBIF_USER")    # Should return your username
+Sys.getenv("GBIF_PWD")     # Should return your password
+Sys.getenv("GBIF_EMAIL")   # Should return your email
+
+```
+
+```{r GBIF_download1}
+taxonKey <- name_backbone("Malurus splendens")$usageKey # Use scientific name of the specie to get a taxonkey
+occ_search(taxonKey = taxonKey)
+```
+
+There are three formats of species data that GBIF provides. Usually, "SIMPLE" version would be sufficient.
+
+|   | Raw data | Interpreted data | Multimedia | Coordinates | Format | Estimated data size |
+|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| **SIMPLE** | ✘ | ✔ | ✘ | ✔ (if available) | Tab-delimited CSV (for use in Excel, etc.) | **Very Large (TB)** (Hundreds of GB zipped for download) |
+| **DARWIN CORE ARCHIVE** | ✔ | ✔ | ✔ (links) | ✔ (if available) | Tab-delimited CSV (for use in Excel, etc.) | **Very Large (TB)** (Hundreds of GB zipped for download) |
+| **SPECIES LIST** | ✘ | ✔ | ✘ | ✘ | Tab-delimited CSV (for use in Excel, etc.) |  |
+
+```{r GBIF_download2}
+# Submit a download request for larger datasets
+download_key <- occ_download(pred("taxonKey", taxonKey),format = "SIMPLE_CSV") # Use the taxonkey and SIMPLE format for Malurus splendens
+```
+
+```{r GBIF_download3}
+# GBIF platform will prepare your requested downloading, and you can check the status of the download.
+
+occ_download_meta(download_key)
+```
+
+When the Status of above codes turns to "SUCCEEDED", then you can run the below codes for downloading.
+
+```{r GBIF_download4}
+# Store the metadata output in a variable
+download_meta <- occ_download_meta(download_key)
+
+# Convert the metadata to a character string
+download_meta_str <- capture.output(print(download_meta))
+
+# Use a regular expression to extract the download key
+download_key_extracted <- sub(".*Download key: ([^ ]+).*", "\\1", grep("Download key:", download_meta_str, value = TRUE))
+
+# Print the extracted download key
+print(download_key_extracted)
+
+```
+
+```{r GBIF_download5}
+# Download to the directory only
+occ_download_get(download_key, path = env_data_dir, overwrite = TRUE)
+
+# Rename the downloaded file
+file.rename(file.path(env_data_dir, paste0(download_key, ".zip")),
+            file.path(env_data_dir, "GBIF_Malurus_splendens.zip"))
+
+```
+
+```{r GBIF_download6}
+# Unzip the downloaded file
+unzip_path <- file.path(env_data_dir, "GBIF_Malurus_splendens")  # Folder to unzip to
+download_file <- file.path(env_data_dir, "GBIF_Malurus_splendens.zip")
+unzip(download_file, exdir = unzip_path)
+
+# Define the original and new file paths using the extracted download key
+original_file <- file.path(unzip_path, paste0(download_key_extracted, ".csv"))
+new_file <- file.path(unzip_path, "GBIF_Malurus_splendens.csv")
+
+# Rename the file
+file.rename(original_file, new_file)
+
+# Check the unzipped files
+unzipped_files <- list.files(unzip_path, recursive = TRUE)
+print(unzipped_files)
+
+```
+
+```{r GBIF_download7}
+# Define the path to the CSV file within the unzipped directory
+csv_file <- file.path(unzip_path, "GBIF_Malurus_splendens.csv")
+
+# Read the tab-separated CSV file
+GBIF_data <- read.csv(csv_file, sep = "\t", row.names = NULL) # GBIF csv contents are separated by tabs, so we tell R to separate conents by "\t"
+
+# View the first few rows of the data
+head(GBIF_data)
+```
+
+```{r GBIF_download8}
+colnames(GBIF_data)
+```
+
+```{r load_libraries_4}
+# Load required packages
+library(ggplot2)
+library(rnaturalearth) # For the map data
+library(dplyr) # For data manipulation if needed
+```
+
+```{r au_map}
+# Load Australia map data
+australia_map <- ne_countries(scale = "medium", country = "Australia", returnclass = "sf")
+
+```
+
+```{r plotting_GBIF1}
+# Plotting
+ggplot() +
+  geom_sf(data = australia_map, fill = "#61c6fa", color = "black") +  # Australia map fill and outline color
+  geom_point(data = GBIF_data, aes(x = decimalLongitude, y = decimalLatitude),
+             color = "#11aa96", alpha = 0.6, size = 2) +  # Occurrence points (adjusted color to match the palette)
+  coord_sf(xlim = c(110, 155), ylim = c(-45, -10), expand = FALSE) +  # Set map limits to focus on Australia
+  labs(
+    x = "Longitude",
+    y = "Latitude",
+    title = "GBIF Malurus splendens Occurrences in Australia"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.text = element_text(size = 12),
+    panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5)
+  )
+
+```
+
+```{r plotting_GBIF2}
+# Set plot width and height for an interactive environment
+options(repr.plot.width = 16, repr.plot.height = 6)
+
+# Creating a histogram of the 'year' column with the updated style
+GBIF_hist_plot <- ggplot(GBIF_data, aes(x = year)) +
+  geom_histogram(binwidth = 5, fill = "#11aa96", color = "black", alpha = 0.6) +  # Updated color to match the palette
+  labs(
+    title = "Histogram of GBIF Malurus splendens Records by Year (5-Year Bins)",
+    x = "Year",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),  # Rotate x-axis labels by 45 degrees
+    axis.text.y = element_text(size = 12),
+    panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5)
+  ) +
+  scale_x_continuous(breaks = seq(min(GBIF_data$year, na.rm = TRUE), max(GBIF_data$year, na.rm = TRUE), by = 5)) +
+  stat_bin(binwidth = 5, geom = "text", aes(label = ..count..), vjust = -0.5, color = "black")
+
+# Display the plot
+print(GBIF_hist_plot)
+
+
+```
+
+## 3.2 ALA - the Atlas of Living Australia
+
+**ALA** — The Atlas of Living Australia is a national collaborative infrastructure funded by the Australian Government, aimed at providing free, online access to a vast repository of biodiversity data in Australia. The platform supports research, conservation, and policy-making by making data on Australia’s unique biodiversity widely accessible.
+
+To access ALA’s data via their R package "galah," you need to register with ALA to obtain a "registered email address" that will allow you to connect and retrieve data programmatically.
+
+```{r install_packages_galah}
+# "galah" is the official R package built by ALA
+
+install.packages("galah")
+```
+
+```{r load_libraries_galah}
+library(galah)
+
+galah_config(email = "your_registered_email_adress")
+
+```
+
+```{r ala_data_1}
+# Step 1: Define the data request with `galah_call()`
+
+data_request <- galah_call() %>%
+  galah_identify("Malurus splendens") %>%  # Specify the species
+  galah_filter(country == "Australia")     # Apply filters if needed
+
+# Step 2: Collect the data
+ALA_data <- atlas_occurrences(data_request)
+
+# Step 3: View the data
+head(ALA_data)
+
+```
+
+```{r ala_data_2}
+# Step 4: Save the data to a CSV file
+# Define the path to save the CSV file in the env_data directory
+csv_file_path <- file.path(env_data_dir, "ALA_Malurus_splendens.csv")
+
+# Save the data to the specified path
+write.csv(ALA_data, file = csv_file_path, row.names = FALSE)
+
+```
+
+```{r plotting_ala_1}
+# Plot the occurrences on the map
+
+ggplot() +
+  geom_sf(data = australia_map, fill = "#61c6fa", color = "black") +  # Australia map fill and outline color
+  geom_point(data = GBIF_data, aes(x = decimalLongitude, y = decimalLatitude),
+             color = "#f6aa70", alpha = 0.6, size = 2) +  # Occurrence points (adjusted color to match the palette)
+  coord_sf(xlim = c(110, 155), ylim = c(-45, -10), expand = FALSE) +  # Set map limits to focus on Australia
+  labs(
+    x = "Longitude",
+    y = "Latitude",
+    title = "ALA Malurus splendens Occurrences in Australia"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.text = element_text(size = 12),
+    panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5)
+  )
+
+```
+
+```{r data_ala_1}
+colnames(ALA_data)
+```
+
+The ALA data does not have a "year" column, but it does have an "eventDate" formatted as "YYYY-MM-DD time" (e.g., "1991-06-01 00:00:00"). We need to extract the year and create a new column.
+
+```{r data_ala_2}
+install.packages("lubridate")
+# Load necessary library
+library(lubridate)
+
+# Extract the year from the 'eventDate' column and create a new 'year' column
+ALA_data$year <- year(ymd_hms(ALA_data$eventDate))
+
+# Display the first few rows of the data to confirm
+head(ALA_data)
+
+```
+
+```{r plotting_ala_2}
+# Set plot width and height for an interactive environment
+options(repr.plot.width = 16, repr.plot.height = 6)
+
+# Creating a histogram of the 'year' column with the updated style
+ALA_hist_plot <- ggplot(ALA_data, aes(x = year)) +
+  geom_histogram(binwidth = 5, fill = "#f6aa70", color = "black", alpha = 0.6) +  # Updated color to match the palette
+  labs(
+    title = "Histogram of ALA Malurus splendens Records by Year (5-Year Bins)",
+    x = "Year",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),  # Rotate x-axis labels by 45 degrees
+    axis.text.y = element_text(size = 12),
+    panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5)
+  ) +
+  scale_x_continuous(breaks = seq(min(ALA_data$year, na.rm = TRUE), max(ALA_data$year, na.rm = TRUE), by = 5)) +
+  stat_bin(binwidth = 5, geom = "text", aes(label = ..count..), vjust = -0.5, color = "black")
+
+# Display the plot
+print(ALA_hist_plot)
+```
+
+## 3.3 eBird
+
+To access and download the eBird Basic Dataset (EBD), updated on the 15th of each month, you need to complete a data request form via [eBird Data Access](https://ebird.org/data/download?_ga=2.68545554.288689875.1731287369-1776978368.1731287369&_gl=1*u5ha8k*_gcl_au*NDc4OTIxNDIxLjE3MzEyODczNjk.*_ga*MTc3Njk3ODM2OC4xNzMxMjg3MzY5*_ga_QR4NVXZ8BM*MTczMTQ2Nzg3MC44LjEuMTczMTQ2OTYzNy41Ni4wLjA.).
+
+This session will be updated once access to the eBird data has been granted.
+
+# 4. Compare the Malurus splendens data downloaded from three data portals.
+
+## 4.1 Amount
+
+```{r compare_1}
+nrow(GBIF_data)
+nrow(ALA_data)
+```
+
+## 4.2 Time range
+
+```{r compare_2}
+# Assuming your dataframes are named GBIF_data and ALA_data and the year column is named 'year'
+
+# Get the year range for GBIF data
+gbif_year_min <- min(GBIF_data$year, na.rm = TRUE)
+gbif_year_max <- max(GBIF_data$year, na.rm = TRUE)
+
+# Get the year range for ALA data
+ala_year_min <- min(ALA_data$year, na.rm = TRUE)
+ala_year_max <- max(ALA_data$year, na.rm = TRUE)
+
+# Display the year ranges
+cat("GBIF Year Range:", gbif_year_min, "-", gbif_year_max, "\n")
+cat("ALA Year Range:", ala_year_min, "-", ala_year_max, "\n")
+
+```
+
+```{r compare_3}
+# Load libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Set plot width and height for an interactive environment
+options(repr.plot.width = 30, repr.plot.height = 6)
+
+# Define the range of years based on the combined datasets
+all_years <- data.frame(year = seq(min(c(GBIF_data$year, ALA_data$year), na.rm = TRUE),
+                                   max(c(GBIF_data$year, ALA_data$year), na.rm = TRUE), by = 1))
+
+# Prepare GBIF data with all years and fill missing records with 0
+GBIF_data_complete <- all_years %>%
+  left_join(GBIF_data %>% count(year), by = "year") %>%
+  mutate(source = "GBIF", n = replace_na(n, 0))
+
+# Prepare ALA data with all years and fill missing records with 0
+ALA_data_complete <- all_years %>%
+  left_join(ALA_data %>% count(year), by = "year") %>%
+  mutate(source = "ALA", n = replace_na(n, 0))
+
+# Combine the two datasets
+combined_data <- rbind(GBIF_data_complete, ALA_data_complete)
+
+# Plot the histogram with overlaid colors for GBIF and ALA
+hist_plot <- ggplot(combined_data, aes(x = year, y = n, fill = source)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black", alpha = 0.7) +  # Use dodge to place bars side-by-side
+  scale_fill_manual(values = c("GBIF" = "#11aa96", "ALA" = "#f6aa70")) +  # Custom colors for each source
+  labs(
+    title = "Yearly Record Distribution for GBIF and ALA",
+    x = "Year",
+    y = "Number of Records"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 12)
+  )
+
+# Display the plot
+print(hist_plot)
+
+```
+
+## 4.3 Information included
+
+```{r compare_4}
+# Get column names for each dataset
+gbif_columns <- colnames(GBIF_data)
+ala_columns <- colnames(ALA_data)
+
+# Find common columns
+common_columns <- intersect(gbif_columns, ala_columns)
+
+# Find columns unique to each dataset
+gbif_unique_columns <- setdiff(gbif_columns, ala_columns)
+ala_unique_columns <- setdiff(ala_columns, gbif_columns)
+
+# Display the results
+cat("Common columns:\n")
+print(common_columns)
+
+cat("\nColumns unique to GBIF dataset:\n")
+print(gbif_unique_columns)
+
+cat("\nColumns unique to ALA dataset:\n")
+print(ala_unique_columns)
+
+```
+
+```{r code_chunk_30}
+# Create a summary data frame
+column_comparison <- data.frame(
+  Column = unique(c(gbif_columns, ala_columns)),
+  In_GBIF = ifelse(unique(c(gbif_columns, ala_columns)) %in% gbif_columns, "Yes", "No"),
+  In_ALA = ifelse(unique(c(gbif_columns, ala_columns)) %in% ala_columns, "Yes", "No")
+)
+
+# Display the comparison table
+print(column_comparison)
+
+```
+
+```{r sessioninfo}
+## Session Information
+# Below is the session information which provides details about the versions of R and the packages used in this notebook.
+
+# Display session information
+sessionInfo()
+```
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our partner**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)

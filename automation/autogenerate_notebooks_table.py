@@ -17,8 +17,8 @@ WARNING_HEADER = [
 ]
 
 TABLE_HEADER = [
-    "| **notebook** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |",
-    "|:------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|"
+    "| **notebook** | **notebook file** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |",
+    "|:------------:|:---------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|"
 ]
 
 MODELS_SECTION_HEADER = "## 🐨 Species Distribution Modelling ({} notebooks)"
@@ -80,14 +80,17 @@ class TableEntry:
         )
 
     def format(self) -> str:
-        notebook_link_ipynb = NOTEBOOK_LINK_PATTERN.format(f"{self.display_name} (ipynb)", NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}")
-        notebook_link_qmd = NOTEBOOK_LINK_PATTERN.format(f"{self.display_name} (qmd)", NOTEBOOKS_ROOT_PATH, f"{self.notebook_name.replace('.ipynb', '')}.qmd")
+        notebook_link = NOTEBOOK_LINK_PATTERN.format(self.display_name, NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}")
+        notebook_file_links = (
+            f"[![ipynb](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/jupyter_notebook.png)]({NOTEBOOKS_ROOT_PATH}/{self.notebook_name})<br>"
+            f"[![qmd](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/quartomd.png)]({NOTEBOOKS_ROOT_PATH}/{self.notebook_name.replace('.ipynb', '')}.qmd)"
+        )
         open_in_colab_badge = OPEN_IN_COLAB_BADGE_PATTERN.format(NOTEBOOKS_COLAB_ROOT_PATH, f"{self.notebook_name}")
         econotebook_badge = ECONOTEBOOK_BADGE_PATTERN.format(self.econotebook_blogpost_path) if self.econotebook_blogpost_path else ""
         youtube_badge = YOUTUBE_BADGE_PATTERN.format(self.youtube_video_path) if self.youtube_video_path else ""
         github_badge = GITHUB_BADGE_PATTERN.format(self.github_repository_path) if self.github_repository_path else ""
         arxiv_badge = ARXIV_BADGE_PATTERN.format(self.arxiv_index, self.arxiv_index) if self.arxiv_index else ""
-        return f"| {notebook_link_ipynb} <br> {notebook_link_qmd} | {open_in_colab_badge} | {econotebook_badge} {youtube_badge} | {github_badge} {arxiv_badge}|"
+        return f"| {notebook_link} | {notebook_file_links} | {open_in_colab_badge} | {econotebook_badge} {youtube_badge} | {github_badge} {arxiv_badge}|"
 
 
 def read_lines_from_file(path: str) -> List[str]:
@@ -153,3 +156,4 @@ if __name__ == "__main__":
                   [SKILLS_SECTION_HEADER.format(len(skills_lines))] + TABLE_HEADER + skills_lines
     readme_lines = inject_markdown_table_into_readme(readme_lines=readme_lines, table_lines=table_lines)
     save_lines_to_file(path=args.readme_path, lines=readme_lines)
+

@@ -3,3 +3,4 @@ GLM,EC_GLM.ipynb,https://ecocommons-australia-2024-2026.github.io/notebook-blog/
 Maxent,,https://ecocommons-australia-2024-2026.github.io/ec-notebook_site/maxent.qmd,,, , False, models
 Marxan Connect,,https://ecocommons-australia-2024-2026.github.io/notebook-blog/sp/ecocommons-marxan-integration-poc.html,,https://github.com/EcoCommons-Australia-2024-2026/ecocommons-marxan-integration-poc.git,, False, skills
 Environmental Data Preparation (Raster),raster_preparation.ipynb,https://ecocommons-australia-2024-2026.github.io/notebook-blog/sdms/raster_preparation.html,,,, False, skills
+Import Species Records from Open Access Date Portals,Import_species_data.ipynb,,,,, False, skills
