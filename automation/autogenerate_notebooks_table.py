@@ -82,9 +82,12 @@ class TableEntry:
     def format(self) -> str:
         notebook_link = NOTEBOOK_LINK_PATTERN.format(self.display_name, NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}")
         notebook_file_links = (
-            f"[![ipynb](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/jupyter_notebook.png)]({NOTEBOOKS_ROOT_PATH}/{self.notebook_name})<br>"
-            f"[![qmd](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/quartomd.png)]({NOTEBOOKS_ROOT_PATH}/{self.notebook_name.replace('.ipynb', '')}.qmd)"
-        )
+        f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name}">'
+        f'<img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/jupyter_notebook.png" width="50" height="50"></a><br>'
+        f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name.replace(".ipynb", "")}.qmd">'
+        f'<img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/quartomd.png" width="50" height="50"></a>'
+)
+
         open_in_colab_badge = OPEN_IN_COLAB_BADGE_PATTERN.format(NOTEBOOKS_COLAB_ROOT_PATH, f"{self.notebook_name}")
         econotebook_badge = ECONOTEBOOK_BADGE_PATTERN.format(self.econotebook_blogpost_path) if self.econotebook_blogpost_path else ""
         youtube_badge = YOUTUBE_BADGE_PATTERN.format(self.youtube_video_path) if self.youtube_video_path else ""
