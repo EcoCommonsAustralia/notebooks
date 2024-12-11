@@ -1,6 +1,6 @@
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
 
-# Species Distribution Analysis - Generalized Linear Model (GLM)
+# Species Distribution Analysis - Generalised Linear Model (GLM)
 
 Author details: Abhimanyu Raj Singh and Xiang Zhao
 
@@ -10,579 +10,814 @@ Contact details: support\@ecocommons.org.au
 
 Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
 
-Date: Oct 2024
+Date: December 2024
 
-# Script and data info:
+# Script information
 
-This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental datasets that in the format of raster to be used for SDM.
+This notebook, developed by the EcoCommons team, showcases how to build Species Distribution Models (SDMs) using Generalised Linear Model algorithm.
 
-**Workflow Overview**:
+# Introduction
 
--   Initial Setup: Set the working directory and load necessary R packages (dismo, ggplot2, raster, googledrive, sp, dplyr, terra). Create directories to store raw data files.
+Using **Mountain Ash** (*Eucalyptus regnans*), a very tall and straight tree species native to Victoria and Tasmania, we will guide you through a standard protocol developed by Zurell et al. (2020) for building species distribution models (SDMs) with one of the most widely used algorithms: the **Generalised Linear Model (GLM)**.
 
--   Data Download: Download continuous environmental dataset from WorldClim. Download categorical environmental dataset from our Google Drive.
+# Objectives
 
--   Data Processing: Reproject environmental datasets to the crs your desire. Crop and mask environmental dataset to the extent of your study area. Resample environmental dataset to a same resolution.
+1.  Understand a standard protocol of species distribution models.
+2.  Familiarise your with the five main steps of running Generalised Linear Models for a tree species.
+3.  Learn how to adjust this Quarto Markdown notebook to run your own GLM-based SDM.
+4.  Get accustomed to the style of the EcoCommons Notebooks.
 
-In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
+# **Workflow Overview**
 
-If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+Following a standard protocol for species distribution models proposed by Zurell et al., (2020), a R environment set-up step and five main modelling steps are demonstrated in this notebook:
 
-![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ec_breaker_nobackgoundcolor.png)
++--------+--------------------------------+------------------------------------------------------------+
+| Step   | Main Step                      | Sub-steps                                                  |
++========+================================+============================================================+
+| Set-up | Set-up                         | S.1 Set up the working directory                           |
+|        |                                |                                                            |
+|        |                                | S.2 Install and load required R packages for this notebook |
+|        |                                |                                                            |
+|        |                                | S.3 Download the case study datasets                       |
++--------+--------------------------------+------------------------------------------------------------+
+| Step 1 | Overview and Conceptualisation | 1.1 Model objective                                        |
+|        |                                |                                                            |
+|        |                                | 1.2 Taxon, location, predictors, scale                     |
++--------+--------------------------------+------------------------------------------------------------+
+| Step 2 | Data                           | 2.1 Biodiversity data                                      |
+|        |                                |                                                            |
+|        |                                | 2.2 Pseudo absence data                                    |
+|        |                                |                                                            |
+|        |                                | 2.3 Environmental data                                     |
+|        |                                |                                                            |
+|        |                                | 2.4 Combine data                                           |
++--------+--------------------------------+------------------------------------------------------------+
+| Step 3 | Model fitting                  | 3.1 Multicollinearity and variable selection               |
+|        |                                |                                                            |
+|        |                                | 3.2 Data splitting                                         |
+|        |                                |                                                            |
+|        |                                | 3.3 Model fitting                                          |
++--------+--------------------------------+------------------------------------------------------------+
+| Step 4 | Evaluation                     | 4.1 Interpretation                                         |
+|        |                                |                                                            |
+|        |                                | 4.2 Cross-valiadation                                      |
++--------+--------------------------------+------------------------------------------------------------+
+| Step 5 | Predictions                    | 5.1 Mapping                                                |
++--------+--------------------------------+------------------------------------------------------------+
 
-# Examplary Species: Koala (*Phascolarctos cinereus*)
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
 
-## Summary
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
 
-The koala (*Phascolarctos cinereus*), sometimes called the koala bear, is an arboreal herbivorous marsupial native to Australia. The species was selected as an example for this analysis due to its ecological significance and conservation status.
+# Set-up: R Environment and Packages
 
-![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/ec_breaker_nobackgoundcolor.png)
+Some housekeeping before we start. This process might take some time as many packages needed to be installed.
 
-# A. Environment, Packages and Dependencies
+## S.1 Set the working directory and create a folder for data.
 
-Some house-keeping before we start. This process might take some time (30mins) as many packages needed to be installed.
+Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
 
-## 1. Set working directory and make a folder to store data.
+```{r workspace}
 
-```{r setup_workspace}
-# Set Workspace as the current working directory
+# Set the workspace to the current working directory
+# Uncomment and replace the path below with your own working directory if needed:
+# setwd("/Users/zhaoxiang/Documents/tmp/EC_GLM_notebook") 
 
-workspace <- getwd()
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
 
-raw_data_dir <- file.path(workspace, "raw_data")
-
-# Create the 'raw_data' directory if it doesn't exist
-if (!dir.exists(raw_data_dir)) {
-  dir.create(raw_data_dir, recursive = TRUE)
-  cat("Directory 'raw_data' created successfully.\n")
-} else {
-  cat("Directory 'raw_data' already exists.\n")
-}
-
-# Increase the plot size by changing the options for the plot dimensions
-options(repr.plot.width = 16, repr.plot.height = 8)  # This will make the plot larger in the notebook output
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
 
 ```
 
-## 2. Install and load essential libraries.
+Ideally, you would use the **`renv`** package to create an isolated environment for installing all the required R packages used in this notebook. However, since installing **`renv`** and its dependencies can be time-consuming, we recommend trying this after the workshop.
 
-```{r install_libraries}
+```{r renv}
+
+# # Ensure "renv" package is installed
+# if (!requireNamespace("renv", quietly = TRUE)) {
+#   install.packages("renv")
+# }
+# 
+# # Check if renv has been initialized in the project
+# if (!file.exists("renv/activate.R")) {
+#   message("renv has not been initiated in this project. Initializing now...")
+#   renv::init()  # Initialize renv if not already set up
+# } else {
+#   source("renv/activate.R")  # Activate the renv environment
+#   message("renv is activated.")
+# }
+# 
+# # Check for the existence of renv.lock and restore the environment
+# if (file.exists("renv.lock")) {
+#   message("Restoring renv environment from renv.lock...")
+#   renv::restore()
+# } else {
+#   message("No renv.lock file found in the current directory. Skipping restore.")
+# }
+
+```
+
+## S.2 Install and load essential libraries.
+
+Install and load R packages.
+
+```{r install_libraries, message=FALSE, warning=FALSE}
+
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
 # List of packages to check, install if needed, and load
-packages <- c("dplyr", "terra", "sf", "googledrive", "ggplot2", "corrplot", "pROC")
+packages <- c("dplyr", "terra", "sf", "googledrive", "ggplot2", "corrplot", "pROC", "dismo", "spatstat.geom", "patchwork", "biomod2", "leaflet", "car", "gridExtra", "htmltools", "RColorBrewer")
+
+# Function to display a cat message
+cat_message <- function(pkg, message_type) {
+  if (message_type == "installed") {
+    cat(paste0(pkg, " has been installed successfully!\n"))
+  } else if (message_type == "loading") {
+    cat(paste0(pkg, " is already installed and has been loaded!\n"))
+  }
+}
 
 # Install missing packages and load them
 for (pkg in packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     install.packages(pkg)
+    cat_message(pkg, "installed")
+  } else {
+    cat_message(pkg, "loading")
   }
   library(pkg, character.only = TRUE)
 }
+
+
+# If you are using renv, you can snapshot the renv after loading all the packages.
+
+#renv::snapshot()
+
 ```
 
-# B. Data
+## S.3 Download case study datasets
 
-## 1. Get data from EcoCommons Public Google drive
+We have prepared the following data and uploaded them to our Google Drive for your use:
 
-```{r download_env_data}
+-   **Species occurrence data:** Shapefile format (.shp)
+
+-   **Environmental variables:** Stacked Raster format (.tif)
+
+-   **Study area boundary:** Shapefile format (.shp)
+
+```{r download_data}
+
 # De-authenticate Google Drive to access public files
 drive_deauth()
 
-# Define Google Drive file IDs and corresponding local file paths for environmental variables
-file_ids <- list(
-  csv = "13wnlQvnAqtml-_MUY6iIZe7LabrrhQCX", # Koala data
-  env_var_stack = "1ES0UbTDKSKyQ7PpM8eFN59R8xOYuDgrC" # environmental variables
-)
+# Define Google Drive file ID and the path for downloading
+zip_file_id <- "1twKlNokB7t33QH2KesH7BHYffp5kvoiP" # Replace with the actual file ID of the zipped file
+datafolder_path <- file.path(workspace)
 
-# Define local file paths for each environmental variable
-file_paths <- list(
-  csv = file.path(workspace, "raw_data", "koala.csv"),
-  env_var_stack = file.path(workspace, "raw_data", "env_var_stack.tif")
-)
+# Create a local path for the zipped file
+zip_file_path <- file.path(datafolder_path, "mountain_ash_centralhighlands_data.zip")
 
-# Function to download individual files with progress messages
-download_file <- function(file_id, file_path) {
-  cat("Downloading:", basename(file_path), "...\n")
+# Function to download a file with progress messages
+download_zip_file <- function(file_id, file_path) {
+  cat("Downloading zipped file...\n")
   drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
-  cat("Downloaded:", basename(file_path), "\n")
+  cat("Downloaded zipped file to:", file_path, "\n")
 }
 
-# Download each environmental variable file
-cat("Downloading environmental variable files...\n")
-invisible(mapply(download_file, file_ids, file_paths))
-
-# Confirm the files have been downloaded
-downloaded_files <- list.files(file.path(workspace, "raw_data"), recursive = TRUE)
-cat("Downloaded files:\n", downloaded_files, "\n")
-
-
-```
-
-```{r download_studyarea_data}
-
-library(googledrive)
-
-# De-authenticate Google Drive to access public files
-drive_deauth()
-
-# Folder ID for the Australian polygon shapefile
-aus_folder_id <- "1rzNHthnQQXVulocKkB5i7v2dObqKMP11"
-
-# Define the local directory to save the shapefile components
-shapefile_dir <- file.path(workspace, "raw_data", "aus_shapefile")
-dir.create(shapefile_dir, showWarnings = FALSE, recursive = TRUE)
-
-# List all files in the shapefile folder on Google Drive
-files_in_folder <- drive_ls(as_id(aus_folder_id))
-
-# Download each file in the folder
-cat("Downloading shapefile components...\n")
-for (i in 1:nrow(files_in_folder)) {
-  file_name <- files_in_folder$name[i]
-  cat("Downloading:", file_name, "...\n")
-  drive_download(files_in_folder$id[i], path = file.path(shapefile_dir, file_name), overwrite = TRUE)
+# Create local directory if it doesn't exist
+if (!dir.exists(datafolder_path)) {
+  dir.create(datafolder_path, recursive = TRUE)
 }
 
-cat("Shapefile components downloaded to:", shapefile_dir, "\n")
+# Download the zipped file
+cat("Starting to download the zipped file...\n")
+download_zip_file(zip_file_id, zip_file_path)
+
+# Unzip the downloaded file
+cat("Unzipping the file...\n")
+unzip(zip_file_path, exdir = datafolder_path)
+cat("Unzipped files to folder:", datafolder_path, "\n")
 
 ```
 
-## 2. Define Study Area
+# 1 Overview and Conceptualisation
 
-All raster files are loaded and reprojected if necessary to ensure consistency.
+## 1.1 Taxon, location, data and scale
 
-```{r studyarea}
+**Taxon:** Mountain Ash (*Eucalyptus regnans*)
 
-library(sf)
-library(terra)
-library(ggplot2)
+![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/mountain_ash.jpeg){alt="Mountain Ash, " width="674"}
 
-# Define the path to the Australian shapefile's .shp component
-shapefile_path <- file.path(workspace, "raw_data", "aus_shapefile", "AUS_2021_AUST_GDA2020.shp")
+Photographer: [Reiner Richter, ALA](https://biocache.ala.org.au/occurrences/52a0b6eb-3656-4190-a8d6-ba4846b884a5)
 
-# Load the Australian boundary as an sf object and convert to EPSG 4326
-australia_boundary <- st_read(shapefile_path)
-australia_boundary <- st_transform(australia_boundary, crs = 4326)
+**Mountain Ash (*Eucalyptus regnans*)**, is a remarkably tall and straight tree native to Victoria and Tasmania. This species thrives in cool, temperate rainforests characterized by high rainfall, deep, well-drained soils, mild temperatures, and high humidity. It is typically found at altitudes ranging from 200 to 1,000 meters above sea level (Burns et al., 2015).
 
-# Convert the sf object to a SpatVector for terra operations, if needed
-australia_boundary_vect <- vect(australia_boundary)
+The Mountain Ash faces two main forms of disturbance: **bushfires**, which are its primary natural disturbance, and **logging**, which represents the primary human-induced threat to its habitat (Burns et al., 2015; Nevill et al., 2010).
 
-# Plot the Australia boundary using ggplot2
-ggplot(data = australia_boundary) +
-  geom_sf(fill = "#61c6fa", color = "black") +  # Fill with light blue and outline in black
-  labs(title = "Map of Australia") +
-  theme_minimal() +
-  theme(plot.title = element_text(size = 18, face = "bold"),
-        axis.title.x = element_text(size = 12),
-        axis.title.y = element_text(size = 12),
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        legend.text = element_text(size = 12),
-        panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5))
+**Location:** **the Central Highlands (study area)** in the south part of Victoria
+
+**Spatial and temporal scales:** small (spatial) and static (temporal)
+
+```{r leaflet, warning=FALSE}
+
+# Load your shapefiles
+central_highlands <- st_read("mountain_ash_centralhighlands/central_highlands.shp")
+
+# Custom CSS for a smaller legend box
+custom_css <- tags$style(HTML("
+  .leaflet-control .legend {
+    font-size: 8px !important; /* Reduce font size */
+    padding: 4px; /* Reduce padding inside the legend box */
+    line-height: 1; /* Reduce spacing between lines */
+    width: auto; /* Automatically size the legend box */
+    height: auto; /* Automatically size the legend box */
+  }
+  .leaflet-control .legend i {
+    width: 10px; /* Smaller legend icons */
+    height: 10px;
+  }
+"))
+
+# Render the map
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+  # Add the Central Highlands layer with a distinct color
+  addPolygons(
+    data = central_highlands,
+    color = "lightblue",         # Border color of Central Highlands polygon
+    weight = 1,                  # Border width
+    fillColor = "lightblue",     # Fill color of Central Highlands
+    fillOpacity = 0.3,           # Transparency for fill
+    group = "Central Highlands"
+  ) %>%
+  setView(lng = 145.7, lat = -37.5, zoom = 7) %>% # Set the view to desired location
+  addLegend(
+    position = "bottomright",
+    colors = c("lightblue"),
+    labels = c("Central Highlands"),
+    opacity = 0.7
+  ) %>%
+  # Add the custom CSS to modify the legend font size
+  htmlwidgets::prependContent(custom_css)
 
 ```
 
-## 3. Species Occurrence Data Prep and check
+## 1.2 Model objective
 
-```{r species_data}
+**Explanation:** To conduct detailed analyses of species–environment relationships and test specific hypotheses about the main factors driving species distributions.
 
-# Load required libraries
-library(sf)
-library(dplyr)
+**Mapping/interpolating:** To use the estimated species-environment relationships to map the distribution of the targeted species in the same geographic area.
 
-# Read the koala data
-koala_path <- file.path(workspace, "raw_data", "koala.csv")
-koala_data <- read.csv(koala_path)
+**Prediction in new area:** To forecast or project the estimated species–environment relationships to a different geographic area. *(Exercise, data provided)*
 
-# Filter rows without missing values in coordinates
-koala_data_clean <- koala_data %>%
-  filter(!is.na(decimalLongitude), !is.na(decimalLatitude))
+# 2. Data
 
-# Convert the koala data to an sf object using "decimalLongitude" and "decimalLatitude"
-koala_sf <- st_as_sf(koala_data_clean, coords = c("decimalLongitude", "decimalLatitude"), crs = 4326)
+In this section, details about the species and environmental data, data partitioning and transfer data are provided.
 
-# Define the bounding box
-bbox <- st_bbox(c(xmin = 96.81695, ymin = -43.7405, xmax = 167.998, ymax = -9.142163), crs = st_crs(koala_sf))
+## 2.1 Biodiversity data
 
-# Convert the bbox to an sfc object
-bbox_sfc <- st_as_sfc(bbox)
+Understanding your species is essential. This includes knowing their common names (which may include multiple names) and scientific name to ensure you collect the most comprehensive records available in open-access biodiversity data portals, such as the Atlas of Living Australia (ALA) or the Global Biodiversity Information Facility (GBIF).
 
-# Filter koala points that fall within the bounding box
-koala_sf_au <- koala_sf[st_within(koala_sf, bbox_sfc, sparse = FALSE), ]
+For this exercise, we have prepared a species occurrence data file in CSV format, which was downloaded from ALA. To make it accessible, we have stored this file in the EcoCommons Public Google Drive for you to download and use conveniently.
 
-# View filtered points
-print(koala_sf_au)
+```{r plotting_mountain_ash, warning=FALSE}
 
-# Replace "PRESENT" with 1 and "ABSENT" with 0 in the occurrenceStatus column
-koala_sf_au$occurrenceStatus <- ifelse(koala_sf_au$occurrenceStatus == "PRESENT", 1, 0)
+# Read the shapefile for mountain ash occurrence point dataset
+mountain_ash_centralhighlands <- st_read("mountain_ash_centralhighlands/mountain_ash_centralhighlands.shp")
 
-# Convert occurrenceStatus to a factor
-koala_sf_au$occurrenceStatus <- factor(koala_sf_au$occurrenceStatus, levels = c(0, 1))
+# Filter the data to include only PRESENT points
+mountain_ash_present <- mountain_ash_centralhighlands %>%
+  dplyr::filter(occrrnS == "1")
 
-# View updated koala data
-print(koala_sf_au)
-```
-
-```{r classification_01}
-
-library(ggplot2)
-library(dplyr)
-
-# Calculate counts for presence and absence
-koala_counts <- koala_sf_au %>%
-  dplyr::count(occurrenceStatus)
-
-# Create labels for the legend that include counts
-legend_labels <- c(
-  "0" = paste0("ABSENT: ", koala_counts$n[koala_counts$occurrenceStatus == 0]),
-  "1" = paste0("PRESENT: ", koala_counts$n[koala_counts$occurrenceStatus == 1])
-)
-```
-
-```{r plotting}
-# Plotting
-ggplot(data = australia_boundary) +
-  geom_sf(fill = "#61c6fa", color = "black") +  # Australia map fill and outline color
-  geom_sf(data = koala_sf_au, aes(color = occurrenceStatus), size = 2) +  # Koala presences and absences points
-  scale_color_manual(values = c("0" = "#f6aa70", "1" = "#11aa96"),  # Colors for absence (0) and presence (1)
-                     labels = legend_labels) +  # Labels for legend including counts
-  labs(title = "Koala Presences and Absences in Australia", color = "Occurrence Status") +  # Title and legend title
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 18, face = "bold"),
-    axis.text.x = element_text(size = 12),
-    axis.text.y = element_text(size = 12),
-    legend.text = element_text(size = 12),
-    panel.border = element_rect(colour = "gray", fill = NA, linewidth = 0.5),
-    legend.position.inside = c(0.8, 0.2),  # Adjusted legend position for full map
-    legend.justification = c(0, 1)
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+  # Add the Central Highlands layer with a distinct color
+  addPolygons(
+    data = central_highlands,
+    color = "lightblue",         # Border color of Central Highlands polygon
+    weight = 1,                  # Border width
+    fillColor = "lightblue",     # Fill color of Central Highlands
+    fillOpacity = 0.3,           # Transparency for fill
+    group = "Central Highlands"
+  ) %>%
+  # Add Mountain Ash presence points
+  addCircleMarkers(
+    data = mountain_ash_present,
+    color = "#11aa96",
+    radius = 1,
+    weight = 0.5,
+    opacity = 1,
+    fillOpacity = 1,
+    group = "Mountain Ash Presence Records"
+  ) %>%
+  setView(lng = 145.7, lat = -37.5, zoom = 7) %>% # Adjust longitude, latitude, and zoom as needed
+  # Add layer controls for easier toggling
+  addLayersControl(
+    overlayGroups = c("Central Highlands", "Mountain Ash Presence Records"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  # Add a compact legend with a clean style
+  addControl(
+    html = "
+    <div style='background-color: white; padding: 4px; font-size: 8px; border: none; box-shadow: none;'>
+      <div style='display: flex; align-items: center; margin-bottom: 3px;'>
+        <div style='background: lightblue; width: 10px; height: 10px; margin-right: 5px; opacity: 0.7;'></div>
+        Central Highlands
+      </div>
+      <div style='display: flex; align-items: center;'>
+        <div style='background: #11aa96; width: 10px; height: 10px; margin-right: 5px;'></div>
+        Mountain Ash Presence Records
+      </div>
+    </div>
+    ",
+    position = "bottomright"
   )
+
+
 ```
 
-## 4. Environmental Variables Prep and check
+## 2.2 Pseudo Absence Data
 
-Since the extents of the enviromental variables 1 to 5 are world wide, we need to crop it to the extent of our study area, that is Australia. And we want to make sure the coordinate system of each of the variable is EPSG:4326.
+Species distribution models typically require both presence and absence data to predict the distribution of a species. However, true absence data—locations where the species is confirmed not to occur—are often unavailable for various reasons. In such cases, pseudo-absence data are used to fill this gap.
 
-```{r read_raster}
+We generated pseudo-absence data using the EcoCommons platform with the following configuration:
 
-stack_file_path <- file.path(workspace, "raw_data", "env_var_stack.tif")
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/disk_pseudo_absence.png)
 
-raster_stack <- rast(stack_file_path)
+**Dispersal Kernel**
 
-print(names(raster_stack))
+-   *Key point:* Mountain Ash seed dispersal is likely within 150 meters, based on von Takach Dukai (2019).
 
-# Load the raster stack
-stack_file_path <- file.path(workspace, "raw_data", "env_var_stack.tif")
-raster_stack <- rast(stack_file_path)
+-   *Implication:* This distance should be factored into pseudo-absence generation to avoid selecting pseudo-absence points too close to presence points, which could bias the model by including areas that the species might still occupy but haven't been sampled.
 
-# Assign new names to the first five layers
+**Absence-Presence Ratio**
+
+-   *Key point:* The ratio of absence to presence is set to 1.
+
+-   *Implication:* For each presence point, one pseudo-absence point should be generated. This balanced ratio ensures the model isn't skewed by an overabundance of either class and aids in robust statistical comparisons.
+
+**Pseudo-Absence Strategy**
+
+-   *Key point:* Disk strategy with a range of 1000 - 5000 meters.
+
+-   *Implication:*
+
+    -   The disk strategy selects pseudo-absences outside a certain buffer zone from presence points.
+
+    -   The range of 1000–5000 meters should be carefully reviewed since it must balance avoiding areas within the species' potential dispersal kernel (150 meters) and including areas beyond the likely range of colonization.
+
+![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/Disk_pseudo_absence.png){alt="Mountain Ash, " width="200"}
+
+```{r pseudo_absent, warning=FALSE}
+
+# Filter the data to include only ABSENT points
+mountain_ash_absent <- mountain_ash_centralhighlands %>%
+  dplyr::filter(occrrnS == "0")
+
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+ # Add the Central Highlands layer with a distinct color
+  addPolygons(data = central_highlands,
+              color = "lightblue",         # Border color of Central Highlands polygon
+              weight = 1,            # Border width
+              fillColor = "lightblue",  # Fill color of Central Highlands
+              fillOpacity = 0.3,     # Transparency for fill
+              group = "Central Highlands") %>%
+  
+    # Add Mountain Ash presence points
+  addCircleMarkers(data = mountain_ash_present,
+                   color = "#11aa96",
+                   radius = 1,
+                   weight = 0.5,
+                   opacity = 1,
+                   fillOpacity = 1,
+                   group = "Mountain Ash Presence Records") %>%
+  
+
+      # Add Mountain Ash absent points
+  addCircleMarkers(data = mountain_ash_absent,
+                   color = "#f6aa70",
+                   radius = 1,
+                   weight = 0.5,
+                   opacity = 1,
+                   fillOpacity = 1,
+                   group = "Mountain Ash Pseudo_absent Records") %>%
+  
+  setView(lng = 145.7, lat = -37.5, zoom = 7)  %>% # Adjust longitude, latitude, and zoom as needed 
+  
+    # Add layer controls for easier toggling
+  addLayersControl(
+    overlayGroups = c("Central Highlands", "Mountain Ash Presence Records", "Mountain Ash Pseudo_absent Records"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  
+  # Add a legend for the layers
+  addControl(
+    html = "
+    <div style='background-color: white; padding: 10px; border-radius: 5px;'>
+      <strong>Legend</strong><br>
+      <i style='background: lightblue; width: 18px; height: 18px; display: inline-block; margin-right: 8px; opacity: 0.7;'></i>
+      Central Highlands<br>
+      <i style='background: #11aa96; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;'></i>
+      Mountain Ash Presence Records<br>
+      <i style='background: #f6aa70; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;'></i>
+      Mountain Ash Pseudo-absent Records
+    </div>
+    ",
+    position = "bottomright"
+  )
+
+```
+
+## 2.3 Environmental Data
+
+When selecting environmental variables for a model, it is important to avoid indiscriminately including any available data. Instead, select variables thoughtfully, guided by ecological knowledge and the specific hypotheses being tested.
+
+As previously mentioned, Mountain Ash thrives in cool, temperate rainforests characterized by high rainfall, deep, well-drained soils, mild temperatures, and high humidity. This species is typically found at altitudes ranging from 200 to 1,000 meters above sea level (Burns et al., 2015). Mountain Ash habitats face two primary forms of disturbance: bushfires, which are the main natural disturbance, and logging, which constitutes the primary human-induced threat (Burns et al., 2015; Nevill et al., 2010).
+
++------------------------------------+----------------------------------------------------------------+-------------+--------------------------------------+
+| Environmental Variables Categories | Variables                                                      | Data Type   | Source                               |
++====================================+================================================================+=============+======================================+
+| Temperature and Radiation          | Bioclim 01: Annual mean temperature                            | Continuous  | 1976-2005, CSIRO via EcoCommons      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 04: Temperature Seasonality (standard deviation \*100) |             |                                      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 06: Min Temperature of Coldest Month\                  |             |                                      |
+|                                    | Bioclim 10: Mean Temperature of Warmest Quarter                |             |                                      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 20: Annual mean radiation                              |             |                                      |
++------------------------------------+----------------------------------------------------------------+-------------+--------------------------------------+
+| Humidity                           | Bioclim 12: Annual Precipitation                               | Continuous  | 1976-2005, CSIRO via EcoCommons      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 18: Precipitation of Warmest Quarter                   |             |                                      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 19: Precipitation of Coldest Quarter                   |             |                                      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 28: Annual mean moisture index                         |             |                                      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 34: Mean moisture index of warmest quarter             |             |                                      |
+|                                    |                                                                |             |                                      |
+|                                    | Bioclim 35: Mean moisture index of coldest quarter             |             |                                      |
++------------------------------------+----------------------------------------------------------------+-------------+--------------------------------------+
+| Topography                         | Digital Elevation Model                                        | Continuous  | Geoscience Australia via EcoCommons  |
++------------------------------------+----------------------------------------------------------------+-------------+--------------------------------------+
+| Soil                               | Australian Soil Classification                                 | Categorical | Tern via EcoCommons                  |
++------------------------------------+----------------------------------------------------------------+-------------+--------------------------------------+
+| Disturbance                        | Fires                                                          | Continuous  | Vic DEECA spatial data and resources |
+|                                    |                                                                |             |                                      |
+|                                    | Logging                                                        |             |                                      |
++------------------------------------+----------------------------------------------------------------+-------------+--------------------------------------+
+
+```{r load_env_var}
+
+# Load the stacked raster layers
+env_var_stack <- rast("mountain_ash_centralhighlands/central_highlands_15envvar.tif")
+
+# Define the custom names for the raster layers
 layer_names <- c(
-  "env_var_1", #   "Bioclim 01: Annual Mean Temperature",
-  "env_var_2", #   "Bioclim 02: Mean Diurnal Range",
-  "env_var_3", #   "Bioclim 03: Isothermality",
-  "env_var_4", #   "Bioclim 04: Temperature Seasonality",
-  "env_var_5", #   "Bioclim 05: ",
-  "env_cat_var_1" # "Six class of land use of Australia",
+  "Annual_Mean_Temp",
+  "Temp_Seasonality",
+  "Min_Temp_Coldest_Month",
+  "Mean_Temp_Warmest_Quarter",
+  "Annual_Mean_Radiation",
+  "Annual_Precipitation",
+  "Precip_Warmest_Quarter",
+  "Precip_Coldest_Quarter",
+  "Annual_Mean_Moisture",
+  "Moisture_Warmest_Quarter",
+  "Moisture_Coldest_Quarter",
+  "Elevation",
+  "Soil_Type",
+  "Fires",
+  "Logging"
 )
 
-names(raster_stack)[1:6] <- layer_names
 
-# Factorize the sixth raster layer
-raster_stack[[6]] <- as.factor(raster_stack[[6]])
+# Assign the custom names to the raster layers
+names(env_var_stack) <- layer_names
 
-# Verify the names
-print(raster_stack)
+# We want to make sure that soil type raster layer is factor.
+env_var_stack[["Soil_Type"]] <- as.factor(env_var_stack[["Soil_Type"]])
 
-```
-
-```{r plot_env1}
-
-# Plot the masked raster
-plot(raster_stack[[1]],
-     main = "Bioclim 01: Annual Mean Temperature",
-     col = terrain.colors(20),
-     xlab = "Longitude",
-     ylab = "Latitude",
-     cex.main = 1.5,
-     cex.lab = 1.2,
-     cex.axis = 1)
-```
-
-```{r plot_env2}
-
-# Plot the masked raster
-plot(raster_stack[[2]],
-     main = "Bioclim 02: Mean Diurnal Range",
-     col = terrain.colors(20),
-     xlab = "Longitude",
-     ylab = "Latitude",
-     cex.main = 1.5,
-     cex.lab = 1.2,
-     cex.axis = 1)
-```
-
-```{r plot_env3}
-
-# Plot the masked raster
-plot(raster_stack[[3]],
-     main = "Bioclim 03: Isothermality",
-     col = terrain.colors(20),
-     xlab = "Longitude",
-     ylab = "Latitude",
-     cex.main = 1.5,
-     cex.lab = 1.2,
-     cex.axis = 1)
+# Check if the names are assigned correctly
+print(names(env_var_stack))
 
 ```
 
-```{r plot_env4}
-# Plot the masked raster
-plot(raster_stack[[4]],
-     main = "Bioclim 04: Temperature Seasonality",
-     col = terrain.colors(20),
-     xlab = "Longitude",
-     ylab = "Latitude",
-     cex.main = 1.5,
-     cex.lab = 1.2,
-     cex.axis = 1)
-```
+```{r temperature}
 
-```{r plot_env5}
+# Custom titles for the layers
+layer_titles <- c(
+  "Bioclim 01: Annual Mean Temperature",
+  "Bioclim 04: Temperature Seasonality (standard deviation *100)",
+  "Bioclim 06: Min Temperature of Coldest Month",
+  "Bioclim 10: Mean Temperature of Warmest Quarter",
+  "Bioclim 20: Annual mean radiation"
+)
 
-# Plot the masked raster
-plot(raster_stack[[5]],
-     main = "Bioclim 05: Max Temperature of Warmest Month",
-     col = terrain.colors(20),
-     xlab = "Longitude",
-     ylab = "Latitude",
-     cex.main = 1.5,
-     cex.lab = 1.2,
-     cex.axis = 1)
-```
+# Indices of the layers to plot
+layers_to_plot <- c(1, 2, 3, 4, 8)
 
-```{r plot_env_cat_1}
+# Set layout for plotting (3 rows, 2 columns for 5 plots)
+par(mfrow = c(3, 2)) 
 
-# Set color palette and categories
-color_palette <- c("#CA7AF5", "#FFFFBE", "#FFAA00", "#734C00", "#FF0000", "#0000FF")
-color_category <- c("Conservation",
-                    "Production Natural",
-                    "Dryland Agriculture",
-                    "Irrigated Agriculture",
-                    "Intensive Uses",
-                    "Water")
-
-# Set up layout with more space for the main plot and a smaller area for the legend
-layout(matrix(c(1, 2), nrow = 1), widths = c(7, 3))  # Allocate 7:3 space for the main plot and legend
-
-# Increase the plot size by changing the options for the plot dimensions
-options(repr.plot.width = 16, repr.plot.height = 8)  # This will make the plot larger in the notebook output
-
-# Increase the margins for the main plot to make it visually balanced
-par(mar = c(5, 4, 4, 1), cex.axis = 1.5, cex.lab = 1.5, cex.main = 2)  # Adjust margin and text sizes
-
-# Plot the reclassified raster without the legend or color bar
-plot(raster_stack[[6]], col = color_palette, main = "Land Use of Australia",
-     legend = FALSE, axes = TRUE, xlab = "Longitude", ylab = "Latitude")
-
-# Set margins for the legend plot area and create enough space to avoid overlap
-par(mar = c(5, 1, 4, 1))  # Minimal margins for the legend area
-plot.new()  # Create a blank plot for the legend
-
-# Add a custom legend with colors and category labels, placed on the left
-legend("left", legend = color_category, fill = color_palette,
-       title = "Land Use Categories", cex = 1.2, bty = "n", xpd = TRUE)
-
-```
-
-## 5. Combine data for the model
-
-```{r combine_data_1}
-
-# For the fisrt five continuous environmental variables, we extract their values and combine them with the species presence and absence data
-
-# Convert occurrence points to a SpatVector to work with terra package
-occurrence_points <- vect(koala_sf_au)
-
-# Initialize an empty list to store the extracted values for the first five raster layers
-extracted_values_list <- list()
-
-# Extract values for the first five environmental layers
-for (i in 1:5) {
-  # Extract values from the current raster layer
-  extracted_values <- extract(raster_stack[[i]], occurrence_points)[, 2]  # Extracts values, removes ID column
-  # Append the extracted values to the list
-  extracted_values_list[[i]] <- extracted_values
+# Plot each specified layer with its custom title and smaller title size
+for (i in seq_along(layers_to_plot)) {
+  layer_index <- layers_to_plot[i]
+  plot(env_var_stack[[layer_index]], main = layer_titles[i], cex.main = 0.8) # Adjust cex.main for title size
 }
 ```
 
-```{r combine_data_2}
+```{r Humidity}
 
-# Combine all extracted values into a dataframe
-extracted_values_df <- as.data.frame(extracted_values_list)
+# Custom titles for the specified layers
+layer_titles <- c(
+  "Bioclim 12: Annual Precipitation",
+  "Bioclim 18: Precipitation of Warmest Quarter",
+  "Bioclim 19: Precipitation of Coldest Quarter",
+  "Bioclim 28: Annual Mean Moisture Index",
+  "Bioclim 34: Mean Moisture Index of Warmest Quarter",
+  "Bioclim 35: Mean Moisture Index of Coldest Quarter"
+)
 
-# Set appropriate column names for the extracted environmental variables
-names(extracted_values_df) <- paste0("env_var_", 1:5)
+# Indices of the layers to plot
+layers_to_plot <- c(5, 6, 7, 9, 10, 11)
 
-# Combine coordinates and occurrence data with the extracted values
-coordinates <- st_coordinates(koala_sf_au)
-occurrence_data <- as.data.frame(koala_sf_au)
+# Set layout for plotting (3 rows, 2 columns for 5 plots)
+par(mfrow = c(3, 2)) 
 
-# Combine all into a single dataframe
-model_data_df <- data.frame(coordinates, occurrence_data, extracted_values_df)
-
-# Rename columns for better readability
-names(model_data_df)[1:2] <- c("Longitude", "Latitude")
-
-# View the first few rows of the resulting dataframe
-head(model_data_df)
-```
-
-```{r combine_data_3}
-
-# Extract values for the sixth environmental variable
-env_var_6_values <- extract(raster_stack[[6]], occurrence_points)[, 2]  # Extracts values, removes ID column
-
-# Convert the extracted values to a factor (if not already)
-env_var_6_values <- as.factor(env_var_6_values)
+# Plot each specified layer with its custom title and smaller title size
+for (i in seq_along(layers_to_plot)) {
+  layer_index <- layers_to_plot[i]
+  plot(env_var_stack[[layer_index]], main = layer_titles[i], cex.main = 0.8) # Adjust cex.main for title size
+}
 
 ```
 
-```{r combine_data_4}
+```{r others}
 
-# Add the extracted factor variable to model_data_df
-model_data_df$env_cat_var_1 <- env_var_6_values
+# Custom titles for the specified layers
+layer_titles <- c(
+  "Digital Elevation Model",
+  "Australian Soil Classification",
+  "Logging",
+  "Fires"
+)
 
-model_data_df <- na.omit(model_data_df) # we need to remove rows containing NA
+# Indices of the layers to plot
+layers_to_plot <- c(12:15)
 
-# View the first few rows of the resulting dataframe
-head(model_data_df)
+# Set layout for plotting (3 rows, 2 columns for 5 plots)
+par(mfrow = c(2, 2)) 
+
+# Plot each specified layer with its custom title and smaller title size
+for (i in seq_along(layers_to_plot)) {
+  layer_index <- layers_to_plot[i]
+  plot(env_var_stack[[layer_index]], main = layer_titles[i], cex.main = 0.8) # Adjust cex.main for title size
+}
+
 ```
 
-The number of absence of koala is 1958, the number of presence of koala is 242516, which is very unbalanced. We want to use oversampling method to make some pesudo absence data to add to the koala data to make 0 and 1 balanced.
+Soil Type Classification: 3 - Dermosol, 4 - Chromosol, 5 - Ferrosol, 7 - Tenosol, 8 - Kandosol,12 - Calcarosol, 13 - Organosol, and 14 - Anthroposol.
 
-Number of Additional Absence Records Needed: 242 , 516 − 1 , 958 = 240 , 558 242,516−1,958=240,558
+## 2.4 Combine species occurrence data and environmental variables
 
-## 6. Test Collinearity among continuous variables
+We will create a data frame that combines each presence/absence record of Mountain Ash with data from our 15 environmental variables.
 
-Testing for collinearity among continuous variables is an important step in many modeling processes, particularly in species distribution modeling and other regression-based analyses. Collinearity occurs when two or more predictor variables in a dataset are highly correlated, which can lead to unstable estimates of regression coefficients and make it difficult to interpret the results.
+```{r combine}
 
-There are two common methods for testing collinearity among continous variables.
+# Convert species occurrence data to terra-compatible SpatVector
+occurrence_vect <- vect(mountain_ash_centralhighlands)
 
-Before fitting the mode, we can use **correlation matrix**
+# Extract raster values at species occurrence points
+extracted_values <- terra::extract(env_var_stack, occurrence_vect)
+
+# Combine occurrence data with extracted raster values
+# (Keep geometry or drop it based on your needs)
+occurrence_data <- cbind(as.data.frame(mountain_ash_centralhighlands), extracted_values)
+
+# Remove rows with any NA values in predictors
+occurrence_data <- na.omit(occurrence_data)
+
+# we want to make sure the data type of soil types is factor.
+occurrence_data$Soil_Type <- as.factor(occurrence_data$Soil_Type)
+
+head(occurrence_data)
+
+```
+
+# 3 Model fitting
+
+## 3.1 **Multicollinearity and Variable Selection**
+
+Testing for collinearity among continuous variables is an important step in many modeling processes, particularly in species distribution modeling and other regression-based analyses. Codllinearity occurs when two or more predictor variables in a dataset are highly correlated, which can lead to unstable estimates of regression coefficients and make it difficult to interpret the results.
+
+There are two common methods for testing collinearity among **continuous variables**.
+
+**Correlation matrix.**
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Corrplot_sample.png){alt="corrplot, " width="400"}
 
 ```{r corrplot}
 
-# Load necessary library
-library(corrplot)
+layer_names <- c(
+  "Annual_Mean_Temp",
+  "Temp_Seasonality",
+  "Min_Temp_Coldest_Month",
+  "Mean_Temp_Warmest_Quarter",
+  "Annual_Mean_Radiation",
+  "Annual_Precipitation",
+  "Precip_Warmest_Quarter",
+  "Precip_Coldest_Quarter",
+  "Annual_Mean_Moisture",
+  "Moisture_Warmest_Quarter",
+  "Moisture_Coldest_Quarter",
+  "Elevation",
+  "Fires",
+  "Logging"
+)
 
-# Calculate the correlation matrix for the first five continuous variables
-cor_matrix <- cor(model_data_df[, c("env_var_1", "env_var_2", "env_var_3", "env_var_4", "env_var_5")],
-                  use = "complete.obs", method = "pearson")
-print(cor_matrix)
 
-# Visualize the correlation matrix using corrplot
+# Select columns by their names
+cor_data <- occurrence_data[, layer_names]
+
+# Check the structure of the numeric data
+str(cor_data)
+
+# Calculate the correlation matrix for the numeric columns
+cor_matrix <- cor(cor_data, use = "complete.obs", method = "pearson")
+
+
 corrplot(cor_matrix,
-         method = "color",          # Use colored squares to represent correlation strength
-         type = "upper",            # Only show the upper triangle of the matrix
-         order = "hclust",          # Reorder the variables based on hierarchical clustering
-         addCoef.col = "black",     # Add correlation coefficients in black
-         tl.col = "black",          # Text labels color
-         tl.srt = 45,               # Rotate text labels for better readability
-         diag = FALSE)              # Hide the diagonal
-```
-
-**From the above corrplot, we can find:**
-
-There are some strong correlations present, notably between env_var_1 and env_var_5 (0.878) and env_var_2 and env_var_3 (0.817). This indicates potential collinearity, which could be problematic for certain modeling approaches, as it can affect the stability of model parameters.
-
-**We don't have to include env_var_2 and env_var_5 in model anymore.**
-
-```{r remove_env_var}
-
-# Remove "env_var_2" and "env_var_5" by specifying their negative index
-model_data_df <- model_data_df[, !names(model_data_df) %in% c("env_var_2", "env_var_5")]
-```
-
-## 7. Dealing with unbalanced dataset
-
-Since our koala absences are too few comparing with the presences, we need to use resamping tehniques to increase the koala absences in the dataset to make it even.
-
-```{r calculate_0_1}
-
-# Calculate counts for presence and absence
-print(koala_counts)
+         method = "color",            # Use colored squares for correlation
+         type = "upper",              # Show upper triangle only
+         order = "hclust",            # Reorder variables hierarchically
+         addCoef.col = "black",       # Show correlation coefficients in black
+         number.cex = 0.5,            # Reduce the size of correlation labels
+         tl.col = "black",            # Text label color
+         tl.srt = 30,                 # Rotate labels slightly for readability
+         tl.cex = 0.5,                # Reduce text size of variable labels (set smaller valu)
+         cl.cex = 0.8,                # Reduce text size of color legend
+         diag = FALSE,                # Hide diagonal
+         col = colorRampPalette(c("#11aa96", "#61c6fa", "#f6aa70"))(200),
+         sig.level = 0.01, insig = "blank")
 
 ```
 
-```{r ROSE}
+**If you find corrplot is hard for you to make decisions, we can use Variance Inflation Factor (VIF)**. VIF is another statistical measure used to detect **multicollinearity** in a set of explanatory (independent) variables in a regression model.
 
-# we can use R package called "ROSE" to do the oversampling
+**Interpretation:**
 
-install.packages("ROSE")
-library(ROSE)
+1.  **VIF = 1**: No correlation
+
+2.  **VIF \> 1 and \<= 5**: Moderate correlation; may not require corrective action.
+
+3.  **VIF \> 5**: Indicates high correlation. Multicollinearity may be problematic, and further investigation is recommended.
+
+4.  **VIF \> 10**: Strong multicollinearity. The variable is highly collinear with others, and steps should be taken to address this.
+
+```{r VIF_1}
+
+# Fit a GLM for species distribution
+glm_model <- glm(
+  occrrnS ~ Annual_Mean_Temp + Temp_Seasonality + Min_Temp_Coldest_Month +
+    Mean_Temp_Warmest_Quarter + Annual_Mean_Radiation + Annual_Precipitation +
+    Precip_Warmest_Quarter + Precip_Coldest_Quarter + Annual_Mean_Moisture +
+    Moisture_Warmest_Quarter + Moisture_Coldest_Quarter + Elevation + Fires + Logging,
+  data = occurrence_data,
+  family = binomial(link = "logit")  # Logistic regression
+)
+
 ```
 
-```{r oversampling}
+```{r VIF_2}
 
-# Balance the dataset using oversampling for absences
-balanced_data <- ovun.sample(
-  occurrenceStatus ~ env_var_1 + env_var_3 + env_var_4 + env_cat_var_1,
-  data = model_data_df,
-  method = "over",
-  N = 2 * 242516  # Total desired sample size: equal number of 0 and 1
-)$data
+# Calculate VIF for the GLM
+vif_values <- vif(glm_model)
 
-# Verify the balance of the dataset
-table(balanced_data$occurrenceStatus)
+# Convert VIF values to a data frame with two columns
+vif_table <- data.frame(
+  Variable = names(vif_values),  # Column 1: Variable names
+  VIF = round(vif_values, 2)     # Column 2: VIF values rounded to 2 decimals
+)
+
+# Rank the VIF table from high to low
+vif_table <- vif_table[order(vif_table$VIF, decreasing = TRUE), ]
+
+# Print the ranked table
+print(vif_table)
 
 ```
 
-Now, our 0s and 1s look very even.
+Rules of thumb for VIF:
 
-## 8. Split data into training dataset (80%) and testing dataset (20%)
+**Variables to Drop (Initial Recommendation):**
+
+1.  `Annual_Mean_Temp` (High VIF + highly correlated with many others).
+
+2.  `Mean_Temp_Warmest_Quarter` (High VIF + redundant with `Min_Temp_Coldest_Month`).
+
+3.  `Annual_Mean_Radiation` (High VIF + redundant with `Elevation`).
+
+4.  `Annual_Precipitation` (Redundant with `Annual_Mean_Moisture`).
+
+5.  `Precip_Warmest_Quarter` (Redundant with `Moisture_Warmest_Quarter`).
+
+Getting rid of some highly correlated variables and run VIF again.
+
+```{r VIF_3}
+
+# Fit a GLM for testing the VIF
+glm_model <- glm(
+  occrrnS ~ Temp_Seasonality + Min_Temp_Coldest_Month +
+    Precip_Coldest_Quarter + Moisture_Coldest_Quarter + Elevation + Fires + Logging,
+  data = occurrence_data,
+  family = binomial(link = "logit")  # Logistic regression
+)
+
+# Calculate VIF for the GLM
+vif_values <- vif(glm_model)
+
+# Convert VIF values to a data frame with two columns
+vif_table <- data.frame(
+  Variable = names(vif_values),  # Column 1: Variable names
+  VIF = round(vif_values, 2)     # Column 2: VIF values rounded to 2 decimals
+)
+
+# Rank the VIF table from high to low
+vif_table <- vif_table[order(vif_table$VIF, decreasing = TRUE), ]
+
+# Print the ranked table
+print(vif_table)
+
+```
+
+Now, from our 14 continuous variables, we choose above 7 variables and 1 categorical variable Soil_Types to make our final model.
+
+## 3.2 Data splitting
+
+For cross-validation purposes, we need to leave out some data as testing dataset. There are many strategies of splitting data for cross-validation, like random, k-fold, and leave-one-out etc. Here we will use the easiest one: random splitting.
 
 ```{r data_split}
 
-## 80% of the species occurrence data
-smp_size <- floor(0.8 * nrow(balanced_data))
-
-## set the seed to make your partition reproducible
+# Set seed for reproducibility
 set.seed(123)
-train_ind <- sample(seq_len(nrow(balanced_data)), size = smp_size)
 
-training_df <- balanced_data[train_ind, ]
-testing_df <- balanced_data[-train_ind, ]
+# Split the data into training (80%) and testing (20%)
+train_index <- sample(1:nrow(occurrence_data), size = 0.8 * nrow(occurrence_data))
+
+# Create training and testing datasets
+train_data <- occurrence_data[train_index, ]
+test_data <- occurrence_data[-train_index, ]
+
+# Check the split
+cat("Training Set:", nrow(train_data), "rows\n")
+cat("Testing Set:", nrow(test_data), "rows\n")
+
 ```
 
-# C. Generalised Logistic Regression (GLM)
+## 3.3 Model fitting
 
-## 1. Model Configuration
+**Null model:** no explanatory variables or predictors are included.
 
-We are fitting a logistic regression model using 3 continuous environmental variables and one categorical variable as predictors with the **testing dataset**.
+It is always helpful to create a null model as a benchmark to assess how the inclusion of explanatory variables improves the model.
 
 ```{r null_model}
 
 # Let's make a null model as a benchmark
 
 # Fit a null model with only the intercept
-null_model <- glm(occurrenceStatus ~ 1,
-                  data = training_df,
+null_model <- glm(occrrnS ~ 1,
+                  data = train_data,
                   family = binomial(link = "logit"))
 
 summary(null_model)
 
 ```
 
+Now, we can fit a full model.
+
 ```{r model_fit}
 
-# Fit a logistic regression model with presence (binary response)
-glm_model <- glm(occurrenceStatus ~ env_var_1 + env_var_3 + env_var_4 + env_cat_var_1,
-                 data = training_df,
-                 family = binomial(link = "logit")) #in the Generalized Linear Model (GLM), setting family = binomial(link = "logit") is appropriate when dealing with binary outcomes such as presence (1) and absence (0) of an event, which, in this case, is the occurrence of tree kangaroos.
+# Fit the GLM on the training data
+glm_model <- glm(
+  occrrnS ~ Temp_Seasonality + Min_Temp_Coldest_Month +
+    Precip_Coldest_Quarter + Moisture_Coldest_Quarter +
+    Elevation + Fires + Soil_Type + Logging,
+  data = train_data,
+  family = binomial(link = "logit")  # Logistic regression
+)
 
-# Summary of the model to view the results
+# Summarize the model
 summary(glm_model)
+
 ```
+
+# 4. Model evaluation
+
+## 4.1 Summary of Interpretation
 
 ```{r model_compare}
 
@@ -607,49 +842,328 @@ cat("Deviance Explained:", deviance_explained_percent, "%\n")
 
 ```
 
-### Summary of Interpretation
-
 The **Likelihood Ratio Test (ANOVA)** shows that adding the predictors significantly improved the model's fit compared to the null model, as indicated by the high deviance reduction and a p-value of 0.
 
 The **AIC** for the full model is much lower than the null model, further indicating a better fit when balancing model complexity.
 
-The **Deviance Explained** of 25.34% suggests that the full model explains about a quarter of the variability in koala presence/absence, indicating that while the predictors contribute useful information, there is still substantial unexplained variability that may require further investigation or additional predictors.
+The **Deviance Explained** of 42 % suggests that the full model explains almost half of the variability in mountain ash presence/absence, indicating that while the predictors contribute useful information, there is still substantial unexplained variability that may require further investigation or additional predictors.
 
-## 2. Model evaluation
+**Variable Importance** metric.
 
-Now, we use the **testing dataset** to evaluate the model performance.
+It is a measure used to assess the relative importance of predictors (environmental variables) in the model.
 
-```{r POC}
+```{r VIP}
 
-# Predict on the testing data
-predicted_probs <- predict(glm_model, newdata = testing_df, type = "response")
+# Function to plot effect size graph
+plot_effect_size <- function(glm_model) {
+  # Check if required libraries are installed
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Please install the 'ggplot2' package to use this function.")
+  }
+  library(ggplot2)
 
-# Convert probabilities to binary predictions (using a threshold of 0.5)
-predicted_classes <- ifelse(predicted_probs > 0.5, 1, 0)
+  # Extract effect sizes (coefficients) from the model
+  coefs <- summary(glm_model)$coefficients
+  effect_sizes <- data.frame(
+    Variable = rownames(coefs)[-1],  # Exclude the intercept
+    Effect_Size = coefs[-1, "Estimate"],
+    Std_Error = coefs[-1, "Std. Error"]
+  )
 
-library(pROC)
+  # Sort by effect size
+  effect_sizes <- effect_sizes[order(-abs(effect_sizes$Effect_Size)), ]
 
-# Create an ROC curve and compute AUC
-roc_curve <- roc(testing_df$occurrenceStatus, predicted_probs)
-auc_value <- auc(roc_curve)
-print(auc_value)
+  # Plot the effect sizes with error bars
+  ggplot(effect_sizes, aes(x = reorder(Variable, Effect_Size), y = Effect_Size)) +
+    geom_bar(stat = "identity", fill = "#11aa96") +
+    geom_errorbar(aes(ymin = Effect_Size - Std_Error, ymax = Effect_Size + Std_Error), width = 0.2) +
+    coord_flip() +
+    labs(
+      title = "Effect Sizes of Variables",
+      x = "Variable",
+      y = "Effect Size (Coefficient Estimate)"
+    ) +
+    theme_minimal()
+}
 
-# Plot the ROC curve
-plot(roc_curve, main = paste("ROC Curve (AUC =", round(auc_value, 2), ")"))
+# Example usage of effect size plot
+plot_effect_size(glm_model)
 ```
 
-# D. Predictions
+## 4.2 Cross validation
 
-## 1. Predictions on Current Environment
+Now, we use the **testing data** to evaluate the model performance.
+
+```{r ROC}
+
+# Predict on the testing data
+predicted_probs <- predict(glm_model, newdata = test_data, type = "response")
+
+# Create an ROC curve and compute AUC
+roc_curve <- roc(test_data$occrrnS, predicted_probs)
+auc_value <- auc(roc_curve)
+
+# Extract ROC data for ggplot
+roc_data <- data.frame(
+  Sensitivity = roc_curve$sensitivities,
+  Specificity = 1 - roc_curve$specificities
+)
+
+# Plot the ROC curve using ggplot2
+ggplot(roc_data, aes(x = Specificity, y = Sensitivity)) +
+  geom_line(color = "#61cafa", linewidth = 0.5) +                  # ROC curve
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") + # Diagonal line
+  labs(
+    title = paste("ROC Curve (AUC =", round(auc_value, 2), ")"),
+    x = "1 - Specificity",
+    y = "Sensitivity"
+  ) +
+  theme_minimal() +                                           # Minimal theme
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"), # Centered and bold title
+    axis.title = element_text(size = 12),                   # Axis label font size
+    axis.text = element_text(size = 10)                     # Axis tick font size
+  )
+```
+
+```{r species_response_curves}
+
+plot_species_response <- function(glm_model, predictors, data) {
+  # Check if required libraries are installed
+  if (!requireNamespace("ggplot2", quietly = TRUE) || !requireNamespace("gridExtra", quietly = TRUE)) {
+    stop("Please install the 'ggplot2' and 'gridExtra' packages to use this function.")
+  }
+  library(ggplot2)
+  library(gridExtra)
+
+  # Create empty list to store response plots
+  response_plots <- list()
+
+  # Loop through each predictor variable
+  for (predictor in predictors) {
+    # Create new data frame to vary predictor while keeping others constant
+    pred_range <- seq(
+      min(data[[predictor]], na.rm = TRUE),
+      max(data[[predictor]], na.rm = TRUE),
+      length.out = 100
+    )
+    const_data <- data[1, , drop = FALSE]  # Use first row to keep other predictors constant
+    response_data <- const_data[rep(1, 100), ]  # Duplicate the row
+    response_data[[predictor]] <- pred_range
+
+    # Predict probabilities
+    predicted_response <- predict(glm_model, newdata = response_data, type = "response")
+
+    # Create data frame for plotting
+    plot_data <- data.frame(
+      Predictor_Value = pred_range,
+      Predicted_Probability = predicted_response
+    )
+
+    # Add presence and absence data
+    presence_absence_data <- data.frame(
+      Predictor_Value = data[[predictor]],
+      Presence_Absence = data$occrrnS
+    )
+
+    # Generate the response plot
+    p <- ggplot() +
+      geom_line(data = plot_data, aes(x = Predictor_Value, y = Predicted_Probability), color = "#61c6fa", linewidth = 1) +
+      geom_point(data = presence_absence_data[presence_absence_data$Presence_Absence == 1, ], aes(x = Predictor_Value, y = Presence_Absence), color = "#11aa96", alpha = 0.6) +
+      geom_point(data = presence_absence_data[presence_absence_data$Presence_Absence == 0, ], aes(x = Predictor_Value, y = Presence_Absence), color = "#f6aa70", alpha = 0.6) +
+      labs(x = predictor, y = NULL) +
+      theme_minimal() +
+      theme(axis.title.y = element_blank())
+
+    # Store the plot in the list
+    response_plots[[predictor]] <- p
+  }
+
+  # Arrange all plots in one combined plot with a single shared y-axis label
+  grid.arrange(
+    grobs = response_plots, 
+    ncol = 3,
+    left = "Predicted Probability / Presence-Absence"
+  )
+}
+
+# Example usage:
+predictors <- c("Temp_Seasonality", "Min_Temp_Coldest_Month", "Precip_Coldest_Quarter", "Moisture_Coldest_Quarter", "Elevation", "Fires", "Logging")
+plot_species_response(glm_model, predictors, train_data)
+
+```
+
+```{r density_histogram_plot}
+
+# Density and Histogram Plot Function
+plot_density_histogram <- function(predicted_probs, actual_labels) {
+  # Combine data into a data frame
+  plot_data <- data.frame(
+    Predicted_Probability = predicted_probs,
+    Presence_Absence = factor(actual_labels, levels = c(0, 1), labels = c("Absence", "Presence"))
+  )
+  
+  # Plot density and histogram
+  ggplot(plot_data, aes(x = Predicted_Probability, fill = Presence_Absence)) +
+    geom_histogram(aes(y = after_stat(density)), bins = 10, alpha = 0.6, position = "identity") +  # Histogram with density
+    geom_density(alpha = 0.4) +  # Density curve
+    labs(
+      title = "Density and Histogram of Predicted Probabilities",
+      x = "Predicted Probability",
+      y = "Density",
+      fill = "Presence/Absence"
+    ) +
+    scale_fill_manual(values = c("#f6aa70", "#11aa96")) +  # Custom colors
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      axis.title = element_text(size = 12),
+      axis.text = element_text(size = 10),
+      legend.position = "top"
+    )
+}
+
+# Example usage:
+# Replace `predicted_probs` with your predicted probabilities and `test_data$occrrnS` with your actual labels
+plot_density_histogram(predicted_probs, test_data$occrrnS)
+
+```
+
+# 5. Mapping and Interpolation
+
+If you remember, we started with these point records of mountain ash
+
+![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/point_data.png){width="300px" alt="Point data"}
+
+Now, let's predict a continuous mapping of the distribution of mountain ash in the central highlands.
 
 ```{r prediction}
 
 # Predict the presence probability across the entire raster extent
-predicted_raster <- predict(raster_stack, glm_model, type = "response")
+predicted_raster <- predict(env_var_stack, glm_model, type = "response")
 
-# Plot the predicted raster to visualize the results
-plot(predicted_raster, main = "Predicted Probability of Presence")
+# Define a custom color palette
+custom_palette <- colorRampPalette(c("#f6aa70", "#61cafa", "#11aa96"))
+
+
+# Plot the raster with the custom color palette
+plot(
+  predicted_raster, 
+  main = "Predicted Probability of Presence of Mountain Ash in Central Highlands",
+  col = custom_palette(100) # Use 100 colors for smooth transitions
+)
 ```
+
+We can also use an independent mountain ash data to cross-validate your mapping.
+
+```{r forest_types_vic}
+
+forest_type_vic <- st_read("mountain_ash_centralhighlands/FORTYPE500.shp")
+
+forest_type_central_highlands <- st_intersection(forest_type_vic, central_highlands)
+
+ggplot(data = forest_type_central_highlands) +
+  geom_sf(aes(fill = as.factor(X_DESC)), color = NA) +
+  scale_fill_manual(
+    name = "Forest Type",
+    values = c(
+      "#D55E00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", 
+      "#CC79A7", "#E69F00", "#000000", "#8E44AD", 
+      "#3498DB", "#F39C12","#27AE60", "#E74C3C", "#BDC3C7"
+    )
+  ) +
+  labs(title = "Forest Types in the Central Highlands") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    legend.text = element_text(size = 8),      # Smaller legend text
+    legend.title = element_text(size = 10),   # Smaller legend title
+    plot.title = element_text(size = 16, face = "bold"), # Larger plot title
+    axis.text = element_text(size = 10),      # Adjust axis text
+    axis.title = element_text(size = 12)      # Adjust axis title
+  ) +
+  coord_sf(expand = FALSE)
+
+```
+
+```{r mountain_ash_forest}
+
+mountain_ash_forest <- forest_type_central_highlands[forest_type_central_highlands$X_DESC == "Mountain Ash", ]
+
+# Plot the filtered shapefile
+ggplot(data = mountain_ash_forest) +
+  geom_sf(fill = "NA", color = "red", size = 0.1) +  # Blue fill and black border
+  labs(
+    title = "Mountain Ash Forest in Central Highlands",
+    caption = "Data Source: FORTYPE500.shp"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.text = element_text(size = 10),
+    axis.title = element_blank(),
+    legend.position = "none"  # No legend needed since this is a single type
+  )
+
+```
+
+```{r cross-validation_forest}
+
+custom_palette <- c("#f6aa70", "#61cafa", "#11aa96")
+
+
+pal <- colorNumeric(
+  palette = custom_palette,      # Use custom colors
+  domain = values(predicted_raster),
+  na.color = "transparent"       # Make NA values transparent
+)
+
+# Create the leaflet map
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+  # Add raster layer
+  addRasterImage(predicted_raster, color = pal, opacity = 0.7, project = TRUE) %>%
+  # Add shapefile layer
+  addPolygons(
+    data = mountain_ash_forest,
+    color = "red",              # Border color of shapefile polygons
+    weight = 1,                  # Border width
+    fillColor = "lightblue",     # Fill color of shapefile polygons
+    fillOpacity = 0.3            # Transparency for fill
+  ) %>%
+  # Add legend for raster
+  addLegend(
+    pal = pal,
+    values = values(predicted_raster),
+    title = "Probability",
+    position = "bottomright"
+  )
+
+```
+
+# References
+
+Burns, E. L., Lindenmayer, D. B., Stein, J., Blanchard, W., McBurney, L., Blair, D., & Banks, S. C. (2015). Ecosystem assessment of mountain ash forest in the C entral H ighlands of V ictoria, south‐eastern A ustralia. *Austral Ecology*, *40*(4), 386-399.
+
+von Takach Dukai, B. (2019). The genetic and demographic impacts of contemporary disturbance regimes in mountain ash forests.
+
+Nevill, P. G., Bossinger, G., & Ades, P. K. (2010). Phylogeography of the world’s tallest angiosperm, Eucalyptus regnans: evidence for multiple isolated Quaternary refugia. *Journal of Biogeography*, *37*(1), 179-192. 
+
+Zurell, D., Franklin, J., König, C., Bouchet, P. J., Dormann, C. F., Elith, J., Fandos, G., Feng, X., Guillera‐Arroita, G., & Guisan, A. (2020). A standard protocol for reporting species distribution models. *Ecography*, *43*(9), 1261-1277.
+
+Logging History (1930-07-01 - 2022-06-30), Data VIC, 2024, <https://discover.data.vic.gov.au/dataset/logging-history-overlay-of-most-recent-harvesting-activities>
+
+Fire History (2011-2021), Data VIC, 2024,  <https://www.agriculture.gov.au/abares/forestsaustralia/forest-data-maps-and-tools/spatial-data/forest-fire#fires-in-australias-forests-201116-2018>
+
+Forest types of Victoria, Data VIC, 2024, <https://discover.data.vic.gov.au/dataset/forest-types-of-victoria> 
+
+Victory shapefile, Australian Bureau of Statistics, 2021, https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/access-and-downloads/digital-boundary-files
+
+Harwood, Tom (2019): 9s climatology for continental Australia 1976-2005: BIOCLIM variable suite. v1. CSIRO. Data Collection. <https://doi.org/10.25919/5dce30cad79a8>
+
+3 second SRTM Derived Digital Elevation Model (DEM) Version 1.0, Geoscience Australia, 2018, <https://dev.ecat.ga.gov.au/geonetwork/srv/api/records/a05f7892-ef04-7506-e044-00144fdd4fa6>
+
+Searle, R. (2021): Australian Soil Classification Map. Version 1. Terrestrial Ecosystem Research Network. (Dataset). [**https://doi.org/10.25901/edyr-wg85**](https://doi.org/10.25901/edyr-wg85)
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
 
