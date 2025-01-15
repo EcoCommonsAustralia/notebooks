@@ -2,3 +2,6 @@
 .Rhistory
 .DS_Store
 notebooks/.vdoc.r
+raster_preparation.zip
+rasters_files
+__MACOSX/._rasters_files

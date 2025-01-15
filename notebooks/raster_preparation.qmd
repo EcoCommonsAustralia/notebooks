@@ -4,7 +4,9 @@
 
 Author details: Xiang Zhao
 
-Contact details: support\@ecocommons.org.au
+Editor details: Sebastian Lopez Marcano
+
+Contact details: support@ecocommons.org.au
 
 Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
 
@@ -12,7 +14,7 @@ Date: December 2024
 
 # Script and data info:
 
-This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental dataset that in the format of raster to be used for building Species Distribution Models (SDMs)
+This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental datasets. The datasets are in the raster format and these are generally used to build Species Distribution Models (SDMs)
 
 # Introduction
 
@@ -26,7 +28,7 @@ Raster data is a type of geospatial data represented by a grid of cells or pixel
 
 -   Data Download: Download continuous environmental dataset from WorldClim. Download categorical environmental dataset from our Google Drive.
 
--   Data Processing: Reproject environmental datasets to the crs your desire. Crop and mask environmental dataset to the extent of your study area. Resample environmental dataset to a same resolution.
+-   Data Processing: Reproject environmental datasets to the CRS (Coordinate Reference System) you desire / require. Crop and mask environmental dataset(s) to the extent of your study area. Resample environmental dataset(s) to a same resolution.
 
 In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
 
@@ -159,7 +161,7 @@ Ideally, you would use the **`renv`** package to create an isolated environment 
 
 ## S.2 Install and load essential libraries.
 
-Install and load R packages.
+Install and load R packages. Terra and sf are essential for working with raster and vector data, respectively. Other packages like dplyr, ggplot2, and leaflet are useful for data manipulation, visualization, and interactive mapping.
 
 ```{r install_libraries, message=FALSE, warning=FALSE}
 
@@ -199,7 +201,7 @@ drive_deauth()
 
 ## S.3 Download the Case Study Datasets
 
-Environmental variables are downloaded from both WorldClim and Google Drive, and stored in GeoTIFF format.
+Environmental variables are downloaded from both WorldClim and Google Drive, and stored in GeoTIFF format. 
 
 ```{r download_data}
 
@@ -238,7 +240,7 @@ cat("Unzipped files to folder:", datafolder_path, "\n")
 
 ## 1.1 Study area
 
-Before processing raster or any other spatial data, it's important to understand your study area. This helps you determine the spatial extent of the environmental variables to collect, whether it's nationwide data (e.g., all of Australia) or localized data for a smaller area.
+Before processing raster or any other spatial data, it's important to understand your study area. This helps you determine the spatial extent of the environmental variables to collect, whether it's nationwide data (e.g., all of Australia) or localised data for a smaller area.
 
 ```{r study_area_crs}
 
@@ -250,7 +252,7 @@ print(crs(central_highlands))
 
 ```
 
-From above information, we can find the CRS of the study area shapefile is EPSG:4283, the unit of it is degree. To know more about this CRS, visit <https://epsg.io/4283>.
+From above, we can find that the CRS of the study area shapefile is EPSG:4283, the unit of it is 'degree'. To know more about this CRS, visit <https://epsg.io/4283>.
 
 ```{r study_area}
 
@@ -321,7 +323,7 @@ Usually, you are the person who collects raster files from different data platfo
 ```{r load_rasters}
 
 # Define the folder path
-datafolder_path <- "/Users/zhaoxiang/Desktop/raster_prep/rasters_files"
+datafolder_path <- "rasters_files"
 
 # List all .tif files with full paths
 file_paths <- list.files(path = datafolder_path, pattern = "\\.tif$", full.names = TRUE)
@@ -371,7 +373,7 @@ Australian Soil Classification (nsg-2011-250m_asc_vic) should be categorical, ho
 
     -   If the raster was exported or converted incorrectly (e.g., saved as a floating-point raster), it could cause the values to be treated as continuous.
 
-Sometimes, after manipulation, a raster may lose its categorical (factor) properties due to how terra or other spatial libraries interpret the file upon reloading. Rasters saved as categorical may be stored with integer values rather than explicit factor levels in the file, meaning they need to be redefined as factors when reloaded.
+Sometimes, after manipulation, a raster may lose its categorical (factor) properties due to how terra (the R package) or other spatial libraries interpret the file upon reloading. Rasters saved as categorical may be stored with integer values rather than explicit factor levels in the file, meaning they need to be redefined as factors when reloaded.
 
 ```{r factorize}
 
@@ -391,7 +393,7 @@ for (i in seq_along(rasters)) {
 
 Now, it looks correct.
 
-## 1.3 Plot Rasters to Know Your Data
+## 1.3 Plot Rasters to Understand Your Data
 
 ```{r plot_rasters, warning=FALSE}
 
@@ -465,7 +467,7 @@ We need to unify extent and resolutions.
 
 ## 1.5 Unify CRS and Resolution
 
-As we know, the CRS of the shapefile of the study area and all the raster files is EPSG:4283 (unit in degree). What if I want to change the CRS these files to **EPSG: 28355** (GDA94 / MAG Zone 55, unit in meter), a more precise CRS for our study area (why? read this [article](https://parametricmonkey.com/2020/04/08/understanding-australias-coordinate-systems/) by Paul Wintour).
+As we know, the CRS of the shapefile of the study area and all the raster files is EPSG:4283 (unit in degrees). What if I want to change the CRS these files to **EPSG: 28355** (GDA94 / MAG Zone 55, unit in meter), a more precise CRS for our study area (why? read this [article](https://parametricmonkey.com/2020/04/08/understanding-australias-coordinate-systems/) by Paul Wintour).
 
 ```{r reproject_rasters}
 
@@ -559,13 +561,13 @@ for (i in seq_along(rasters_reprojected)) {
 
 ```
 
-As we can see, we unified the CRS of all raster files to EPSG:28355. We can also notice that the figures in resolution and extent have changed. That is because the unit of the CRS has changed from degree to meter.
+As we can see, we unified the CRS of all raster files to EPSG:28355. We can also notice that the figures in resolution and extent have changed. That is because the unit of the CRS has changed from degrees to meters.
 
 ## 1.6 Resample Rasters to Match the Finest Resolution
 
 There are two methods for unifying the resolutions of raster files: (1) resampling to the finest resolution or (2) resampling to the coarsest resolution. Resampling to the finest resolution preserves as much information as possible from the original raster files but increases the file size and processing time. On the other hand, resampling to the coarsest resolution significantly reduces the file size and processing time, though it may result in some loss of detail.
 
-Personally, I prefer using the finest resolution, as I don't like losing information from my data. However, in some cases, using the finest resolution is unnecessary. For example, when studying large, mobile animals such as whales or elephants, resampling all your raster files—from, say, 1 km, 5 km, 250 m, and 5 m to 5 m—would result in an unnecessary computational burden and waste of resources. In such situations, I might resample them to 1 km or 250 m instead.
+In EcoCommons we recommend using the finest resolution when the objective of the study is well known, and coarser resolutions for preliminary / pilot studies. The decision of fine vs coarse also depends on your study area, species and data availability. For example, when studying large, mobile animals such as whales or elephants, resampling all your raster files—from, say, 1 km, 5 km, 250 m, and 5 m to 5 m—would result in an unnecessary computational burden and waste of resources.
 
 ```{r resample_rasters}
 
@@ -656,7 +658,7 @@ cropped_masked_rasters <- lapply(rasters_resampled, function(raster) {
 
 # 3. Stack and Save Rasters
 
-We can only stack rasters that have the same extent, CRS, and resolution. If stacking fails, it means that at least one of these properties does not match.
+We can only stack rasters that have the same extent, CRS, and resolution. If stacking fails, it means that at least one of these properties do not match.
 
 ```{r stack_save_rasters}
 
