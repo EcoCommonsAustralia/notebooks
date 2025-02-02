@@ -1,0 +1,45 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Structural Equation Modelling: Understanding hidden animal behaviour 
+
+Author details: Dr Sebastian Lopez Marcano
+
+Editor details: Xiang Zhao
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
+
+Date: February 2025
+
+# Script and data info:
+
+This notebook, developed by the EcoCommons team, showcases how to develop a structural equation model (SEM) to understand the 'hidden' relationships between different variables. The original material was developed by the FishID team from Griffith University, with support from Data61 CSIRO for Sebastian's PhD project. 
+
+**Note**: This notebook is not an exhaustive guide to SEMs. We highly recommend you read the [SEM Book from Jon Lefcheck](https://jslefche.github.io/sem_book/). 
+
+# Introduction
+Structural equation modelling (SEM) allows us to determine relationships between variables and understand how each of them conribute to a particular outcome. SEMs are particularly useful when we have a large number of variables, data points and the relationships and outcomes are not particularly clear. 
+
+To provide a simple example, SEMs can answer questions like "What factors influence how much I enjoy a pizza"?. We know that multiple factors can affect my or your pizza enjoyment (e.g., is the pizza hot, was the pizza homemade or from a Michelin star restaurant, etc.). 
+
+## SEM Assumptions
+Assumptions in statistical models are important and sometimes are overlooked because finding answer takes priority over following the process. SEMs have a few assumptions that need to be before we can build a model and interpret the results.
+
+1. **Linearity**: The relationships between variables are linear. 
+2. **Normality**: The data is normally distributed.
+3. **Free of outliers**: The data does not contain outliers.
+4. **Sample size**: Sample size ranging from 200 to 400 with 10 to 15 indicators per variable is generally recommended.
+5. **No multicollinearity**: The data does not contain multicollinearity. Multicollinearity occurs when two or more independent variables are highly correlated with each other.
+
+## Step by Step SEM Process
+1. **Install and load required packages**: `lavaan` is the main package for SEMs in R
+2. **Data preparation**: Load the data and check for missing values and check SEM assumptions.
+3. **Explore correlations**: Explore relationships between variables and check for multicollinearity.
+4. **Model specification**: Define the model; the model needs to make 'ecological sense' and built following some theoretical framework (e.g., fiddler crabs in coastal areas are more likely to be foraging during low tide). 
+
+# Set-up: R Environment and Packages
+Some housekeeping before we start. This process might take some time as many packages needed to be installed.
+
+## S.1 Set the working directory and create a folder for data.
+Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
