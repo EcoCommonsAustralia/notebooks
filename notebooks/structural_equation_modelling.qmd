@@ -43,3 +43,87 @@ Some housekeeping before we start. This process might take some time as many pac
 
 ## S.1 Set the working directory and create a folder for data.
 Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
+
+```{r setup_workspace}
+
+# Set the workspace to the current working directory
+
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
+
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
+```
+
+Ideally, you would use the **`renv`** package to create an isolated environment for installing all the required R packages used in this notebook. However, since installing **`renv`** and its dependencies can be time-consuming, we recommend trying this after the notebook.
+
+```{r renv}
+
+# # Ensure "renv" package is installed
+# if (!requireNamespace("renv", quietly = TRUE)) {
+#   install.packages("renv")
+# }
+# 
+# # Check if renv has been initialized in the project
+# if (!file.exists("renv/activate.R")) {
+#   message("renv has not been initiated in this project. Initializing now...")
+#   renv::init()  # Initialize renv if not already set up
+# } else {
+#   source("renv/activate.R")  # Activate the renv environment
+#   message("renv is activated.")
+# }
+# 
+# # Check for the existence of renv.lock and restore the environment
+# if (file.exists("renv.lock")) {
+#   message("Restoring renv environment from renv.lock...")
+#   renv::restore()
+# } else {
+#   message("No renv.lock file found in the current directory. Skipping restore.")
+# }
+
+```
+
+## S.2 Install and load essential libraries.
+
+Install and load R packages. The following packages are required for this notebook:
+
+```{r install_libraries, message=FALSE, warning=FALSE}
+
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+# List of packages to check, install if needed, and load
+packages <- c("tidyverse", "lavaan", "semPlot", "corrplot")
+
+# Function to display a cat message
+cat_message <- function(pkg, message_type) {
+  if (message_type == "installed") {
+    cat(paste0(pkg, " has been installed successfully!\n"))
+  } else if (message_type == "loading") {
+    cat(paste0(pkg, " is already installed and has been loaded!\n"))
+  }
+}
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+    cat_message(pkg, "installed")
+  } else {
+    cat_message(pkg, "loading")
+  }
+  library(pkg, character.only = TRUE)
+}
+
+# If you are using renv, you can snapshot the renv after loading all the packages.
+
+#renv::snapshot()
+```
+
+# Data Access and Preparation
+SEMs are particularly suitable for studying behavioural patterns in animals. In this example, we will use an adaptation of a dataset produced by the FishID project, Australia's largest solution for automated identification of fish species. 
+
+The dataset contains tracking information of fish individuals swimming in a underwater pipe located in a natural estuary. The data was collected using an underwater camera and an AI algorithm with a fish tracker enabled. You do not need to use AI or cameras to collect data for SEMs; as long as you have continous data of individuals and their behaviours, you can use SEMs to understand the relationships between variables.
+
+## 1 Load the data
+The dataset is stored in a CSV file. We will load the data and check the first few rows to understand the structure of the data.
+```
