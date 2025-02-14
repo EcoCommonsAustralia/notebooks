@@ -1,0 +1,164 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# How to determine extent of occurrence (EOO) and area of occupancy (AOO) for a species
+
+Author details: Dr Jenna Wraith and Dr Sebastian Lopez Marcano
+
+Editor details: Xiang Zhao
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
+
+Date: March 2025
+
+# Script and data info:
+
+This notebook, developed by the EcoCommons team, showcases how to determine the extent of occurrence (EOO) and area of occupancy (AOO) for a species. 
+
+# Introduction
+## Extent of occurrence (EOO)
+Extent of Occurrence (EOO): The EOO represents the total geographic spread of a species. It’s defined as the area within the smallest convex polygon that encompasses all known occurrences of the species. Ecologically, EOO is a critical metric for assessing the distributional range of a species and is used in conservation to estimate risk. Species with a small EOO are more likely to be susceptible to extinction because their populations are more likely to be impacted by habitat changes, climate fluctuations, and human activities across their limited range.
+
+## Area of Occupancy (AOO)
+The AOO is a more fine-scale measurement of where a species is actually found within its range. This metric accounts for the specific locations where the species occupies habitat within the broader EOO and is calculated using a grid-based approach, typically with cells sized to 2x2 km as per IUCN standards. AOO provides insight into habitat specificity, population density, and the effects of habitat fragmentation. Lower AOO values imply that the species is confined to smaller, often isolated patches, which could increase its vulnerability.
+
+## Species of interest: Cycas megacarpa
+Cycas megacarpa is a species of cycad native to Queensland, Australia that is listed as 'Endangered' on the 
+EPBC Act Listing Status (2000). Calculating the EOO and AOO for species like Cycas megacarpa is essential for understanding their conservation status and identifying potential threats to remaining populations. Given its status, websites such as Atlas of Living Australia (ALA) limit the display of occurrence data to protect the species from over-collection and habitat disturbance. 
+
+## A short explanation of the notebook
+This notebook calculates two important ecological metrics, the Extent of Occurrence (EOO) and the Area of Occupancy (AOO), for the species Cycas megacarpa. These metrics are commonly used to assess species conservation status by providing information on the geographic range and area occupied by the species.
+
+# Set-up: R Environment and Packages
+For this notebook we are going to use ConR, which includes a EOO.computing and AOO.computing functions to calculate the EOO and AOO for a species. Similarly to other EcoCommons notebooks, we will use the `googledrive` package to download the sample dataset for this notebook. 
+
+
+#Calculate Extent of Occurrence (EOO): EOO is calculated using the EOO.computing function from the ConR package. This metric represents the area within the smallest convex polygon that can encompass all known occurrence points of the species. If the EOO.computing function returns a null polygon, the script generates a convex hull as an alternative.
+#Calculate Area of Occupancy (AOO): AOO is computed with the AOO.computing function, which uses a grid approach to calculate the area actually occupied by the species. In this script, a 2x2 km cell grid is used to estimate the AOO.
+#Visualise Results: A map is generated with ggplot2, showing the land area, species occurrence points, and the EOO polygon (convex hull). The EOO and AOO values are displayed in an annotation box on the map.
+#Save Map Output: Finally, the map is saved as a PNG file, allowing users to share or document the results.
+
+```{r setup workspace}
+``{r install_libraries, message=FALSE, warning=FALSE}
+
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+# List of packages to check, install if needed, and load
+packages <- c("googledrive", "lwgeom", "ggplot" , "ggspatial", "ConR", "sf", "devtools")
+
+# Function to display a cat message
+cat_message <- function(pkg, message_type) {
+  if (message_type == "installed") {
+    cat(paste0(pkg, " has been installed successfully!\n"))
+  } else if (message_type == "loading") {
+    cat(paste0(pkg, " is already installed and has been loaded!\n"))
+  }
+}
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+    cat_message(pkg, "installed")
+  } else {
+    cat_message(pkg, "loading")
+  }
+  library(pkg, character.only = TRUE)
+}
+
+# De-authenticate Google Drive to access public files
+drive_deauth()
+
+# If you are using renv, you can snapshot the renv after loading all the packages.
+
+#renv::snapshot()
+```
+
+
+
+
+
+
+#install.packages("devtools")
+#devtools::install_github("gdauby/ConR")
+#install.packages("lwgeom")
+
+setwd("/Users/jennawraith/Desktop/EC/Notebooks")
+# Load your data
+MyData <- read.csv("Cycas_megacarpa_eoo.csv")
+species_points <- st_as_sf(MyData, coords = c("Longitude", "Latitude"), crs = 4326)
+
+# Calculate EOO (Extent of Occurrence)
+EOO_polygon <- EOO.computing(MyData, export_shp = FALSE)
+
+# Check if the spatial polygon is NULL
+if (is.null(EOO_polygon$spatial.polygon_1)) {
+  # Create the convex hull from the species points
+  eoo_hull <- st_convex_hull(st_union(st_geometry(species_points)))
+  # Save the convex hull as an sf object
+  EOO_sf <- st_sf(geometry = eoo_hull)
+} else {
+  # Convert the existing polygon to an sf object if available
+  EOO_sf <- st_as_sf(EOO_polygon$spatial.polygon_1)
+}
+
+# Calculate AOO (Area of Occupancy)
+AOO_result <- AOO.computing(
+  MyData,
+  cell_size_AOO = 2,
+  nbe.rep.rast.AOO = 0,
+  parallel = FALSE,
+  NbeCores = 2,
+  show_progress = TRUE,
+  export_shp = FALSE,
+  proj_type = "cea"
+)
+aoo_value <- AOO_result$aoo
+
+# Extract the EOO value
+eoo_value <- EOO_polygon$eoo
+
+# Get the bounding box for the species points
+bbox <- st_bbox(species_points)
+
+# Create the ggplot with the layers
+ggplot() +
+  # Plot the land layer
+  geom_sf(data = land, fill = "lightgreen", color = "darkgreen") +
+  # Plot the EOO convex hull
+  geom_sf(data = EOO_sf, fill = NA, color = "red", linetype = "dashed", size = 3) +
+  # Plot the species points
+  geom_sf(data = species_points, color = "blue", size = 2, shape = 16) +
+  
+  # Set coordinate limits based on the bounding box
+  coord_sf(xlim = c(bbox["xmin"] - 0.5, bbox["xmax"] + 0.5), 
+           ylim = c(bbox["ymin"] - 0.5, bbox["ymax"] + 0.5), expand = FALSE) +
+  
+  # Add EOO and AOO values as an annotation box
+  annotate("label", 
+           x = bbox["xmax"] - 0.2, 
+           y = bbox["ymax"] - 0.2, 
+           label = paste("EOO:", round(eoo_value, 2), "km²\nAOO:", round(aoo_value, 2), "km²"), 
+           size = 5, 
+           fill = "white", 
+           color = "black", 
+           fontface = "bold", 
+           label.size = 0) +  # Removes the border around the label
+  
+  # Set gridlines at 2 km intervals
+  scale_x_continuous(breaks = seq(floor(bbox["xmin"]), ceiling(bbox["xmax"]), by = 1)) +
+  scale_y_continuous(breaks = seq(floor(bbox["ymin"]), ceiling(bbox["ymax"]), by = 1)) +
+  
+  # Customize the theme
+  theme_minimal() +
+  labs(title = "Extent of Occurrence (EOO) + Area of Occupancy (AOO) for Cycas megacarpa") +
+  theme(legend.position = "none")  # Remove legend if not needed
+
+#save the plot as png
+# Define the file path for saving the plot
+file_path_png <- "shapesIUCN/Cycas_megacarpa_EOO_plot.png"
+
+# Save the plot as a PNG
+ggsave(file_path_png, width = 10, height = 8, dpi = 300)
