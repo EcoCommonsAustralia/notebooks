@@ -23,30 +23,32 @@ Extent of Occurrence (EOO): The EOO represents the total geographic spread of a 
 ## Area of Occupancy (AOO)
 The AOO is a more fine-scale measurement of where a species is actually found within its range. This metric accounts for the specific locations where the species occupies habitat within the broader EOO and is calculated using a grid-based approach, typically with cells sized to 2x2 km as per IUCN standards. AOO provides insight into habitat specificity, population density, and the effects of habitat fragmentation. Lower AOO values imply that the species is confined to smaller, often isolated patches, which could increase its vulnerability.
 
-## Species of interest: Cycas megacarpa
-Cycas megacarpa is a species of cycad native to Queensland, Australia that is listed as 'Endangered' on the 
-EPBC Act Listing Status (2000). Calculating the EOO and AOO for species like Cycas megacarpa is essential for understanding their conservation status and identifying potential threats to remaining populations. Given its status, websites such as Atlas of Living Australia (ALA) limit the display of occurrence data to protect the species from over-collection and habitat disturbance. 
-
 ## A short explanation of the notebook
 This notebook calculates two important ecological metrics, the Extent of Occurrence (EOO) and the Area of Occupancy (AOO), for the species Cycas megacarpa. These metrics are commonly used to assess species conservation status by providing information on the geographic range and area occupied by the species.
 
 # Set-up: R Environment and Packages
 For this notebook we are going to use ConR, which includes a EOO.computing and AOO.computing functions to calculate the EOO and AOO for a species. Similarly to other EcoCommons notebooks, we will use the `googledrive` package to download the sample dataset for this notebook. 
 
-
 #Calculate Extent of Occurrence (EOO): EOO is calculated using the EOO.computing function from the ConR package. This metric represents the area within the smallest convex polygon that can encompass all known occurrence points of the species. If the EOO.computing function returns a null polygon, the script generates a convex hull as an alternative.
 #Calculate Area of Occupancy (AOO): AOO is computed with the AOO.computing function, which uses a grid approach to calculate the area actually occupied by the species. In this script, a 2x2 km cell grid is used to estimate the AOO.
 #Visualise Results: A map is generated with ggplot2, showing the land area, species occurrence points, and the EOO polygon (convex hull). The EOO and AOO values are displayed in an annotation box on the map.
 #Save Map Output: Finally, the map is saved as a PNG file, allowing users to share or document the results.
 
-```{r setup workspace}
-``{r install_libraries, message=FALSE, warning=FALSE}
+```{r install_libraries}
+
+# Set the workspace to the current working directory
+#setwd("") # Uncomment and replace the path below with your own working directory if needed:
+
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
+
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
 
 # Set CRAN mirror
 options(repos = c(CRAN = "https://cran.rstudio.com/"))
 
 # List of packages to check, install if needed, and load
-packages <- c("googledrive", "lwgeom", "ggplot" , "ggspatial", "ConR", "sf", "devtools")
+packages <- c("googledrive", "lwgeom", "ggplot" , "ggspatial", "sf", "devtools")
 
 # Function to display a cat message
 cat_message <- function(pkg, message_type) {
@@ -68,28 +70,70 @@ for (pkg in packages) {
   library(pkg, character.only = TRUE)
 }
 
+# Install ConR from GitHub if not already installed
+if (!requireNamespace("ConR", quietly = TRUE)) {
+  devtools::install_github("gdauby/ConR")
+  cat_message("ConR", "installed")
+} else {
+  cat_message("ConR", "loading")
+}
+library(ConR)
+
 # De-authenticate Google Drive to access public files
 drive_deauth()
 
-# If you are using renv, you can snapshot the renv after loading all the packages.
-
-#renv::snapshot()
 ```
 
+# Access the data 
+## Species of interest: Cycas megacarpa
+Cycas megacarpa is a species of cycad native to Queensland, Australia that is listed as 'Endangered' on the EPBC Act Listing Status (2000). Calculating the EOO and AOO for species like Cycas megacarpa is essential for understanding their conservation status and identifying potential threats to remaining populations. Given its status, websites such as Atlas of Living Australia (ALA) limit the display of occurrence data to protect the species from over-collection and habitat disturbance. 
 
+The occurrence data for Cycas megacarpa is sourced from the Atlas of Living Australia (ALA) and is provided as a CSV file. The dataset includes the latitude and longitude coordinates of species occurrences, which are used to calculate the EOO and AOO metrics.
 
+```{r download_data}
 
+# Define Google Drive file ID and the path for downloading
+data_file_id <- "1Wc50TQSbPV2xSl10nmFoUvzhiQrzBhqn" # Replace with the actual file ID of the CSV file
 
+# Define workspace path
+datafolder_path <- file.path(workspace)
 
-#install.packages("devtools")
-#devtools::install_github("gdauby/ConR")
-#install.packages("lwgeom")
+# Create a local path for the CSV file
+csv_file_path <- file.path(datafolder_path, "raster_preparation.csv")
 
-setwd("/Users/jennawraith/Desktop/EC/Notebooks")
-# Load your data
-MyData <- read.csv("Cycas_megacarpa_eoo.csv")
+# Function to download a CSV file with progress messages
+download_csv_file <- function(file_id, file_path) {
+  cat("Downloading CSV file...\n")
+  drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
+  cat("Downloaded CSV file to:", file_path, "\n")
+}
+
+# Create local directory if it doesn't exist
+if (!dir.exists(datafolder_path)) {
+  dir.create(datafolder_path, recursive = TRUE)
+}
+
+# Download the CSV file
+cat("Starting to download the CSV file...\n")
+download_csv_file(data_file_id, csv_file_path)
+
+cat("CSV file is ready for use at:", csv_file_path, "\n")
+
+```
+
+# Data Preparation
+## Load the data and convert it to an sf object
+The occurrence data for Cycas megacarpa is loaded from the CSV file and converted to an sf object using the `st_as_sf` function from the `sf` package. The latitude and longitude columns are specified as the coordinates for the sf object. The coordinate reference system (CRS) is set to EPSG:4326 (WGS 84) to ensure the correct spatial representation of the data.
+
+```{r load_data}
 species_points <- st_as_sf(MyData, coords = c("Longitude", "Latitude"), crs = 4326)
+```
 
+# Calculate Extent of Occurrence (EOO)
+## Calculate the EOO using the EOO.computing function
+The EOO for Cycas megacarpa is calculated using the `EOO.computing` function from the `ConR` package. The function takes the species occurrence points as input and returns the EOO polygon and EOO value. If the EOO polygon is NULL, a convex hull is generated from the species points as an alternative representation of the EOO.
+
+```{r calculate_eoo}
 # Calculate EOO (Extent of Occurrence)
 EOO_polygon <- EOO.computing(MyData, export_shp = FALSE)
 
@@ -103,6 +147,9 @@ if (is.null(EOO_polygon$spatial.polygon_1)) {
   # Convert the existing polygon to an sf object if available
   EOO_sf <- st_as_sf(EOO_polygon$spatial.polygon_1)
 }
+```
+
+# Calculate Area of Occupancy (AOO)
 
 # Calculate AOO (Area of Occupancy)
 AOO_result <- AOO.computing(
