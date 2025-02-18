@@ -29,10 +29,6 @@ This notebook calculates two important ecological metrics, the Extent of Occurre
 # Set-up: R Environment and Packages
 For this notebook we are going to use ConR, which includes a EOO.computing and AOO.computing functions to calculate the EOO and AOO for a species. Similarly to other EcoCommons notebooks, we will use the `googledrive` package to download the sample dataset for this notebook. 
 
-#Calculate Extent of Occurrence (EOO): EOO is calculated using the EOO.computing function from the ConR package. This metric represents the area within the smallest convex polygon that can encompass all known occurrence points of the species. If the EOO.computing function returns a null polygon, the script generates a convex hull as an alternative.
-#Calculate Area of Occupancy (AOO): AOO is computed with the AOO.computing function, which uses a grid approach to calculate the area actually occupied by the species. In this script, a 2x2 km cell grid is used to estimate the AOO.
-#Visualise Results: A map is generated with ggplot2, showing the land area, species occurrence points, and the EOO polygon (convex hull). The EOO and AOO values are displayed in an annotation box on the map.
-#Save Map Output: Finally, the map is saved as a PNG file, allowing users to share or document the results.
 
 ```{r install_libraries}
 
@@ -225,7 +221,7 @@ ggplot() +
   
   # Customize the theme
   theme_minimal() +
-  labs(title = "Extent of Occurrence (EOO) + Area of Occupancy (AOO) for Cycas megacarpa") +
+  labs(title = "EOO and AOO for Cycas megacarpa") +
   theme(legend.position = "none")  # Remove legend if not needed
 
 ```
