@@ -48,7 +48,7 @@ options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and heig
 options(repos = c(CRAN = "https://cran.rstudio.com/"))
 
 # List of packages to check, install if needed, and load
-packages <- c("googledrive", "lwgeom", "ggplot" , "ggspatial", "sf", "devtools")
+packages <- c("googledrive", "lwgeom", "ggplot2" , "ggspatial", "sf", "devtools")
 
 # Function to display a cat message
 cat_message <- function(pkg, message_type) {
@@ -77,11 +77,12 @@ if (!requireNamespace("ConR", quietly = TRUE)) {
 } else {
   cat_message("ConR", "loading")
 }
+
+# Load the ConR package
 library(ConR)
 
 # De-authenticate Google Drive to access public files
 drive_deauth()
-
 ```
 
 # Access the data 
@@ -92,20 +93,21 @@ The occurrence data for Cycas megacarpa is sourced from the Atlas of Living Aust
 
 ```{r download_data}
 
-# Define Google Drive file ID and the path for downloading
-data_file_id <- "1Wc50TQSbPV2xSl10nmFoUvzhiQrzBhqn" # Replace with the actual file ID of the CSV file
+# De-authenticate Google Drive to access public files
+drive_deauth()
 
-# Define workspace path
+# Define Google Drive file ID and the path for downloading
+zip_file_id <- "1gmXK4ewyE35wrjzGD2d5WbL-H8pApdPv" # Replace with the actual file ID of the zipped file
 datafolder_path <- file.path(workspace)
 
-# Create a local path for the CSV file
-csv_file_path <- file.path(datafolder_path, "raster_preparation.csv")
+# Create a local path for the zipped file
+zip_file_path <- file.path(datafolder_path, "Cycas_megacarpa_eoo.zip")
 
-# Function to download a CSV file with progress messages
-download_csv_file <- function(file_id, file_path) {
-  cat("Downloading CSV file...\n")
+# Function to download a file with progress messages
+download_zip_file <- function(file_id, file_path) {
+  cat("Downloading zipped file...\n")
   drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
-  cat("Downloaded CSV file to:", file_path, "\n")
+  cat("Downloaded zipped file to:", file_path, "\n")
 }
 
 # Create local directory if it doesn't exist
@@ -113,11 +115,14 @@ if (!dir.exists(datafolder_path)) {
   dir.create(datafolder_path, recursive = TRUE)
 }
 
-# Download the CSV file
-cat("Starting to download the CSV file...\n")
-download_csv_file(data_file_id, csv_file_path)
+# Download the zipped file
+cat("Starting to download the zipped file...\n")
+download_zip_file(zip_file_id, zip_file_path)
 
-cat("CSV file is ready for use at:", csv_file_path, "\n")
+# Unzip the downloaded file
+cat("Unzipping the file...\n")
+unzip(zip_file_path, exdir = datafolder_path)
+cat("Unzipped files to folder:", datafolder_path, "\n")
 
 ```
 
@@ -126,7 +131,14 @@ cat("CSV file is ready for use at:", csv_file_path, "\n")
 The occurrence data for Cycas megacarpa is loaded from the CSV file and converted to an sf object using the `st_as_sf` function from the `sf` package. The latitude and longitude columns are specified as the coordinates for the sf object. The coordinate reference system (CRS) is set to EPSG:4326 (WGS 84) to ensure the correct spatial representation of the data.
 
 ```{r load_data}
+
+# Load the occurrence data for Cycas megacarpa
+MyData <- read.csv('Cycas_megacarpa_eoo.csv')
+
 species_points <- st_as_sf(MyData, coords = c("Longitude", "Latitude"), crs = 4326)
+
+# Head of the species points data
+head(species_points)
 ```
 
 # Calculate Extent of Occurrence (EOO)
@@ -134,6 +146,7 @@ species_points <- st_as_sf(MyData, coords = c("Longitude", "Latitude"), crs = 43
 The EOO for Cycas megacarpa is calculated using the `EOO.computing` function from the `ConR` package. The function takes the species occurrence points as input and returns the EOO polygon and EOO value. If the EOO polygon is NULL, a convex hull is generated from the species points as an alternative representation of the EOO.
 
 ```{r calculate_eoo}
+
 # Calculate EOO (Extent of Occurrence)
 EOO_polygon <- EOO.computing(MyData, export_shp = FALSE)
 
@@ -150,7 +163,11 @@ if (is.null(EOO_polygon$spatial.polygon_1)) {
 ```
 
 # Calculate Area of Occupancy (AOO)
+## Calculate the AOO using the AOO.computing function
+The AOO for Cycas megacarpa is calculated using the `AOO.computing` function from the `ConR` package. The function takes the species occurrence points as input and returns the AOO value based on a 2x2 km grid. 
+The AOO value represents the area actually occupied by the species within the grid cells.
 
+```{r calculate_aoo}
 # Calculate AOO (Area of Occupancy)
 AOO_result <- AOO.computing(
   MyData,
@@ -162,11 +179,19 @@ AOO_result <- AOO.computing(
   export_shp = FALSE,
   proj_type = "cea"
 )
-aoo_value <- AOO_result$aoo
+```
 
-# Extract the EOO value
-eoo_value <- EOO_polygon$eoo
+# Visualise and analyse the results
+## Visualise the EOO, AOO, and species occurrence points
+Now, to conclude this short notebook, we will visualise the calculated EOO, AOO, and the species occurrence points on a map using `ggplot2`. The map will display the land area, species points, EOO polygon (or convex hull), and include annotations for the EOO and AOO values. The map will provide a visual representation of the species distribution and the extent of its occurrence.
 
+```{r print aoo and eoo values}
+# Extract the EOO and AOO values
+print(paste("The EOO value is:", EOO_polygon$eoo, "km²"))
+print(paste("The AOO value is:", AOO_result$aoo, "km²"))
+```
+
+```{r plot_map}
 # Get the bounding box for the species points
 bbox <- st_bbox(species_points)
 
@@ -187,7 +212,7 @@ ggplot() +
   annotate("label", 
            x = bbox["xmax"] - 0.2, 
            y = bbox["ymax"] - 0.2, 
-           label = paste("EOO:", round(eoo_value, 2), "km²\nAOO:", round(aoo_value, 2), "km²"), 
+           label = paste("EOO:", round(EOO_polygon$eoo, 2), "km²\nAOO:", round(AOO_result$aoo, 2), "km²"), 
            size = 5, 
            fill = "white", 
            color = "black", 
@@ -203,9 +228,6 @@ ggplot() +
   labs(title = "Extent of Occurrence (EOO) + Area of Occupancy (AOO) for Cycas megacarpa") +
   theme(legend.position = "none")  # Remove legend if not needed
 
-#save the plot as png
-# Define the file path for saving the plot
-file_path_png <- "shapesIUCN/Cycas_megacarpa_EOO_plot.png"
+```
 
-# Save the plot as a PNG
-ggsave(file_path_png, width = 10, height = 8, dpi = 300)
+# Conclusion
