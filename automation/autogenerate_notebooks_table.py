@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from typing import Optional, List
 from enum import Enum
 
-NOTEBOOKS_ROOT_PATH = "https://github.com/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks"
-NOTEBOOKS_COLAB_ROOT_PATH = "github/EcoCommons-Australia-2024-2026/notebooks/blob/main/notebooks"
+NOTEBOOKS_ROOT_PATH = "https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks"
+NOTEBOOKS_COLAB_ROOT_PATH = "github/ecocommonsaustralia/notebooks/blob/main/notebooks"
 
 WARNING_HEADER = [
     "<!---",
@@ -26,7 +26,7 @@ SKILLS_SECTION_HEADER = "## 🌍 Geo/ecological skills ({} notebooks)"
 
 NOTEBOOK_LINK_PATTERN = "[{}]({}/{})"
 OPEN_IN_COLAB_BADGE_PATTERN = "[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/{}/{})"
-ECONOTEBOOK_BADGE_PATTERN = "[![EcoNotebooks Blog](https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebook_icon.png)]({})"
+ECONOTEBOOK_BADGE_PATTERN = "[![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)]({})"
 GITHUB_BADGE_PATTERN = "[![GitHub](https://badges.aleen42.com/src/github.svg)]({})"
 ARXIV_BADGE_PATTERN = "[![arXiv](https://img.shields.io/badge/arXiv-{}-b31b1b.svg)](https://arxiv.org/abs/{})"
 YOUTUBE_BADGE_PATTERN = "[![YouTube](https://img.shields.io/badge/YouTube-Video-red)]({})"
@@ -83,9 +83,9 @@ class TableEntry:
         notebook_link = NOTEBOOK_LINK_PATTERN.format(self.display_name, NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}")
         notebook_file_links = (
         f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name}">'
-        f'<img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a><br>'
+        f'<img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a><br>'
         f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name.replace(".ipynb", "")}.qmd">'
-        f'<img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/quartomd.png" width="40%"></a>'
+        f'<img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a>'
 )
 
         open_in_colab_badge = OPEN_IN_COLAB_BADGE_PATTERN.format(NOTEBOOKS_COLAB_ROOT_PATH, f"{self.notebook_name}")
