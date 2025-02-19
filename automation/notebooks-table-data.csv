@@ -1,4 +1,4 @@
 display_name, notebook_name, econotebook_blogpost_path, youtube_video_path, github_repository_path, arxiv_index, should_open_in_sagemaker_labs, readme_section
-GLM,EC_GLM.ipynb,https://ecocommons-australia-2024-2026.github.io/notebook-blog/notebooks/EC_GLM/EC_GLM.html,, , , False, models
-Marxan Connect,,https://ecocommons-australia-2024-2026.github.io/notebook-blog/notebooks/sp/ecocommons-marxan-integration-poc.html,,https://github.com/EcoCommons-Australia-2024-2026/ecocommons-marxan-integration-poc.git,, False, skills
-Environmental Data Preparation (Raster),raster_preparation.ipynb,https://ecocommons-australia-2024-2026.github.io/notebook-blog/notebooks/data_prep/raster_preparation.html,,,, False, skills
+GLM,EC_GLM.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/EC_GLM/EC_GLM.html,, , , False, models
+Marxan Connect,,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/sp/ecocommons-marxan-integration-poc.html,,https://github.com/EcoCommons-Australia-2024-2026/ecocommons-marxan-integration-poc.git,, False, skills
+Environmental Data Preparation (Raster),raster_preparation.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/raster_preparation.html,,,, False, skills
