@@ -1,6 +1,13 @@
-::: {align="center"}
-<p><a align="center" href="" target="_blank"> <img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner" width="850"/> </a></p>
-
+<div align="center">
+  <p>
+    <a align="center" href="" target="_blank">
+      <img
+        width="850"
+        src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner"
+      >
+    </a>
+  </p>
+  <br>
 <br>
 
 [📔Notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks) \| [🗒️Blog](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site) \| [🌿EcoCommons Platform](https://www.ecocommons.org.au) \| [X](https://twitter.com/EcoCommonsAus) \| [⏰LinkedIn](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
