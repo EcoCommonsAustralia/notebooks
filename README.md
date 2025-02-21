@@ -1,17 +1,13 @@
-<div align="center">
-  <p>
-    <a align="center" href="" target="_blank">
-      <img
-        width="850"
-        src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner"
-      >
-    </a>
-  </p>
-  <br>
+::: {align="center"}
+<p><a align="center" href="" target="_blank"> <img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner" width="850"/> </a></p>
+
+<br>
 
 [📔Notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks) \| [🗒️Blog](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site) \| [🌿EcoCommons Platform](https://www.ecocommons.org.au) \| [X](https://twitter.com/EcoCommonsAus) \| [⏰LinkedIn](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
 
-<br> \## 🐢 hello
+<br>
+
+## 🐢 Hello
 
 EcoCommons is a national digital platform hosted by the Queensland Cyber Infrastructure Foundation and supported by the Australian Research Data Commons. The platform provides a range of services to support the Australian ecological research community, including access to data and ecological modelling tools.
 
@@ -25,12 +21,12 @@ This repository contains examples and tutorials with the objective of mirroring 
 ## 🐨 Species Distribution Modelling (1 notebooks)
 | **notebook** | **notebook file** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |
 |:------------:|:---------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|
-| [GLM](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a><br><a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/EC_GLM/EC_GLM.html)  |  |
+| [GLM](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/EC_GLM/EC_GLM.html)  |  |
 ## 🌍 Geo/ecological skills (2 notebooks)
 | **notebook** | **notebook file** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |
 |:------------:|:---------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|
-| [Marxan Connect](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a><br><a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/sp/ecocommons-marxan-integration-poc.html)  | [![GitHub](https://badges.aleen42.com/src/github.svg)](https://github.com/EcoCommons-Australia-2024-2026/ecocommons-marxan-integration-poc.git) |
-| [Environmental Data Preparation (Raster)](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a><br><a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/raster_preparation.html)  |  |
+| [Marxan Connect](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/sp/ecocommons-marxan-integration-poc.html)  | [![GitHub](https://badges.aleen42.com/src/github.svg)](https://github.com/EcoCommons-Australia-2024-2026/ecocommons-marxan-integration-poc.git) |
+| [Environmental Data Preparation (Raster)](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/raster_preparation.html)  |  |
 <!--- AUTOGENERATED-NOTEBOOKS-TABLE -->
 
 ## 🐛 Bugs and 🫡 Contribution
@@ -52,3 +48,4 @@ If you use EcoCommons in your research, please cite the platform as follows:
 > EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
 
 You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
+:::

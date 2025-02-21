@@ -82,10 +82,11 @@ class TableEntry:
     def format(self) -> str:
         notebook_link = NOTEBOOK_LINK_PATTERN.format(self.display_name, NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}")
         notebook_file_links = (
-        f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name}">'
-        f'<img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a><br>'
-        f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name.replace(".ipynb", "")}.qmd">'
-        f'<img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a>'
+    f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name}">'
+    f'<img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>'
+    f'&nbsp;&nbsp;'
+    f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name.replace(".ipynb", "")}.qmd">'
+    f'<img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a>'
 )
 
         open_in_colab_badge = OPEN_IN_COLAB_BADGE_PATTERN.format(NOTEBOOKS_COLAB_ROOT_PATH, f"{self.notebook_name}")
