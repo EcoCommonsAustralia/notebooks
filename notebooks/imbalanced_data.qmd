@@ -1,0 +1,1544 @@
+---
+title: "Imbalanced Data"
+bibliography: imbalanced_data_ref.bib
+csl: apa.csl
+---
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Imbalanced species data, background points, and weighting methods
+
+Author details: Xiang Zhao
+
+Editor details: Dr Sebastian Lopez Marcano
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
+
+Date: February 2025
+
+# Script and data info:
+
+This notebook, developed by the EcoCommons team, showcases how to deal with imbalanced species datasets (presence and absence data) with resampling methods.
+
+# Introduction
+
+When building species distribution models, it is common to encounter imbalanced datasets. This may involve a large number of presence records and relatively few absence records, or, in the case of rare species, a substantial number of absence records but only a limited number of presence records.
+
+Using imbalanced datasets making models and predictions can result in many unintended issues, such as bias towards the majority class, misleading performance metrics, poor sensitivity for the minority class, etc. Because the model has more information from the prevalent class than the rare events [@menardi2014training]. Thus, we need to deal with imbalanced datasets.
+
+# Objectives
+
+1.  Understand what are imbalanced datasets and the influence of it on the performance of models.
+2.  Understand using weigthing methods to improve the issue of imbalanced datasets.
+3.  Know how to generate background points with two methods: completely random and buffered-random.
+4.  Learn how to compare the performance of models using difference methods of producing background points and pseudo absence data.
+
+# **Workflow Overview**:
+
+-   Set the working directory and load the necessary R packages (`dismo`, `ggplot2`, `raster`, `googledrive`, `sp`, `dplyr`, `terra`). Create directories to store raw data files.
+
+-   Data Download: Download prepared imbalanced dataset from our Google Drive.
+
+-   
+
+-   Model evaluation and comparison.
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
+
+If you have any corrections or suggestions to improve the effeciengy, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+# Set-up: R Environment and Packages
+
+Some housekeeping before we start. This process might take some time as many packages needed to be installed.
+
+## S.1 Set the working directory and create a folder for data.
+
+Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
+
+```{r workspace}
+
+# Set the workspace to the current working directory
+
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
+
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
+
+```
+
+Ideally, you would use the **`renv`** package to create an isolated environment for installing all the required R packages used in this notebook. However, since installing **`renv`** and its dependencies can be time-consuming, we recommend trying this after the workshop.
+
+```{r renv}
+
+# # Ensure "renv" package is installed
+# if (!requireNamespace("renv", quietly = TRUE)) {
+#   install.packages("renv")
+# }
+# 
+# # Check if renv has been initialized in the project
+# if (!file.exists("renv/activate.R")) {
+#   message("renv has not been initiated in this project. Initializing now...")
+#   renv::init()  # Initialize renv if not already set up
+# } else {
+#   source("renv/activate.R")  # Activate the renv environment
+#   message("renv is activated.")
+# }
+# 
+# # Check for the existence of renv.lock and restore the environment
+# if (file.exists("renv.lock")) {
+#   message("Restoring renv environment from renv.lock...")
+#   renv::restore()
+# } else {
+#   message("No renv.lock file found in the current directory. Skipping restore.")
+# }
+
+```
+
+## S.2 Install and load essential libraries.
+
+Install and load R packages.
+
+```{r install_libraries, message=FALSE, warning=FALSE}
+
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+# List of packages to check, install if needed, and load
+packages <- c("dplyr", "reshape2", "terra", "sf", "googledrive", "ggplot2", "corrplot", 
+              "pROC", "dismo", "spatstat.geom", "patchwork", "biomod2", "PRROC",
+              "leaflet", "car", "gridExtra", "htmltools", "RColorBrewer")
+
+# Function to display a cat message
+cat_message <- function(pkg, message_type) {
+  if (message_type == "installed") {
+    cat(paste0(pkg, " has been installed successfully!\n"))
+  } else if (message_type == "loading") {
+    cat(paste0(pkg, " is already installed and has been loaded!\n"))
+  }
+}
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+    cat_message(pkg, "installed")
+  } else {
+    cat_message(pkg, "loading")
+  }
+  library(pkg, character.only = TRUE)
+}
+
+
+# If you are using renv, you can snapshot the renv after loading all the packages.
+
+#renv::snapshot()
+
+```
+
+## S.3 Download case study datasets
+
+We have prepared the following data and uploaded them to our Google Drive for your use:
+
+-   **Species occurrence data:** Shapefile format (.shp)
+
+-   **Environmental variables:** Stacked Raster format (.tif)
+
+-   **Study area boundary:** Shapefile format (.shp)
+
+```{r download_data, message=FALSE}
+
+# De-authenticate Google Drive to access public files
+drive_deauth()
+
+# Define Google Drive file ID and the path for downloading
+zip_file_id <- "1GXOA330Ow2F7NqxdhuBfbz0a-CMT8DTb" # Replace with the actual file ID of the zipped file
+datafolder_path <- file.path(workspace)
+
+# Create a local path for the zipped file
+zip_file_path <- file.path(datafolder_path, "imbalanced_data.zip")
+
+# Function to download a file with progress messages
+download_zip_file <- function(file_id, file_path) {
+  cat("Downloading zipped file...\n")
+  drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
+  cat("Downloaded zipped file to:", file_path, "\n")
+}
+
+# Create local directory if it doesn't exist
+if (!dir.exists(datafolder_path)) {
+  dir.create(datafolder_path, recursive = TRUE)
+}
+
+# Download the zipped file
+cat("Starting to download the zipped file...\n")
+download_zip_file(zip_file_id, zip_file_path)
+
+# Unzip the downloaded file
+cat("Unzipping the file...\n")
+unzip(zip_file_path, exdir = datafolder_path)
+cat("Unzipped files to folder:", datafolder_path, "\n")
+
+```
+
+# 1. Introduction
+
+## 1.1 Imbalanced binary species dataset
+
+Imbalanced datasets are not unusual. Shown as the figure below, a dataset is imbalanced if the classifications are not equally represented [@chawla2002smote].
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/imbalanceddataillustration.png)
+
+In the case of binary species records, presence and absence of a species, there is a common scenario of imbalanced datasets: **too many presences**. The phenomenon of **too many presences** in a species record dataset is quite dominant. In many open access biodiversity data portals, like the Global Biodiversity Information Facility (GBIF, <https://www.gbif.org/>) and Atlas of Living Australia (ALA, <https://www.ala.org.au/>), most of species only have present records.
+
+Undesired outcomes of using imbalanced dataset for modelling and prediction. For example, because presences dominate the training set, the model may be inclined to predict presence more often to minimize overall errors. You may see high **sensitivity** (true positive rate, correctly identifying most presences) but low **specificity** (true negative rate) [@johnson2012species]. Thus, dealing with imbalanced data before fitting SDMs is a necessary step.
+
+## 1.2 Weighting methods
+
+Many studies show that weighting methods can improve SDM performance [@zhang2020does; @benkendorf2023correcting; @chen2004using]. Applying class weights to SDM algorithm so the cost of misclassifying the minority class can be elevated relative to the cost of misclassifying the majority class [@benkendorf2023correcting].
+
+For example, if a dataset contains 900 presences and 100 absences, the ratio of classes is 9:1. To compensate for this imbalance, class weights can be assigned inversely proportional to class frequencies. In this case, a weight of 1 would be assigned to the majority class (presences) and a weight of 9 to the minority class (absences). This means the model incurs a 9× cost for misclassifying an absence relative to a presence. Such reweighting has been shown to improve the tradeoff between model sensitivity and specificity. Specifically, although increases in sensitivity are often accompanied by decreases in specificity and overall accuracy, applying these class weights can help achieve a better balance.
+
+In this notebook, we use a very simple weighting methods used by Elith et al. [@elith2006novel] and Valavi et al. [@valavi2022predictive]. The weights are generated by giving a weight of 1 to every presence location and give the weights to the background in a way that the sum of the weights for the presence and background samples are equal
+
+```{r sample_weighting}
+
+# Load necessary library
+library(dplyr)
+
+# 1️⃣ Create a toy dataset
+set.seed(123)  # For reproducibility
+
+# Example data frame with presence (1) and background/absence (0)
+train_data <- data.frame(
+  id = 1:10,
+  occrrnS = c(rep(1, 7), rep(0, 3))  # 7 presence points, 3 background points
+)
+
+# 2️⃣ Calculate weights
+# Count the number of presence and background points
+prNum <- sum(train_data$occrrnS == 1)
+bgNum <- sum(train_data$occrrnS == 0)
+
+# Apply weights: presence = 1, background = prNum / bgNum
+wt <- ifelse(train_data$occrrnS == 1, 1, prNum / bgNum)
+
+# Add weights to the data frame
+train_data <- train_data %>%
+  mutate(weight = wt)
+
+# 3️⃣ Display the final dataset with weights
+print(train_data)
+```
+
+7\*1 = 2.33 \*3 = 7
+
+## 1.3 Background points and Pseudo-absence points
+
+When you only have presence-only records for your study species, a common technique is to sample a relatively large number of random samples from the study area. We call these random samples as **background** or **pseudo-absence points [@valavi2022predictive].**
+
+There are two common approaches of generating background points. The first involves **randomly selecting background points** from the entire extent of the study area, allowing observations to be compared against the full range of environmental conditions within that area [@elith2006novel; @phillips2006maximum]. The second approach generates background points within a specified minimum-maximum radius around presence points-a method referred to as the **"disk" approach** in EcoCommons Platform.
+
+For more information about background points, pseudo-absence data, please check out our support article [**Absence Data**](https://support.ecocommons.org.au/support/solutions/articles/6000255789-absence-data)**.**
+
+## 1.4 Evaluation metric
+
+Several studies suggest how to evaluate the model performance of imbalanced dataset [@johnson2012species; @zhang2020does; @gaul2022modelling; @barbet2012selecting]. We select these to use in this notebook:
+
+| Metric | What it Tells You | Optimized When |
+|----|----|----|
+| **AUROC** (Area Under ROC Curve) | Ability of the model to distinguish between classes | When overall discriminative power is important |
+| **CORR** (Correlation between the observation in the occurrence dataset and the prediction) | Degree of correlation between predicted and observed values | When assessing the strength and direction of relationships |
+| **Precision** | Proportion of positive predictions that are correct | False positives need to be minimized |
+| **Recall** | Ability to capture actual positives | Missing positives has severe consequences |
+| **Specificity** | Ability to correctly identify negatives | False positives need to be minimized |
+| **F1-Score** | Balance between Precision and Recall | Both false positives and false negatives are costly |
+| **AUPR** (Area Under Precision-Recall Curve) | Performance on imbalanced datasets focusing on positive class | When positive class is rare and critical |
+| **TSS** (True Skill Statistic) | Skill of the model beyond random chance | When evaluating presence/absence models in ecological studies |
+
+: We also provide some information on model evaluation on our platform's [educational material page](https://support.ecocommons.org.au/support/solutions/articles/6000163162-model-evaluation).
+
+# 2 Overview and Conceptualisation
+
+## 2.1 Taxon, location, data and scale
+
+**Taxon:** Gang-gang Cockatoo (*Callocephalon fimbriatum*)
+
+![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/gang-gang_ala.jpeg){alt="Gang-gang"}
+
+Photographer: [Kym Nicolson, ALA](https://images.ala.org.au/image/details?imageId=2433eacc-ab65-483b-af69-1207eeb41463)
+
+**The Gang-gang Cockatoo (*Callocephalon fimbriatum*)** is endemic to southeastern Australia, with its distribution primarily spanning higher elevations and southern latitudes, including regions in New South Wales, Victoria, and the Australian Capital Territory. It inhabits temperate eucalypt forests and woodlands, favoring wet sclerophyll forests with dense acacia and banksia understories during the summer months, while moving to drier, open woodlands at lower altitudes in winter. The species is well-adapted to cooler climates and often forages in parks and suburban gardens.
+
+However, Gang-gang Cockatoos face significant threats, including habitat loss due to land clearing, wildfire damage, and competition for nesting hollows with other species. Climate change, particularly increased fire frequency and altered rainfall patterns, poses additional risks to their survival. The species suffered a drastic population decline, exacerbated by the 2019/2020 bushfires, which burned approximately 28–36% of its habitat, leading to a projected long-term decline in population size.
+
+**Location:** **Australian Capital Territory (study area)**
+
+**Spatial and temporal scales:** small (spatial) and static (temporal)
+
+## 2.2 Imbalanced biodiversity data
+
+Understanding your species is essential. This includes knowing their common names (which may include multiple names) and scientific name to ensure you collect the most comprehensive records available in open-access biodiversity data portals, such as the Atlas of Living Australia (ALA) or the Global Biodiversity Information Facility (GBIF).
+
+For this exercise, we have prepared a species occurrence data file in CSV format, which was downloaded from ALA. To make it accessible, we have stored this file in the EcoCommons Public Google Drive for you to download and use conveniently.
+
+```{r plotting_ganggang, warning=FALSE}
+
+# Read the shapefile for mountain ash occurrence point dataset
+gang_gang_act <- st_read("imbalanced_data/gang_gang_ACT.shp")
+
+
+# Create leaflet map
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+  
+  # Add the ACT layer with a distinct color
+  addPolygons(
+    data = ACT,
+    color = "lightblue",         # Border color of ACT polygon
+    weight = 1,                  # Border width
+    fillColor = "lightblue",      # Fill color of ACT
+    fillOpacity = 0.3,           # Transparency for fill
+    group = "ACT"
+  ) %>%
+  
+  # Add Gang-gang Cockatoo presence/absence points from the same shapefile
+  addCircleMarkers(
+    data = gang_gang_act,
+    color = ~ifelse(occrrnS == "PRESENT", "#11aa96", "#f6aa70"),  # Dynamically set color based on occrrnS
+    radius = 1,
+    weight = 0.5,
+    opacity = 1,
+    fillOpacity = 1,
+    group = "Gang-gang Cockatoo Records"
+  ) %>%
+  
+  setView(lng = 149, lat = -35.5, zoom = 8) %>% # Set the view to desired location
+  
+  # Add layer controls for toggling
+  addLayersControl(
+    overlayGroups = c("ACT", "Gang-gang Cockatoo Records"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  
+  # Add a legend for the layers
+  addControl(
+    html = "
+    <div style='background-color: white; padding: 10px; border-radius: 5px;'>
+      <strong>Legend</strong><br>
+      <i style='background: lightblue; width: 18px; height: 18px; display: inline-block; margin-right: 8px; opacity: 0.7;'></i>
+      ACT Boundary<br>
+      <i style='background: #11aa96; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;'></i>
+      Gang-gang Cockatoo Presence<br>
+      <i style='background: #f6aa70; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;'></i>
+      Gang-gang Cockatoo Absence
+    </div>
+    ",
+    position = "bottomright"
+  )
+```
+
+Now, let's calculate the amount of presences and absences in the dataset to see how imbalanced the dataset is.
+
+```{r sum_classification}
+
+# Calculate counts of presence (PRESENT) and absence (ABSENT)
+occ_counts <- table(gang_gang_act$occrrnS)
+
+# Convert to data frame for plotting
+occ_df <- as.data.frame(occ_counts)
+colnames(occ_df) <- c("Occurrence", "Count")
+
+# Create bar plot with custom colors
+ggplot(occ_df, aes(x = Occurrence, y = Count, fill = Occurrence)) +
+  geom_bar(stat = "identity") +
+  geom_text(
+    aes(label = Count),
+    vjust = -0.3,  
+    size = 3
+  ) +
+  labs(
+    title = "Presence vs Absence Count",
+    x = "Occurrence",
+    y = "Count"
+  ) +
+  scale_fill_manual(values = c("PRESENT" = "#11aa96", "ABSENT" = "#f6aa70")) +
+  theme_minimal()
+  
+
+```
+
+We can see the amount of Gang-gang Cockatoo absent records are way less than its present records.
+
+## 2.3 Environmental variables
+
+We did some tests and have selected 7 environmental variables to use in this case study. For more information on how to prepare environmental dataset and how to select environmental variables, please visit our notebooks: [Raster-preparation](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.qmd) and [GLM](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.qmd) (section 2.3-3.1).
+
+| Variable code | **Description** |
+|-----------------------------|-------------------------------------------|
+| AusClim_bioclim_03_9s_1976-2005 | **Isothermality** (BIO3) — Mean Diurnal Range / Annual Temp Range × 100 |
+| AusClim_bioclim_06_9s_1976-2005 | **Min Temperature of Coldest Month** (BIO6) |
+| AusClim_bioclim_09_9s_1976-2005 | **Mean Temperature of Driest Quarter** (BIO9) |
+| AusClim_bioclim_15_9s_1976-2005 | **Precipitation Seasonality** (Coefficient of Variation) (BIO15) |
+| AusClim_bioclim_24_9s_1976-2005 | **Annual Mean Moisture Index** (custom or derived bioclim variable) |
+| AusClim_bioclim_27_9s_1976-2005 | **Mean Moisture Index of Driest Quarter** (custom/derived) |
+| AusClim_bioclim_29_9s_1976-2005 | **Mean Radiation of Warmest Quarter** (custom/derived) |
+
+```{r env_data}
+
+# Load the stacked raster layers
+env_var_stack <- rast("imbalanced_data/ACT_raster.tif")
+
+# Select the desired layers by their names
+selected_layers <- c("AusClim_bioclim_03_9s_1976-2005",
+                     "AusClim_bioclim_06_9s_1976-2005",
+                     "AusClim_bioclim_09_9s_1976-2005",
+                     "AusClim_bioclim_15_9s_1976-2005",
+                     "AusClim_bioclim_24_9s_1976-2005",
+                     "AusClim_bioclim_27_9s_1976-2005",
+                     "AusClim_bioclim_29_9s_1976-2005")
+
+# Subset the raster stack
+selected_rasters <- env_var_stack[[selected_layers]]
+
+# Plot all selected layers
+plot(selected_rasters)
+```
+
+## 2.4 Model objective
+
+This notebook focuses not on creating a perfect Species Distribution Model (SDM) for the Gang-gang Cockatoo, but on comparing different methods for addressing class imbalance in binary species datasets and evaluating their effectiveness in improving SDM performance.
+
+# 3. When we have true-absence data
+
+## 3.1 Including true absence in the training dataset 
+
+Including true-absence data in training dataset is always recommended when such data is available [@vaclavik2009invasive]. In this study, we aim to explore the question: '**how much true-absence data is enough?**' **'Is more always better?'**
+
+To answer this question, we allocate 90%, 70%, 50% of the true absence data, along with an equal amount of present data to the test dataset, using the rest data as training dataset.
+
+Here, we can make a function to split the data as we want.
+
+```{r split_absence_function}
+
+split_occurrence_data_by_absence_test <- function(data, p_abs_test = 0.9, seed = 123) {
+  # Set seed for reproducibility
+  set.seed(seed)
+  
+  # Identify indices for ABSENT and PRESENT rows
+  abs_idx <- which(data$occrrnS == "ABSENT")
+  pres_idx <- which(data$occrrnS == "PRESENT")
+  
+  # Total number of ABSENT records
+  n_abs <- length(abs_idx)
+  
+  # Number of ABSENT records to include in test set
+  n_test_abs <- round(p_abs_test * n_abs)
+  
+  # Randomly sample n_test_abs indices from the ABSENT indices for the test set
+  test_abs_idx <- sample(abs_idx, n_test_abs)
+  
+  # For the test set, randomly sample an equal number of PRESENT records
+  test_pres_idx <- sample(pres_idx, n_test_abs)
+  
+  # Create test data: sampled ABSENT + sampled PRESENT
+  test_data <- data[c(test_abs_idx, test_pres_idx), ]
+  
+  # Create training data: the remaining rows (i.e., those not selected for test)
+  train_data <- data[-c(test_abs_idx, test_pres_idx), ]
+  
+  return(list(test_data = test_data, train_data = train_data))
+}
+
+```
+
+Now, we can use the above function to split the data in three difference ways:
+
+-   90% of true absence data, along with an equal amount of present data to the test dataset, using the rest data as training dataset.
+
+-   70% of true absence data, along with an equal amount of present data to the test dataset, using the rest data as training dataset.
+
+-   50% of the true absence data, along with an equal amount of present data to the test dataset, using the rest data as training dataset.
+
+```{r split_data}
+
+# For a 90% test split (of the ABSENT records)
+split_90_absence <- split_occurrence_data_by_absence_test(gang_gang_act, p_abs_test = 0.9, seed = 123)
+
+# For a 70% test split
+split_70_absence <- split_occurrence_data_by_absence_test(gang_gang_act, p_abs_test = 0.7, seed = 123)
+
+# For a 50% test split
+split_50_absence <- split_occurrence_data_by_absence_test(gang_gang_act, p_abs_test = 0.5, seed = 123)
+
+# Generate counts from the split data
+train_90_absence <- table(split_90_absence$train_data$occrrnS)
+test_90_absence <- table(split_90_absence$test_data$occrrnS)
+
+train_70_absence <- table(split_70_absence$train_data$occrrnS)
+test_70_absence <- table(split_70_absence$test_data$occrrnS)
+
+train_50_absence <- table(split_50_absence$train_data$occrrnS)
+test_50_absence <- table(split_50_absence$test_data$occrrnS)
+
+# Create a data frame with the extracted counts
+split_data <- data.frame(
+  Split = c("90% Absence Train", "90% Absence Test", "70% Absence Train", "70% Absence Test", "50% Absence Train", "50% Absence Test"),
+  ABSENT = c(train_90_absence["ABSENT"], test_90_absence["ABSENT"],
+             train_70_absence["ABSENT"], test_70_absence["ABSENT"],
+             train_50_absence["ABSENT"], test_50_absence["ABSENT"]),
+  PRESENT = c(train_90_absence["PRESENT"], test_90_absence["PRESENT"],
+              train_70_absence["PRESENT"], test_70_absence["PRESENT"],
+              train_50_absence["PRESENT"], test_50_absence["PRESENT"])
+)
+
+# Display the table
+print(split_data)
+
+```
+
+We can visualize above table in a bar chart.
+
+```{r plot_split}
+
+# Reshape data for ggplot using melt (or use pivot_longer)
+split_data_melted <- melt(split_data, id.vars = "Split", variable.name = "Status", value.name = "Count")
+
+# Create the bar plot with labels
+ggplot(split_data_melted, aes(x = Split, y = Count, fill = Status)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +  # Adjust bar positions
+  geom_text(aes(label = Count), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5, size = 3) +  # Add text labels
+  labs(title = "ABSENT and PRESENT Counts Across Data Splits", x = "Data Split", y = "Count") +
+  theme_minimal() +
+  scale_fill_manual(values = c("ABSENT" = "#f6aa70", "PRESENT" = "#11aa96")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(legend.title = element_blank())
+```
+
+Now, we combine the training and test data with environmental dataset.
+
+```{r combine_1}
+
+get_occurrence_data <- function(occurrence_sf, env_var_stack, drop_na = TRUE, dropCols = NULL) {
+  # Convert the occurrence sf object to a terra SpatVector
+  occ_vect <- vect(occurrence_sf)
+  
+  # Extract raster values at the occurrence points
+  extracted_values <- terra::extract(env_var_stack, occ_vect)
+  
+  # Combine occurrence data (as a data frame) with the extracted raster values
+  occ_data <- cbind(as.data.frame(occurrence_sf), extracted_values)
+  
+  # Optionally remove rows with any NA values
+  if (drop_na) {
+    occ_data <- na.omit(occ_data)
+  }
+  
+  # Optionally drop specified columns
+  if (!is.null(dropCols)) {
+    occ_data <- occ_data[, -dropCols]
+  }
+  
+  return(occ_data)
+}
+```
+
+```{r combine_1}
+
+combine_with_env_data <- function(split_list, env_var_stack, dropCols = c(2,3)) {
+  # Process the training data
+  train_data_env <- get_occurrence_data(split_list$train_data, env_var_stack, dropCols = dropCols)
+  # Process the test data
+  test_data_env  <- get_occurrence_data(split_list$test_data, env_var_stack, dropCols = dropCols)
+  
+  return(list(train_data_env = train_data_env, test_data_env = test_data_env))
+}
+```
+
+```{r combine_1}
+# Then, combine each split with the environmental variables:
+env_combined_90 <- combine_with_env_data(split_90, env_var_stack, dropCols = c(2,3))
+
+env_combined_70 <- combine_with_env_data(split_70, env_var_stack, dropCols = c(2,3))
+
+env_combined_50 <- combine_with_env_data(split_50, env_var_stack, dropCols = c(2,3))
+
+# Create a list of three training data data frames
+train_list <- list(
+  "split_90_train" = env_combined_90$train_data_env,
+  "split_70_train" = env_combined_70$train_data_env,
+  "split_50_train" = env_combined_50$train_data_env
+)
+
+# Create a list of three training data data frames
+test_list <- list(
+  "split_90_test" = env_combined_90$test_data_env,
+  "split_70_test" = env_combined_70$test_data_env,
+  "split_50_test" = env_combined_50$test_data_env
+)
+
+```
+
+Now, we have three sets of training and test data ready for modelling.
+
+## 3.2 Un-weighted models
+
+```{r unweighted_GLM}
+
+fit_model_and_get_perf_no_wt <- function(train_data_env, test_data_env, tss_step = 0.01) {
+  
+  # Load required libraries
+  library(pROC)     # For AUROC
+  library(PRROC)    # For AUPR
+  
+  # 1) Copy data locally
+  train_data <- train_data_env
+  test_data  <- test_data_env
+  
+  # Convert occrrnS to 0/1 numeric
+  train_data$occrrnS <- ifelse(train_data$occrrnS == "PRESENT", 1, 0)
+  test_data$occrrnS  <- ifelse(test_data$occrrnS == "PRESENT", 1, 0)
+  
+  # Define model formula
+  my_formula <- occrrnS ~ `AusClim_bioclim_03_9s_1976-2005` + 
+    `AusClim_bioclim_06_9s_1976-2005` + 
+    `AusClim_bioclim_09_9s_1976-2005` + 
+    `AusClim_bioclim_15_9s_1976-2005` + 
+    `AusClim_bioclim_24_9s_1976-2005` + 
+    `AusClim_bioclim_27_9s_1976-2005` + 
+    `AusClim_bioclim_29_9s_1976-2005`
+  
+  # 2) Fit the unweighted GLM model
+  model <- glm(my_formula, data = train_data, family = binomial(link = "logit"))
+  
+  # Predict probabilities on the test data
+  predicted_probs <- predict(model, newdata = test_data, type = "response")
+  
+  # -----------------------------
+  # PART A: Standard metrics at threshold = 0.5
+  # -----------------------------
+  pred_class <- ifelse(predicted_probs >= 0.5, 1, 0)
+  
+  # Force table to have both '0' and '1' as levels
+  pred_class_factor <- factor(pred_class, levels = c(0,1))
+  actual_factor     <- factor(test_data$occrrnS, levels = c(0,1))
+  
+  conf_mat <- table(Predicted = pred_class_factor, Actual = actual_factor)
+  
+  # Safely extract entries
+  TP <- conf_mat["1","1"]
+  FP <- conf_mat["1","0"]
+  FN <- conf_mat["0","1"]
+  TN <- conf_mat["0","0"]
+  
+  accuracy    <- (TP + TN) / sum(conf_mat)
+  sensitivity <- TP / (TP + FN)  # Recall
+  specificity <- TN / (TN + FP)
+  precision   <- TP / (TP + FP)
+  f1          <- 2 * precision * sensitivity / (precision + sensitivity)
+  
+  # -----------------------------
+  # PART B: Additional Metrics
+  # -----------------------------
+  
+  # AUROC
+  roc_curve <- pROC::roc(response = test_data$occrrnS, predictor = predicted_probs)
+  auc_value <- pROC::auc(roc_curve)
+  
+  # AUPR (Area Under Precision-Recall Curve)
+  pr <- pr.curve(scores.class0 = predicted_probs[test_data$occrrnS == 1],
+                 scores.class1 = predicted_probs[test_data$occrrnS == 0],
+                 curve = TRUE)
+  aupr_value <- pr$auc.integral
+  
+  # Correlation between observed and predicted
+  corr_value <- cor(test_data$occrrnS, predicted_probs, method = "pearson")
+  
+  # -----------------------------
+  # PART C: Sweep thresholds to find max TSS
+  # -----------------------------
+  
+  # Helper function to safely compute TSS elements
+  compute_tss <- function(obs, preds, threshold) {
+    pred_bin <- ifelse(preds >= threshold, 1, 0)
+    TP <- sum(pred_bin == 1 & obs == 1)
+    TN <- sum(pred_bin == 0 & obs == 0)
+    FP <- sum(pred_bin == 1 & obs == 0)
+    FN <- sum(pred_bin == 0 & obs == 1)
+    
+    sens <- if ((TP + FN) > 0) TP / (TP + FN) else NA
+    spec <- if ((TN + FP) > 0) TN / (TN + FP) else NA
+    tss_val <- sens + spec - 1
+    return(list(sensitivity = sens, specificity = spec, TSS = tss_val))
+  }
+  
+  thresholds <- seq(0, 1, by = tss_step)
+  tss_df <- data.frame(
+    threshold   = thresholds,
+    sensitivity = NA,
+    specificity = NA,
+    TSS         = NA
+  )
+  
+  for (i in seq_along(thresholds)) {
+    res_tss <- compute_tss(test_data$occrrnS, predicted_probs, thresholds[i])
+    tss_df$sensitivity[i] <- res_tss$sensitivity
+    tss_df$specificity[i] <- res_tss$specificity
+    tss_df$TSS[i]         <- res_tss$TSS
+  }
+  
+  # Identify the threshold that yields the maximum TSS
+  max_idx <- which.max(tss_df$TSS)
+  best_threshold <- tss_df$threshold[max_idx]
+  best_tss       <- tss_df$TSS[max_idx]
+  best_sens      <- tss_df$sensitivity[max_idx]
+  best_spec      <- tss_df$specificity[max_idx]
+  
+  # -----------------------------
+  # PART D: Return all metrics
+  # -----------------------------
+  return(list(
+    # The fitted model + raw predictions
+    model             = model,
+    predicted_probs   = predicted_probs,
+    roc_obj           = roc_curve,
+    auc               = as.numeric(auc_value),
+    aupr              = as.numeric(aupr_value),
+    corr              = corr_value,
+    confusion_matrix_0.5  = conf_mat,
+    metrics_0.5 = data.frame(
+      Accuracy     = accuracy,
+      Sensitivity  = sensitivity,  # Recall
+      Specificity  = specificity,
+      Precision    = precision,
+      F1           = f1
+    ),
+    # TSS sweep results
+    tss_table      = tss_df,
+    best_threshold = best_threshold,
+    max_tss        = best_tss,
+    best_sensitivity = best_sens,
+    best_specificity = best_spec
+  ))
+}
+```
+
+```{r message=FALSE}
+
+# Apply the fit_model_and_get_perf_no_wt function to train and test lists
+model_including_true_absence_no_wt <- mapply(fit_model_and_get_perf_no_wt, 
+                   train_data_env = train_list, 
+                   test_data_env = test_list,
+                   SIMPLIFY = FALSE)
+
+# Build a data frame by extracting each metric from the results
+results_including_true_absence_table_no_wt <- data.frame(
+  AUC              = sapply(model_including_true_absence_no_wt, function(x) x$auc),
+  AUPR             = sapply(model_including_true_absence_no_wt, function(x) x$aupr),
+  CORR             = sapply(model_including_true_absence_no_wt, function(x) x$corr),
+  Accuracy         = sapply(model_including_true_absence_no_wt, function(x) x$metrics_0.5$Accuracy),
+  Sensitivity      = sapply(model_including_true_absence_no_wt, function(x) x$metrics_0.5$Sensitivity),  # Recall
+  Specificity      = sapply(model_including_true_absence_no_wt, function(x) x$metrics_0.5$Specificity),
+  Precision        = sapply(model_including_true_absence_no_wt, function(x) x$metrics_0.5$Precision),
+  F1               = sapply(model_including_true_absence_no_wt, function(x) x$metrics_0.5$F1),
+  Best_Threshold   = sapply(model_including_true_absence_no_wt, function(x) x$best_threshold),
+  Max_TSS          = sapply(model_including_true_absence_no_wt, function(x) x$max_tss),
+  Best_Sensitivity = sapply(model_including_true_absence_no_wt, function(x) x$best_sensitivity),
+  Best_Specificity = sapply(model_including_true_absence_no_wt, function(x) x$best_specificity)
+)
+```
+
+## 3.3 Weighted models
+
+The only differences between unweighted models and weighted models
+
+```{r weighted_GLM}
+
+fit_model_and_get_perf_wt <- function(train_data_env, test_data_env, tss_step = 0.01) {
+  
+  # Load required libraries
+  library(pROC)    # For AUROC
+  library(PRROC)   # For AUPR
+  
+  # 1) Copy data
+  train_data <- train_data_env
+  test_data  <- test_data_env
+  
+  # Convert occrrnS to 0/1 numeric
+  train_data$occrrnS <- ifelse(train_data$occrrnS == "PRESENT", 1, 0)
+  test_data$occrrnS  <- ifelse(test_data$occrrnS == "PRESENT", 1, 0)
+  
+  # 2) Calculate weights: presence gets 1; background gets (prNum / bgNum)
+  prNum <- sum(train_data$occrrnS == 1)
+  bgNum <- sum(train_data$occrrnS == 0)
+  wt <- ifelse(train_data$occrrnS == 1, 1, prNum / bgNum)
+  
+  # 3) Fit the weighted GLM
+  my_formula <- occrrnS ~ 
+    `AusClim_bioclim_03_9s_1976-2005` + 
+    `AusClim_bioclim_06_9s_1976-2005` + 
+    `AusClim_bioclim_09_9s_1976-2005` + 
+    `AusClim_bioclim_15_9s_1976-2005` + 
+    `AusClim_bioclim_24_9s_1976-2005` + 
+    `AusClim_bioclim_27_9s_1976-2005` + 
+    `AusClim_bioclim_29_9s_1976-2005`
+  
+  model <- glm(my_formula, data = train_data, weights = wt, family = binomial(link = "logit"))
+  
+  # Predict probabilities
+  predicted_probs <- predict(model, newdata = test_data, type = "response")
+  
+  # -----------------------------
+  # PART A: Standard metrics at threshold = 0.5
+  # -----------------------------
+  pred_class <- ifelse(predicted_probs >= 0.5, 1, 0)
+  
+  # Force table to have both '0' and '1' levels
+  pred_class_factor <- factor(pred_class, levels = c(0,1))
+  actual_factor     <- factor(test_data$occrrnS, levels = c(0,1))
+  
+  conf_mat <- table(Predicted = pred_class_factor, Actual = actual_factor)
+  
+  # Safely extract entries
+  TP <- conf_mat["1","1"]
+  FP <- conf_mat["1","0"]
+  FN <- conf_mat["0","1"]
+  TN <- conf_mat["0","0"]
+  
+  # Compute standard metrics
+  accuracy    <- (TP + TN) / sum(conf_mat)
+  sensitivity <- TP / (TP + FN)  # Recall
+  specificity <- TN / (TN + FP)
+  precision   <- TP / (TP + FP)
+  f1          <- 2 * precision * sensitivity / (precision + sensitivity)
+  
+  # -----------------------------
+  # PART B: Additional Metrics
+  # -----------------------------
+  
+  # AUROC
+  roc_curve <- pROC::roc(response = test_data$occrrnS, predictor = predicted_probs)
+  auc_value <- pROC::auc(roc_curve)
+  
+  # AUPR (Area Under Precision-Recall Curve)
+  pr <- pr.curve(scores.class0 = predicted_probs[test_data$occrrnS == 1],
+                 scores.class1 = predicted_probs[test_data$occrrnS == 0],
+                 curve = TRUE)
+  aupr_value <- pr$auc.integral
+  
+  # Correlation between observed and predicted
+  corr_value <- cor(test_data$occrrnS, predicted_probs, method = "pearson")
+  
+  # -----------------------------
+  # PART C: Sweep thresholds to find max TSS
+  # -----------------------------
+  compute_tss <- function(obs, preds, threshold) {
+    pred_bin <- ifelse(preds >= threshold, 1, 0)
+    TP <- sum(pred_bin == 1 & obs == 1)
+    TN <- sum(pred_bin == 0 & obs == 0)
+    FP <- sum(pred_bin == 1 & obs == 0)
+    FN <- sum(pred_bin == 0 & obs == 1)
+    
+    sens <- if ((TP + FN) > 0) TP / (TP + FN) else NA
+    spec <- if ((TN + FP) > 0) TN / (TN + FP) else NA
+    tss_val <- sens + spec - 1
+    return(list(sensitivity = sens, specificity = spec, TSS = tss_val))
+  }
+  
+  thresholds <- seq(0, 1, by = tss_step)
+  tss_df <- data.frame(
+    threshold   = thresholds,
+    sensitivity = NA,
+    specificity = NA,
+    TSS         = NA
+  )
+  
+  for (i in seq_along(thresholds)) {
+    out_tss <- compute_tss(test_data$occrrnS, predicted_probs, thresholds[i])
+    tss_df$sensitivity[i] <- out_tss$sensitivity
+    tss_df$specificity[i] <- out_tss$specificity
+    tss_df$TSS[i]         <- out_tss$TSS
+  }
+  
+  # Identify threshold that yields the maximum TSS
+  max_idx <- which.max(tss_df$TSS)
+  best_threshold <- tss_df$threshold[max_idx]
+  best_tss       <- tss_df$TSS[max_idx]
+  best_sens      <- tss_df$sensitivity[max_idx]
+  best_spec      <- tss_df$specificity[max_idx]
+  
+  # -----------------------------
+  # PART D: Return all metrics
+  # -----------------------------
+  return(list(
+    # Model and predictions
+    model              = model,
+    predicted_probs    = predicted_probs,
+    roc_obj            = roc_curve,
+    
+    # Evaluation Metrics
+    auc                = as.numeric(auc_value),   # AUROC
+    aupr               = as.numeric(aupr_value),  # AUPR
+    corr               = corr_value,              # Correlation
+    
+    # Confusion Matrix at threshold 0.5
+    confusion_matrix_0.5 = conf_mat,
+    
+    # Metrics at threshold 0.5
+    metrics_0.5 = data.frame(
+      Accuracy     = accuracy,
+      Sensitivity  = sensitivity,  # Recall
+      Specificity  = specificity,
+      Precision    = precision,
+      F1           = f1
+    ),
+    
+    # TSS sweep results
+    tss_table      = tss_df,
+    best_threshold = best_threshold,
+    max_tss        = best_tss,
+    best_sensitivity = best_sens,
+    best_specificity = best_spec
+  ))
+}
+```
+
+```{r message=FALSE}
+
+# 1) Fit weighted models for each train/test pair
+model_including_true_absence_wt <- mapply(
+  fit_model_and_get_perf_wt,
+  train_data_env = train_list,
+  test_data_env  = test_list,
+  SIMPLIFY       = FALSE
+)
+
+# 2) Build a data frame by extracting each metric from the results
+#    Note: 'metrics_0.5' is where threshold=0.5 metrics live.
+results_including_true_absence_table_wt <- data.frame(
+  AUC              = sapply(model_including_true_absence_wt, function(x) x$auc),                   # AUROC
+  AUPR             = sapply(model_including_true_absence_wt, function(x) x$aupr),                  # AUPR
+  CORR             = sapply(model_including_true_absence_wt, function(x) x$corr),                  # Correlation
+  Accuracy         = sapply(model_including_true_absence_wt, function(x) x$`metrics_0.5`$Accuracy),
+  Sensitivity      = sapply(model_including_true_absence_wt, function(x) x$`metrics_0.5`$Sensitivity),  # Recall
+  Specificity      = sapply(model_including_true_absence_wt, function(x) x$`metrics_0.5`$Specificity),
+  Precision        = sapply(model_including_true_absence_wt, function(x) x$`metrics_0.5`$Precision),
+  F1               = sapply(model_including_true_absence_wt, function(x) x$`metrics_0.5`$F1),
+  Best_Threshold   = sapply(model_including_true_absence_wt, function(x) x$best_threshold),
+  Max_TSS          = sapply(model_including_true_absence_wt, function(x) x$max_tss),
+  Best_Sensitivity = sapply(model_including_true_absence_wt, function(x) x$best_sensitivity),
+  Best_Specificity = sapply(model_including_true_absence_wt, function(x) x$best_specificity)
+)
+
+```
+
+## 3.4 Comparing un-weighted and weighted methods.
+
+```{r message=FALSE}
+library(knitr)
+
+# Suppose both data frames have identical columns
+combined_df <- bind_rows(
+  results_including_true_absence_table_no_wt %>%
+    mutate(Source = "No_WT"),
+  results_including_true_absence_table_wt %>%
+    mutate(Source = "WT")
+) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+# Create the table with smaller font
+combined_df %>%
+  kable("html", caption = "Model Evaluation Metrics") %>%
+  kable_styling(font_size = 12, full_width = FALSE)
+
+```
+
+From the evaluation metric table, we find:
+
+\(1\) The **unweighted models** suffer from a class imbalance, **overpredicting positives** while failing to capture negatives, leading to **high sensitivity but poor specificity**.
+
+-   **High Sensitivity (1.0)** but **Specificity (0.0)** is **poor** across all splits.
+
+-   Indicates the model **overpredicts positives** — catching all true positives but misclassifying negatives.
+
+-   Increases slightly from **0.14 (90%)** to **0.32 (70%/50%)**, suggesting better alignment between predicted probabilities and true labels with **smaller training sets**.
+
+-   **AUC (0.66 - 0.69)** and **AUPR (0.64 - 0.69)** are moderate, indicating limited discriminative power. **AUPR (\~0.64 - 0.69)** tracks similarly to AUC, but it’s higher on the **70% split**, possibly due to more balanced data.
+
+-   **Accuracy (0.5)** is misleading here due to imbalanced performance (favoring positives entirely).
+
+-   **Best_Threshold (\~0.89 - 0.97)**: High thresholds are needed to balance sensitivity and specificity due to the model’s bias.
+
+-   **Max_TSS (0.17 - 0.31)**: Low, reflecting poor skill beyond random chance. Although still low, **TSS improves** as the training data decreases (**0.17 → 0.31**), possibly due to less overfitting on smaller datasets.
+
+\(2\) **Weighted models** effectively handle class imbalance, leading to more **balanced sensitivity and specificity**. This results in **higher accuracy**, better **F1 scores**, and **improved TSS**.
+
+-   **Improved Balance** between **Sensitivity (0.58 - 0.77)** and **Specificity (0.43 - 0.62)**. The **50% split** achieves perfect balance (**Sensitivity = Specificity = 0.588**).
+
+-   **CORR:** Increases with smaller training data (**0.281 → 0.336**), showing better alignment between predictions and observations on less data.
+
+-   **AUC (0.67 - 0.70)** and **AUPR (0.65 - 0.69)** are slightly higher or comparable to unweighted models. The **70% split** achieves the highest AUC (**0.697**) and AUPR (**0.690**).
+
+-   **Accuracy (\~0.59 - 0.65)** shows improvement, reflecting better overall performance.
+
+-   **Precision (\~0.58 - 0.64)** and **F1 (\~0.59 - 0.66)** indicate a more balanced trade-off between false positives and false negatives.
+
+-   **Max_TSS (\~0.29 - 0.32)** is higher than the unweighted models, indicating **better discriminative skill**. Highest on **50% split** (**0.324**) due to balanced sensitivity and specificity.
+
+-   **Best_Threshold (\~0.45 - 0.65)** is **lower** than the unweighted models, suggesting **less aggressive thresholding** is required.
+
+\(3\) The **weighted models (WT)** significantly outperform the **unweighted models (No_WT)** in terms of **balanced classification**, offering better **specificity**, **F1 scores**, and **TSS** — all while maintaining similar **AUC** and **AUPR**.
+
+| **Metric** | Unweighted | Weighted |
+|---------------------------|-----------------------|-----------------------|
+| **Sensitivity** | Very high (1.0) but at the expense of specificity. | Balanced (\~0.58 - 0.77). |
+| **Specificity** | Extremely poor (0.0). | Improved (\~0.43 - 0.62). |
+| **AUC / AUPR** | Moderate (0.66 - 0.69). | Similar or slightly better (0.67 - 0.70). |
+| **F1 Score** | Inflated due to perfect recall but low precision. | More balanced (\~0.59 - 0.66). |
+| **TSS** | Low (\~0.17 - 0.31), poor model skill. | Higher (\~0.29 - 0.32), indicating improved skill. |
+
+# 
+4. Background point and pseudo-absence points
+
+What if we don't have any true-absence data?
+
+If we put all true absence data and the same amount of presence data into test dataset, and keep the rest as training dataset, we will have 136x2 = 272 rows of test dataset, and 646 rows of training dataset. Approximately 30/70.
+
+```{r}
+
+ # Identify indices for ABSENCE and PRESENCE rows
+  abs_idx <- which(gang_gang_act$occrrnS == "ABSENT")
+  pres_idx <- which(gang_gang_act$occrrnS == "PRESENT")
+  
+  # Number of ABSENCE rows
+  n_abs <- length(abs_idx)
+  
+  # Set seed for reproducibility and sample PRESENCE rows
+  set.seed(123)
+  pres_sample_idx <- sample(pres_idx, n_abs)
+  
+  # Create subdataframe 1: all ABSENCE rows + sampled PRESENCE rows
+  test_data <- gang_gang_act[c(abs_idx, pres_sample_idx), ]
+  
+  # Create subdataframe 2: the remaining rows
+  train_data <- gang_gang_act[-c(abs_idx, pres_sample_idx), ]
+  
+```
+
+```{r}
+
+# Get bounding box from the ACT boundary
+act_bbox <- sf::st_bbox(ACT)
+
+# Create a ggplot for the training data
+p_train <- ggplot() +
+  geom_sf(data = ACT, fill = NA, color = "black") +
+  geom_sf(data = train_data, aes(color = occrrnS)) +
+  scale_color_manual(values = c("PRESENT" = "#11aa96", "ABSENT" = "#f6aa70")) +
+  ggtitle("Training Data") +
+  coord_sf(
+    xlim = c(act_bbox["xmin"], act_bbox["xmax"]), 
+    ylim = c(act_bbox["ymin"], act_bbox["ymax"])
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+# Create a ggplot for the test data
+p_test <- ggplot() +
+  geom_sf(data = ACT, fill = NA, color = "black") +
+  geom_sf(data = test_data, aes(color = occrrnS)) +
+  scale_color_manual(values = c("PRESENT" = "#11aa96", "ABSENT" = "#f6aa70")) +
+  ggtitle("Test Data") +
+  coord_sf(
+    xlim = c(act_bbox["xmin"], act_bbox["xmax"]), 
+    ylim = c(act_bbox["ymin"], act_bbox["ymax"])
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+# Combine the two plots side-by-side
+combined_plot <- p_train + p_test + patchwork::plot_layout(ncol = 2)
+combined_plot
+```
+
+Training data + background data
+
+background points
+
+random
+
+## 4.1 Random
+
+Many studies suggest that the number of background points should be sufficient to comprehensively sample and represent all environments in the study area, or at least a range of background point sizes should be tested. For example, Valavi et al. [@valavi2022predictive] tested their models with **100 to 100,000 background points**. Barbet-Massin et al. [@barbet2012selecting] tested 100, 300, 1000, 3000 or 10000 **background points**.
+
+We here will also test the effect of different sizes of background points on the performance of models. We will test the ratio of background points to true presences from 1:1, 5:1, 10:1, 15:1, 20:1, 30:1, and 50:1 with and without weighting methods.
+
+```{r}
+
+# Convert SpatRaster to Raster
+studyarea <- raster(env_var_stack$`AusClim_bioclim_01_9s_1976-2005`)
+
+# Count the number of presence points in train_data (assuming presence is coded as 1)
+n_pres <- nrow(train_data)
+
+# Set seed for reproducibility
+set.seed(1963)
+
+# Generate background points with a 1:1 ratio
+random_bg_1to1 <- randomPoints(studyarea, n_pres)
+
+# Generate background points with a 5:1 ratio
+random_bg_5to1 <- randomPoints(studyarea, n_pres * 5)
+
+# Generate background points with a 10:1 ratio
+random_bg_10to1 <- randomPoints(studyarea, n_pres * 10)
+
+# Generate background points with a 15:1 ratio
+random_bg_15to1 <- randomPoints(studyarea, n_pres * 15)
+
+# Generate background points with a 20:1 ratio
+random_bg_20to1 <- randomPoints(studyarea, n_pres * 20)
+
+# Generate background points with a 30:1 ratio
+random_bg_30to1 <- randomPoints(studyarea, n_pres * 30)
+
+# Generate background points with a 100:1 ratio
+random_bg_50to1 <- randomPoints(studyarea, n_pres * 50)
+
+```
+
+```{r random_ba=g_points_function}
+
+combine_bg_with_presence <- function(bg_points, train_data, raster_obj, target_crs = 4283, occ_label = "bg") {
+  # Convert the background points matrix to a data frame
+  bg_df <- as.data.frame(bg_points)
+  
+  # Add the occrrnS column with the specified label (e.g., "bg")
+  bg_df$occrrnS <- occ_label
+  
+  # Convert the data frame to an sf object using the raster's projection
+  bg_sf <- st_as_sf(bg_df, coords = c("x", "y"), crs = projection(raster_obj))
+  
+  # Transform the sf object to the target CRS (default is EPSG:4283)
+  bg_sf_target <- st_transform(bg_sf, crs = target_crs)
+  
+  # Combine the original (presence) data with the background points
+  combined <- rbind(train_data, bg_sf_target)
+  
+  return(combined)
+}
+
+```
+
+```{r}
+
+combined_random_bg_1to1 <- combine_bg_with_presence(random_bg_1to1, train_data, studyarea)
+combined_random_bg_5to1 <- combine_bg_with_presence(random_bg_5to1, train_data, studyarea)
+combined_random_bg_10to1 <- combine_bg_with_presence(random_bg_10to1, train_data, studyarea)
+combined_random_bg_15to1 <- combine_bg_with_presence(random_bg_15to1, train_data, studyarea)
+combined_random_bg_20to1 <- combine_bg_with_presence(random_bg_20to1, train_data, studyarea)
+combined_random_bg_30to1 <- combine_bg_with_presence(random_bg_30to1, train_data, studyarea)
+combined_random_bg_50to1 <- combine_bg_with_presence(random_bg_50to1, train_data, studyarea)
+```
+
+```{r}
+# Ensure the occrrnS column is a factor in the correct order
+combined_random_bg_1to1$occrrnS <- factor(combined_random_bg_1to1$occrrnS,
+                                                 levels = c("PRESENT", "bg"))
+combined_random_bg_5to1$occrrnS <- factor(combined_random_bg_5to1$occrrnS,
+                                                 levels = c("PRESENT", "bg"))
+combined_random_bg_10to1$occrrnS <- factor(combined_random_bg_10to1$occrrnS,
+                                                 levels = c("PRESENT", "bg"))
+combined_random_bg_15to1$occrrnS <- factor(combined_random_bg_15to1$occrrnS,
+                                                 levels = c("PRESENT", "bg"))
+combined_random_bg_20to1$occrrnS <- factor(combined_random_bg_20to1$occrrnS,
+                                                 levels = c("PRESENT", "bg"))
+combined_random_bg_30to1$occrrnS <- factor(combined_random_bg_30to1$occrrnS,
+                                                 levels = c("PRESENT", "bg"))
+combined_random_bg_50to1$occrrnS <- factor(combined_random_bg_50to1$occrrnS,
+                                                 levels = c("PRESENT", "bg"))
+```
+
+```{r}
+# Modified function: creates a map plot where "bg" points are drawn first,
+# then "PRESENT" points on top.
+create_map_plot <- function(bg_sf, title, point_size = 0.5) {
+  # Split the data into background points and presence points
+  bg_only <- bg_sf[bg_sf$occrrnS == "bg", ]
+  pa_points <- bg_sf[bg_sf$occrrnS == "PRESENT", ]
+  
+  ggplot() +
+    # Add the ACT polygon layer (without including it in the legend)
+    geom_sf(data = ACT, fill = "lightblue", color = "black", alpha = 0.3, show.legend = FALSE) +
+    # Add background points first
+    geom_sf(data = bg_only, aes(color = occrrnS), size = point_size) +
+    # Add presence points on top
+    geom_sf(data = pa_points, aes(color = occrrnS), size = point_size) +
+    scale_color_manual(
+      name = "Group",
+      values = c("PRESENT" = "#11aa96", "bg" = "grey"),
+      labels = c("Present", "Background Points")
+    ) +
+    ggtitle(title) +
+    coord_sf(lims_method = "geometry_bbox") +
+    theme_minimal() +
+    theme(
+      legend.position = "right",  # Legend in each plot (to be collected)
+      plot.title = element_text(hjust = 0.5, size = 10, face = "bold"),
+      axis.title = element_blank(),
+      axis.text = element_blank(),
+      axis.ticks = element_blank()
+    )
+}
+
+# Create plots for each background ratio (adjust 'point_size' as desired)
+p1 <- create_map_plot(combined_random_bg_1to1, "1:1", point_size = 0.01)
+p2 <- create_map_plot(combined_random_bg_5to1, "5:1", point_size = 0.01)
+p3 <- create_map_plot(combined_random_bg_10to1, "10:1", point_size = 0.01)
+p4 <- create_map_plot(combined_random_bg_15to1, "15:1", point_size = 0.01)
+p5 <- create_map_plot(combined_random_bg_20to1, "20:1", point_size = 0.01)
+p6 <- create_map_plot(combined_random_bg_30to1, "30:1", point_size = 0.01)
+p7 <- create_map_plot(combined_random_bg_50to1, "50:1", point_size = 0.01)
+
+# Combine the three plots in one row and collect a common legend at the bottom
+combined_plot <- (p1 + p2 + p3 + p4 + p5 + p6 + p7) +
+  plot_layout(ncol = 4, guides = "collect") +
+  plot_annotation(theme = theme(legend.position = "bottom"))
+
+combined_plot
+```
+
+```{r}
+train_data_list <- list(
+  combined_random_bg_1to1_env = get_occurrence_data(combined_random_bg_1to1, env_var_stack, dropCols = c(2,3)),
+  combined_random_bg_5to1_env = get_occurrence_data(combined_random_bg_1to1, env_var_stack, dropCols = c(2,3)),
+  combined_random_bg_10to1_env = get_occurrence_data(combined_random_bg_1to1, env_var_stack, dropCols = c(2,3)),
+  combined_random_bg_15to1_env = get_occurrence_data(combined_random_bg_10to1, env_var_stack, dropCols = c(2,3)),
+  combined_random_bg_20to1_env = get_occurrence_data(combined_random_bg_1to1, env_var_stack, dropCols = c(2,3)),
+  combined_random_bg_30to1_env = get_occurrence_data(combined_random_bg_1to1, env_var_stack, dropCols = c(2,3)),
+  combined_random_bg_50to1_env = get_occurrence_data(combined_random_bg_50to1, env_var_stack, dropCols = c(2,3))
+)
+
+test_data_env <- get_occurrence_data(test_data, env_var_stack, dropCols = c(2,3))
+
+```
+
+no weighting
+
+results_table_no_wt
+
+```{r message=FALSE}
+
+results_list_no_wt <- lapply(train_data_list, function(train_data) {
+  fit_model_and_get_perf_no_wt(train_data, test_data_env)
+})
+
+
+# Build a data frame by extracting each metric from the results_list_no_wt
+results_table_no_wt <- data.frame(
+  AUC              = sapply(results_list_no_wt, function(x) x$auc),                    # AUROC
+  AUPR             = sapply(results_list_no_wt, function(x) x$aupr),                   # Area Under Precision-Recall Curve
+  CORR             = sapply(results_list_no_wt, function(x) x$corr),                   # Correlation
+  Accuracy         = sapply(results_list_no_wt, function(x) x$metrics_0.5$Accuracy),   # Accuracy at threshold 0.5
+  Sensitivity      = sapply(results_list_no_wt, function(x) x$metrics_0.5$Sensitivity),# Sensitivity (Recall)
+  Specificity      = sapply(results_list_no_wt, function(x) x$metrics_0.5$Specificity),# Specificity
+  Precision        = sapply(results_list_no_wt, function(x) x$metrics_0.5$Precision),  # Precision
+  F1               = sapply(results_list_no_wt, function(x) x$metrics_0.5$F1),         # F1 Score
+  Best_Threshold   = sapply(results_list_no_wt, function(x) x$best_threshold),         # Best threshold based on TSS
+  Max_TSS          = sapply(results_list_no_wt, function(x) x$max_tss),                # Maximum TSS
+  Best_Sensitivity = sapply(results_list_no_wt, function(x) x$best_sensitivity),       # Sensitivity at Best Threshold
+  Best_Specificity = sapply(results_list_no_wt, function(x) x$best_specificity)        # Specificity at Best Threshold
+)
+
+```
+
+```{r message=FALSE}
+
+# 1) Fit weighted models and extract results
+results_list_wt <- lapply(train_data_list, function(train_data) {
+  fit_model_and_get_perf_wt(train_data, test_data_env)
+})
+
+# 2) Build a data frame by extracting each metric from the results_list_wt
+results_table_wt <- data.frame(
+  AUC              = sapply(results_list_wt, function(x) x$auc),                    # AUROC
+  AUPR             = sapply(results_list_wt, function(x) x$aupr),                   # Area Under Precision-Recall Curve
+  CORR             = sapply(results_list_wt, function(x) x$corr),                   # Correlation
+  Accuracy         = sapply(results_list_wt, function(x) x$metrics_0.5$Accuracy),   # Accuracy at threshold 0.5
+  Sensitivity      = sapply(results_list_wt, function(x) x$metrics_0.5$Sensitivity),# Sensitivity (Recall)
+  Specificity      = sapply(results_list_wt, function(x) x$metrics_0.5$Specificity),# Specificity
+  Precision        = sapply(results_list_wt, function(x) x$metrics_0.5$Precision),  # Precision
+  F1               = sapply(results_list_wt, function(x) x$metrics_0.5$F1),         # F1 Score
+  Best_Threshold   = sapply(results_list_wt, function(x) x$best_threshold),         # Best threshold based on TSS
+  Max_TSS          = sapply(results_list_wt, function(x) x$max_tss),                # Maximum TSS
+  Best_Sensitivity = sapply(results_list_wt, function(x) x$best_sensitivity),       # Sensitivity at Best Threshold
+  Best_Specificity = sapply(results_list_wt, function(x) x$best_specificity)        # Specificity at Best Threshold
+)
+
+```
+
+```{r}
+
+# Suppose both data frames have identical columns
+combined_df <- bind_rows(
+  results_table_no_wt %>%
+    mutate(Source = "No_WT"),
+  results_table_wt %>%
+    mutate(Source = "WT")
+) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+# Create the table with smaller font
+combined_df %>%
+  kable("html", caption = "Model Evaluation Metrics") %>%
+  kable_styling(font_size = 12, full_width = FALSE)
+
+```
+
+## 4.2 Buffer
+
+Besides completely random background points, we will also test a buffer-targeted random background point methods.
+
+**Pseudo-Absence Strategy**
+
+-   *Key point:* Disk strategy with a range of \<500, 500-1000, 1000 - 1500, 1500 - 2000, \> 2000 meters.
+
+-   *Implication:*
+
+    -   The disk strategy selects pseudo-absences outside a certain buffer zone from presence points.
+
+    -   The range of 1000–5000 meters should be carefully reviewed since it must balance avoiding areas within the species' potential dispersal kernel (150 meters) and including areas beyond the likely range of colonization.
+
+![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/Disk_pseudo_absence.png){alt="Mountain Ash, " width="200"}
+
+```{r}
+
+presence_in_train_data <- train_data[train_data$occrrnS == "PRESENT", ]
+
+```
+
+buffer function
+
+```{r}
+library(sf)
+library(dplyr)
+
+# 1) Generate random-buffer pseudo-absences within a study area
+generate_pseudo_absences_random_buffer <- function(presence_in_train_data, 
+                                                   study_area,
+                                                   min_buffer, max_buffer, 
+                                                   n_points_per_presence, 
+                                                   seed = 123) {
+  set.seed(seed)
+  
+  pseudo_list <- lapply(seq_len(nrow(presence_in_train_data)), function(i) {
+    # Random distance for this presence point
+    random_buffer <- runif(1, min = min_buffer, max = max_buffer)
+    
+    # Create the buffer polygon
+    buffer_poly <- st_buffer(presence_in_train_data[i, ], dist = random_buffer)
+    
+    # Intersect buffer with study_area, so we only sample inside it
+    intersection_poly <- st_intersection(buffer_poly, study_area)
+    
+    # If there's no overlap, return NULL
+    if (st_is_empty(intersection_poly)) {
+      return(NULL)
+    } else {
+      # Sample points inside the intersection
+      st_sample(intersection_poly, size = n_points_per_presence, type = "random")
+    }
+  })
+  
+  # Combine into an sfc
+  pseudo_sfc <- do.call(c, pseudo_list)
+  
+  # If all overlaps were empty, pseudo_sfc is NULL
+  if (is.null(pseudo_sfc)) {
+    return(NULL)
+  }
+  
+  # Convert sfc to sf
+  pseudo_sf <- st_sf(geometry = pseudo_sfc)
+  
+  # Label them as "bg"
+  pseudo_sf$occrrnS <- "bg"
+  
+  # Keep only the occrrnS column
+  pseudo_sf <- pseudo_sf[, "occrrnS", drop = FALSE]
+  return(pseudo_sf)
+}
+
+# 2) Combine pseudo-absences with original data
+generate_and_combine_pseudo_absences <- function(presence_in_train_data, 
+                                                 train_data,
+                                                 study_area,
+                                                 min_buffer, max_buffer, 
+                                                 n_points_per_presence, 
+                                                 seed = 123, 
+                                                 target_crs = 4283) {
+  # Make sure everything is in the same CRS before buffering/intersecting
+  presence_in_train_data <- st_transform(presence_in_train_data, target_crs)
+  study_area <- st_transform(study_area, target_crs)
+  
+  # Generate pseudo-absence points
+  pseudo_sf <- generate_pseudo_absences_random_buffer(
+    presence_in_train_data, 
+    study_area,
+    min_buffer, max_buffer, 
+    n_points_per_presence, 
+    seed
+  )
+  
+  # Convert and combine
+  original_data <- st_transform(train_data, target_crs)
+  
+  # If pseudo_sf is NULL (no overlap found), just return original
+  if (is.null(pseudo_sf)) {
+    message("No pseudo-absence points generated (buffers might lie outside the study area).")
+    return(original_data)
+  }
+  
+  combined <- rbind(original_data, pseudo_sf)
+  return(combined)
+}
+```
+
+```{r warning=FALSE}
+buffer_bg_500 <- generate_and_combine_pseudo_absences(presence_in_train_data,
+                                                      train_data, 
+                                                          min_buffer = 0, 
+                                                          max_buffer = 500, 
+                                                          n_points_per_presence = 1,
+                                                          seed = 123,
+                                                      study_area = ACT,
+                                                          target_crs = 4283)
+
+buffer_bg_500_1000 <- generate_and_combine_pseudo_absences(presence_in_train_data,
+                                                           train_data, 
+                                                          min_buffer = 500, 
+                                                          max_buffer = 1000, 
+                                                          n_points_per_presence = 1,
+                                                          seed = 123,
+                                                          study_area = ACT,
+                                                          target_crs = 4283)
+
+buffer_bg_1000_1500 <- generate_and_combine_pseudo_absences(presence_in_train_data,
+                                                           train_data, 
+                                                          min_buffer = 1000, 
+                                                          max_buffer = 1500, 
+                                                          n_points_per_presence = 1,
+                                                          seed = 123,
+                                                          study_area = ACT,
+                                                          target_crs = 4283)
+
+buffer_bg_1500_2000 <- generate_and_combine_pseudo_absences(presence_in_train_data,
+                                                            train_data, 
+                                                        min_buffer = 1500, 
+                                                        max_buffer = 2000,
+                                                        n_points_per_presence = 1, 
+                                                        seed = 123, 
+                                                        study_area = ACT,
+                                                        target_crs = 4283)
+
+buffer_bg_2000 <- generate_and_combine_pseudo_absences(presence_in_train_data,
+                                                       train_data, 
+                                                        min_buffer = 2000, 
+                                                        max_buffer = 10000,
+                                                        n_points_per_presence = 1, 
+                                                        seed = 123, 
+                                                       study_area = ACT,
+                                                        target_crs = 4283)
+
+
+```
+
+```{r}
+
+# Create plots for each background ratio with smaller points
+p1 <- create_map_plot(buffer_bg_500, "Buffe < 500m", point_size = 0.01)
+p2 <- create_map_plot(buffer_bg_500_1000, "Buffer 500-1000m", point_size = 0.01)
+p3 <- create_map_plot(buffer_bg_1000_1500, "Buffer 1000-1500m", point_size = 0.01)
+p4 <- create_map_plot(buffer_bg_1500_2000, "Buffer 1500-2000m", point_size = 0.01)
+p5 <- create_map_plot(buffer_bg_2000, "Buffer > 2000m", point_size = 0.01)
+
+# Combine the three plots in one row and collect a common legend at the bottom
+combined_plot <- (p1 + p2 + p3+ p4 + p5) +
+  plot_layout(ncol = 5, guides = "collect") +
+  plot_annotation(theme = theme(legend.position = "bottom"))
+
+combined_plot
+```
+
+```{r}
+train_data_list <- list(
+  combined_buffer_bg_500_env = get_occurrence_data(buffer_bg_500, env_var_stack, dropCols = c(2,3)),
+  combined_buffer_bg_500_1000_env = get_occurrence_data(buffer_bg_500_1000, env_var_stack, dropCols = c(2,3)),
+  combined_buffer_bg_1000_1500_env = get_occurrence_data(buffer_bg_1000_1500, env_var_stack, dropCols = c(2,3)),
+  combined_buffer_bg_1500_2000_env = get_occurrence_data(buffer_bg_1500_2000, env_var_stack, dropCols = c(2,3)),
+  combined_buffer_bg_2000_env = get_occurrence_data(buffer_bg_2000, env_var_stack, dropCols = c(2,3))
+)
+
+test_data_env <- get_occurrence_data(test_data, env_var_stack, dropCols = c(2,3))
+
+```
+
+```{r message=FALSE}
+results_list_no_wt <- lapply(train_data_list, function(train_data) {
+  fit_model_and_get_perf_no_wt(train_data, test_data_env)
+})
+```
+
+```{r}
+# Extract model names
+model_names <- names(train_data_list)
+
+# Build a data frame by extracting each metric from the results_list
+results_table_no_wt <- data.frame(
+  AUC         = sapply(results_list_no_wt, function(x) x$auc),
+  Accuracy    = sapply(results_list_no_wt, function(x) x$metrics$Accuracy),
+  Sensitivity = sapply(results_list_no_wt, function(x) x$metrics$Sensitivity),
+  Specificity = sapply(results_list_no_wt, function(x) x$metrics$Specificity),
+  Precision   = sapply(results_list_no_wt, function(x) x$metrics$Precision),
+  F1          = sapply(results_list_no_wt, function(x) x$metrics$F1)
+)
+
+# Suppose both data frames have identical columns
+combined_df <- bind_rows(
+  results_table_no_wt %>%
+    mutate(Source = "No_WT")
+) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+# Now make a single table
+kable(combined_df, format = "pipe")
+```
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our partner**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
