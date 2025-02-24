@@ -1,5 +1,4 @@
 ---
-title: "Imbalanced Data"
 bibliography: imbalanced_data_ref.bib
 csl: apa.csl
 ---
@@ -20,13 +19,15 @@ Date: February 2025
 
 # Script and data info:
 
-This notebook, developed by the EcoCommons team, showcases how to deal with imbalanced species datasets (presence and absence data) with resampling methods.
+This notebook, developed by the EcoCommons team, showcases how to deal with imbalanced species datasets (presence and absence data) with serveral methods.
 
-# Introduction
+# Abstract
 
 When building species distribution models, it is common to encounter imbalanced datasets. This may involve a large number of presence records and relatively few absence records, or, in the case of rare species, a substantial number of absence records but only a limited number of presence records.
 
 Using imbalanced datasets making models and predictions can result in many unintended issues, such as bias towards the majority class, misleading performance metrics, poor sensitivity for the minority class, etc. Because the model has more information from the prevalent class than the rare events [@menardi2014training]. Thus, we need to deal with imbalanced datasets.
+
+This notebook explores strategies to address the challenges posed by imbalanced species data in ecological modeling, particularly in Species Distribution Models (SDMs). It focuses on the use of background points and weighting methods to improve model performance when presence and absence data are disproportionate. The study examines the effectiveness of different pseudo-absence generation techniques, including random and buffered-random background point sampling, and applies weighting schemes to mitigate class imbalance. Using the Gang-gang Cockatoo as a case study, the analysis demonstrates the impact of these methods on model evaluation metrics such as AUROC, AUPR, F1-score, and TSS. This guide aims to equip ecologists and data scientists with practical approaches for handling imbalanced datasets, ensuring more accurate and reliable SDMs within the EcoCommons platform.
 
 # Objectives
 
@@ -37,17 +38,15 @@ Using imbalanced datasets making models and predictions can result in many unint
 
 # **Workflow Overview**:
 
--   Set the working directory and load the necessary R packages (`dismo`, `ggplot2`, `raster`, `googledrive`, `sp`, `dplyr`, `terra`). Create directories to store raw data files.
+-   Set the working directory and load the necessary R packages. Create directories to store raw data files.
 
 -   Data Download: Download prepared imbalanced dataset from our Google Drive.
 
--   
+-   Data preparation and split.
 
 -   Model evaluation and comparison.
 
-In the near future, this material may form part of comprehensive support materials available to EcoCommons users.
-
-If you have any corrections or suggestions to improve the effeciengy, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the effeciengy, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
 
@@ -79,10 +78,10 @@ Ideally, you would use the **`renv`** package to create an isolated environment 
 #   install.packages("renv")
 # }
 # 
-# # Check if renv has been initialized in the project
+# # Check if renv has been initialised in the project
 # if (!file.exists("renv/activate.R")) {
 #   message("renv has not been initiated in this project. Initializing now...")
-#   renv::init()  # Initialize renv if not already set up
+#   renv::init()  # Initialise renv if not already set up
 # } else {
 #   source("renv/activate.R")  # Activate the renv environment
 #   message("renv is activated.")
@@ -110,7 +109,7 @@ options(repos = c(CRAN = "https://cran.rstudio.com/"))
 # List of packages to check, install if needed, and load
 packages <- c("dplyr", "reshape2", "terra", "sf", "googledrive", "ggplot2", "corrplot", 
               "pROC", "dismo", "spatstat.geom", "patchwork", "biomod2", "PRROC",
-              "leaflet", "car", "gridExtra", "htmltools", "RColorBrewer")
+              "leaflet", "car", "gridExtra", "htmltools", "RColorBrewer", "kableExtra", "tibble")
 
 # Function to display a cat message
 cat_message <- function(pkg, message_type) {
@@ -202,7 +201,7 @@ Many studies show that weighting methods can improve SDM performance [@zhang2020
 
 For example, if a dataset contains 900 presences and 100 absences, the ratio of classes is 9:1. To compensate for this imbalance, class weights can be assigned inversely proportional to class frequencies. In this case, a weight of 1 would be assigned to the majority class (presences) and a weight of 9 to the minority class (absences). This means the model incurs a 9× cost for misclassifying an absence relative to a presence. Such reweighting has been shown to improve the tradeoff between model sensitivity and specificity. Specifically, although increases in sensitivity are often accompanied by decreases in specificity and overall accuracy, applying these class weights can help achieve a better balance.
 
-In this notebook, we use a very simple weighting methods used by Elith et al. [@elith2006novel] and Valavi et al. [@valavi2022predictive]. The weights are generated by giving a weight of 1 to every presence location and give the weights to the background in a way that the sum of the weights for the presence and background samples are equal
+In this notebook, we use a very simple weighting methods used by Elith et al. [@elith2006novel] and Valavi et al. [@valavi2022predictive]. The weights are generated by giving a weight of 1 to every presence location and give the weights to the background in a way that the sum of the weights for the presence and background samples are equal.
 
 ```{r sample_weighting}
 
@@ -234,11 +233,11 @@ train_data <- train_data %>%
 print(train_data)
 ```
 
-7\*1 = 2.33 \*3 = 7
+The sum of the weights for 1 (Present) is 7 × 1 = 7, which is equal to the sum of the weights for 0 (Absent), 2.33 × 3 = 7. **This weighting method will be used to address the imbalanced dataset issue in this notebook**.
 
 ## 1.3 Background points and Pseudo-absence points
 
-When you only have presence-only records for your study species, a common technique is to sample a relatively large number of random samples from the study area. We call these random samples as **background** or **pseudo-absence points [@valavi2022predictive].**
+When working with presence-only records for your study species, a common approach is to sample a relatively large number of random samples from the study area. These random samples area referred to **background** or **pseudo-absence points [@valavi2022predictive].**
 
 There are two common approaches of generating background points. The first involves **randomly selecting background points** from the entire extent of the study area, allowing observations to be compared against the full range of environmental conditions within that area [@elith2006novel; @phillips2006maximum]. The second approach generates background points within a specified minimum-maximum radius around presence points-a method referred to as the **"disk" approach** in EcoCommons Platform.
 
@@ -263,7 +262,11 @@ Several studies suggest how to evaluate the model performance of imbalanced data
 
 # 2 Overview and Conceptualisation
 
-## 2.1 Taxon, location, data and scale
+## 2.1 Model objective
+
+This notebook focuses not on creating a perfect Species Distribution Model (SDM) for the Gang-gang Cockatoo, but on comparing different methods for addressing class imbalance in binary species datasets and evaluating their effectiveness in improving SDM performance.
+
+## 2.2 Taxon, location, data, scale, and model algorithm
 
 **Taxon:** Gang-gang Cockatoo (*Callocephalon fimbriatum*)
 
@@ -275,11 +278,13 @@ Photographer: [Kym Nicolson, ALA](https://images.ala.org.au/image/details?imageI
 
 However, Gang-gang Cockatoos face significant threats, including habitat loss due to land clearing, wildfire damage, and competition for nesting hollows with other species. Climate change, particularly increased fire frequency and altered rainfall patterns, poses additional risks to their survival. The species suffered a drastic population decline, exacerbated by the 2019/2020 bushfires, which burned approximately 28–36% of its habitat, leading to a projected long-term decline in population size.
 
-**Location:** **Australian Capital Territory (study area)**
+**Location:** Australian Capital Territory (ACT, study area)
 
 **Spatial and temporal scales:** small (spatial) and static (temporal)
 
-## 2.2 Imbalanced biodiversity data
+**model algorithm:** Generalised linear model (GLM)
+
+## 2.3 Imbalanced biodiversity data
 
 Understanding your species is essential. This includes knowing their common names (which may include multiple names) and scientific name to ensure you collect the most comprehensive records available in open-access biodiversity data portals, such as the Atlas of Living Australia (ALA) or the Global Biodiversity Information Facility (GBIF).
 
@@ -287,9 +292,11 @@ For this exercise, we have prepared a species occurrence data file in CSV format
 
 ```{r plotting_ganggang, warning=FALSE}
 
-# Read the shapefile for mountain ash occurrence point dataset
+# Read the shapefile for Gang-gang Cockatoo occurrence point dataset
 gang_gang_act <- st_read("imbalanced_data/gang_gang_ACT.shp")
 
+# Read the shapefile for ACT dataset
+ACT <- st_read("imbalanced_data/ACT_4283.shp")
 
 # Create leaflet map
 leaflet() %>%
@@ -341,7 +348,7 @@ leaflet() %>%
   )
 ```
 
-Now, let's calculate the amount of presences and absences in the dataset to see how imbalanced the dataset is.
+Now, let's calculate the number of presences and absences in the dataset to assess the extent of imbalance.
 
 ```{r sum_classification}
 
@@ -373,12 +380,12 @@ ggplot(occ_df, aes(x = Occurrence, y = Count, fill = Occurrence)) +
 
 We can see the amount of Gang-gang Cockatoo absent records are way less than its present records.
 
-## 2.3 Environmental variables
+## 2.4 Environmental variables
 
-We did some tests and have selected 7 environmental variables to use in this case study. For more information on how to prepare environmental dataset and how to select environmental variables, please visit our notebooks: [Raster-preparation](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.qmd) and [GLM](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.qmd) (section 2.3-3.1).
+We conducted several tests and selected seven environmental variables for this case study. For more information on preparing environmental datasets and selecting environmental variables, please refer to our notebooks: [Raster-preparation](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.qmd) and [GLM](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.qmd) (section 2.3-3.1).
 
 | Variable code | **Description** |
-|-----------------------------|-------------------------------------------|
+|----|----|
 | AusClim_bioclim_03_9s_1976-2005 | **Isothermality** (BIO3) — Mean Diurnal Range / Annual Temp Range × 100 |
 | AusClim_bioclim_06_9s_1976-2005 | **Min Temperature of Coldest Month** (BIO6) |
 | AusClim_bioclim_09_9s_1976-2005 | **Mean Temperature of Driest Quarter** (BIO9) |
@@ -408,13 +415,9 @@ selected_rasters <- env_var_stack[[selected_layers]]
 plot(selected_rasters)
 ```
 
-## 2.4 Model objective
-
-This notebook focuses not on creating a perfect Species Distribution Model (SDM) for the Gang-gang Cockatoo, but on comparing different methods for addressing class imbalance in binary species datasets and evaluating their effectiveness in improving SDM performance.
-
 # 3. When we have true-absence data
 
-## 3.1 Including true absence in the training dataset 
+## 3.1 Including true absence in the training dataset
 
 Including true-absence data in training dataset is always recommended when such data is available [@vaclavik2009invasive]. In this study, we aim to explore the question: '**how much true-absence data is enough?**' **'Is more always better?'**
 
@@ -500,7 +503,7 @@ print(split_data)
 
 ```
 
-We can visualize above table in a bar chart.
+We can visualise above table in a bar chart.
 
 ```{r plot_split}
 
@@ -548,7 +551,7 @@ get_occurrence_data <- function(occurrence_sf, env_var_stack, drop_na = TRUE, dr
 }
 ```
 
-```{r combine_1}
+```{r combine_2}
 
 combine_with_env_data <- function(split_list, env_var_stack, dropCols = c(2,3)) {
   # Process the training data
@@ -560,13 +563,13 @@ combine_with_env_data <- function(split_list, env_var_stack, dropCols = c(2,3)) 
 }
 ```
 
-```{r combine_1}
+```{r combine_3}
 # Then, combine each split with the environmental variables:
-env_combined_90 <- combine_with_env_data(split_90, env_var_stack, dropCols = c(2,3))
+env_combined_90 <- combine_with_env_data(split_90_absence, env_var_stack, dropCols = c(2,3))
 
-env_combined_70 <- combine_with_env_data(split_70, env_var_stack, dropCols = c(2,3))
+env_combined_70 <- combine_with_env_data(split_70_absence, env_var_stack, dropCols = c(2,3))
 
-env_combined_50 <- combine_with_env_data(split_50, env_var_stack, dropCols = c(2,3))
+env_combined_50 <- combine_with_env_data(split_50_absence, env_var_stack, dropCols = c(2,3))
 
 # Create a list of three training data data frames
 train_list <- list(
@@ -586,7 +589,17 @@ test_list <- list(
 
 Now, we have three sets of training and test data ready for modelling.
 
+-   split_90_train & split_90_test
+
+-   split_70_train & split_70_test
+
+-   split_50_train & split_50_test
+
 ## 3.2 Un-weighted models
+
+In this section, we will ignore the issue of dataset imbalance and run a GLM SDM model. We will generate all the evaluation metrics mentioned in section [1.4 Evaluation metric].
+
+This is a function running GLM and producing evaluation metrics.
 
 ```{r unweighted_GLM}
 
@@ -728,7 +741,17 @@ fit_model_and_get_perf_no_wt <- function(train_data_env, test_data_env, tss_step
 }
 ```
 
-```{r message=FALSE}
+Run models with our three pairs of data and extract the evaluation metrics of these models.
+
+-   Split_90_absence_unwt: split_90_train & split_90_test
+
+-   Split_70_absence_unwt: split_70_train & split_70_test
+
+-   Split_50_absence_unwt: split_50_train & split_50_test
+
+'unwt' means unweighted.
+
+```{r run_unwt_glm, message=FALSE}
 
 # Apply the fit_model_and_get_perf_no_wt function to train and test lists
 model_including_true_absence_no_wt <- mapply(fit_model_and_get_perf_no_wt, 
@@ -753,9 +776,64 @@ results_including_true_absence_table_no_wt <- data.frame(
 )
 ```
 
+We can print the evaluation metrics of all three models in one table.
+
+```{r eval_unwt}
+
+# Round numeric values to 3 decimal places
+results_including_true_absence_table_no_wt <- results_including_true_absence_table_no_wt %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+# Create the table with smaller font
+results_including_true_absence_table_no_wt %>%
+  kable("html", caption = "Model Evaluation Metrics") %>%
+  kable_styling(font_size = 12, full_width = FALSE)
+
+```
+
+### 3.2.1 Which model is better?
+
+**split_70_train** shows **better overall performance** based on **AUC, AUPR, CORR**, and **Best_Specificity**.
+
+**split_50_train** leads in **Max_TSS** and **Best_Sensitivity**, indicating it may perform slightly better in balancing true positive and true negative rates.
+
+**split_90_train** consistently underperforms in most metrics.
+
+### 3.2.2 Is more always better?
+
+**Not necessarily — more true-absence data can help, but only up to a point.** The results show that increasing the training data (from 50% to 90%) does **not consistently improve** the model’s performance. Here’s why:
+
+**Performance Improvement with More Absences:**
+
+-   As we increased the proportion of true-absence data from **10% (split_90)** to **50% (split_50)**, there was a **clear improvement** in several metrics:
+
+-   **AUC** rose from **0.661** (split_90) to **0.695** (split_70), showing better discriminatory power with more absences.
+
+-   **AUPR** improved similarly, reflecting better precision-recall balance.
+
+-   **Max_TSS** increased from **0.172** (split_90) to **0.309** (split_50), indicating a better trade-off between sensitivity and specificity.
+
+**Diminishing Returns Beyond a Point:**
+
+While moving from **10% to 30%** absences (split_90 to split_70) resulted in noticeable improvements, the jump from **30% to 50%** (split_70 to split_50) offered **smaller gains** in AUC and AUPR, suggesting diminishing returns.
+
+### 3.2.3 How much true-absence data is enough?
+
+**30% (split_70)** seems to strike a **good balance**:
+
+-   It achieved the **highest AUC (0.695)** and **AUPR (0.688)**.
+
+-   **Best_Specificity (0.568)** was highest in split_70, showing better negative prediction performance.
+
+-   **Max_TSS (0.284)** is respectable and close to the best value (0.309 in split_50).
+
+**50% (split_50)** provides the **highest TSS (0.309)** and **Best_Sensitivity (0.882)** but doesn’t outperform split_70 on AUC and AUPR. This suggests that **too much absence data may dilute the signal** and introduce noise.
+
+Please note that these are the primary results and comparisons of models without addressing the imbalanced data issue. Next, we will investigate whether applying weights improves the models and leads to different performance outcomes.
+
 ## 3.3 Weighted models
 
-The only differences between unweighted models and weighted models
+As explained in Section [1.2 Weighting methods],, we will use a weighting approach to assign more importance to the minority class. To implement this, we adjusted the model code by adding a ‘wt’ parameter and incorporated it into the GLM model.
 
 ```{r weighted_GLM}
 
@@ -908,7 +986,17 @@ fit_model_and_get_perf_wt <- function(train_data_env, test_data_env, tss_step = 
 }
 ```
 
-```{r message=FALSE}
+Run models with our three pairs of data and extract the evaluation metrics of these models.
+
+-   Split_90_absence_wt: split_90_train & split_90_test
+
+-   Split_70_absence_wt: split_70_train & split_70_test
+
+-   Split_50_absence_wt: split_50_train & split_50_test
+
+'wt' means weighted.
+
+```{r run_wt_glm, message=FALSE}
 
 # 1) Fit weighted models for each train/test pair
 model_including_true_absence_wt <- mapply(
@@ -937,12 +1025,42 @@ results_including_true_absence_table_wt <- data.frame(
 
 ```
 
+We can print the evaluation metrics of all three models in one table.
+
+```{r eval_wt}
+
+# Round numeric values to 3 decimal places
+results_including_true_absence_table_wt <- results_including_true_absence_table_wt %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+# Create the table with smaller font
+results_including_true_absence_table_wt %>%
+  kable("html", caption = "Model Evaluation Metrics") %>%
+  kable_styling(font_size = 12, full_width = FALSE)
+
+```
+
+### 3.3.1 General Trends Across Weighted Models
+
+**Best Overall Performer:**
+
+-   **split_70_train** consistently shows the strongest performance across most metrics, striking a balance between sensitivity and specificity while achieving the highest **AUC (0.697)** and **AUPR (0.690)**.
+
+**Effect of Increasing True-Absence Data:**
+
+Increasing the proportion of true-absence data from **10% (split_90)** to **50% (split_50)** shows mixed effects:
+
+-   **Discrimination metrics** (AUC, AUPR) improve from split_90 to split_70 but decline slightly in split_50.
+
+-   **Specificity** improves as more absence data is included, while **sensitivity** tends to decrease.
+
 ## 3.4 Comparing un-weighted and weighted methods.
 
-```{r message=FALSE}
-library(knitr)
+We combine the performance tables of un-weighted and weighted models to see the differences between these two methods.
 
-# Suppose both data frames have identical columns
+```{r compare, message=FALSE}
+
+#combine two evaluation tables
 combined_df <- bind_rows(
   results_including_true_absence_table_no_wt %>%
     mutate(Source = "No_WT"),
@@ -951,65 +1069,62 @@ combined_df <- bind_rows(
 ) %>%
   mutate(across(where(is.numeric), ~ round(.x, 3)))
 
-# Create the table with smaller font
-combined_df %>%
-  kable("html", caption = "Model Evaluation Metrics") %>%
+# Create the table using row names
+kable(combined_df, "html", caption = "Model Evaluation Metrics", rownames = TRUE) %>%
   kable_styling(font_size = 12, full_width = FALSE)
-
 ```
 
-From the evaluation metric table, we find:
+### 3.4.1 Results of comparison
 
-\(1\) The **unweighted models** suffer from a class imbalance, **overpredicting positives** while failing to capture negatives, leading to **high sensitivity but poor specificity**.
+By comparing the performance of unweighted and weighted models, we find:
 
--   **High Sensitivity (1.0)** but **Specificity (0.0)** is **poor** across all splits.
+\(1\) The **weighted models (WT)** significantly outperform the **unweighted models (No_WT)** in terms of **balanced classification**, offering better **specificity**, **F1 scores**, and **TSS** — all while maintaining similar **AUC** and **AUPR**.
 
--   Indicates the model **overpredicts positives** — catching all true positives but misclassifying negatives.
+\(2\) **Weighted models improved discrimination** (AUC, AUPR) and provided more **balanced classification** by reducing the bias toward positive predictions.
 
--   Increases slightly from **0.14 (90%)** to **0.32 (70%/50%)**, suggesting better alignment between predicted probabilities and true labels with **smaller training sets**.
+\(3\) **Specificity improved significantly**, correcting the unweighted models’ tendency to overpredict presences (**Sensitivity = 1** in unweighted models).
 
--   **AUC (0.66 - 0.69)** and **AUPR (0.64 - 0.69)** are moderate, indicating limited discriminative power. **AUPR (\~0.64 - 0.69)** tracks similarly to AUC, but it’s higher on the **70% split**, possibly due to more balanced data.
+\(4\) **split_70_train (WT)** provided the most balanced results:
 
--   **Accuracy (0.5)** is misleading here due to imbalanced performance (favoring positives entirely).
+-   **Highest AUC (0.697)** and **AUPR (0.690)**
 
--   **Best_Threshold (\~0.89 - 0.97)**: High thresholds are needed to balance sensitivity and specificity due to the model’s bias.
+-   **Improved Accuracy (0.647)** and **TSS (0.295)**
 
--   **Max_TSS (0.17 - 0.31)**: Low, reflecting poor skill beyond random chance. Although still low, **TSS improves** as the training data decreases (**0.17 → 0.31**), possibly due to less overfitting on smaller datasets.
+-   Balanced **Sensitivity (0.674)** and **Specificity (0.621)**
 
-\(2\) **Weighted models** effectively handle class imbalance, leading to more **balanced sensitivity and specificity**. This results in **higher accuracy**, better **F1 scores**, and **improved TSS**.
+\(5\) **Weighting corrected imbalanced data issues**:
 
--   **Improved Balance** between **Sensitivity (0.58 - 0.77)** and **Specificity (0.43 - 0.62)**. The **50% split** achieves perfect balance (**Sensitivity = Specificity = 0.588**).
+-   Reduced **false positives** and improved the model’s ability to correctly classify absences.
 
--   **CORR:** Increases with smaller training data (**0.281 → 0.336**), showing better alignment between predictions and observations on less data.
-
--   **AUC (0.67 - 0.70)** and **AUPR (0.65 - 0.69)** are slightly higher or comparable to unweighted models. The **70% split** achieves the highest AUC (**0.697**) and AUPR (**0.690**).
-
--   **Accuracy (\~0.59 - 0.65)** shows improvement, reflecting better overall performance.
-
--   **Precision (\~0.58 - 0.64)** and **F1 (\~0.59 - 0.66)** indicate a more balanced trade-off between false positives and false negatives.
-
--   **Max_TSS (\~0.29 - 0.32)** is higher than the unweighted models, indicating **better discriminative skill**. Highest on **50% split** (**0.324**) due to balanced sensitivity and specificity.
-
--   **Best_Threshold (\~0.45 - 0.65)** is **lower** than the unweighted models, suggesting **less aggressive thresholding** is required.
-
-\(3\) The **weighted models (WT)** significantly outperform the **unweighted models (No_WT)** in terms of **balanced classification**, offering better **specificity**, **F1 scores**, and **TSS** — all while maintaining similar **AUC** and **AUPR**.
+-   Optimal thresholds shifted lower, indicating improved model calibration.
 
 | **Metric** | Unweighted | Weighted |
-|---------------------------|-----------------------|-----------------------|
+|----|----|----|
 | **Sensitivity** | Very high (1.0) but at the expense of specificity. | Balanced (\~0.58 - 0.77). |
 | **Specificity** | Extremely poor (0.0). | Improved (\~0.43 - 0.62). |
 | **AUC / AUPR** | Moderate (0.66 - 0.69). | Similar or slightly better (0.67 - 0.70). |
 | **F1 Score** | Inflated due to perfect recall but low precision. | More balanced (\~0.59 - 0.66). |
 | **TSS** | Low (\~0.17 - 0.31), poor model skill. | Higher (\~0.29 - 0.32), indicating improved skill. |
 
-# 
-4. Background point and pseudo-absence points
+### 3.4.2 Summary
 
-What if we don't have any true-absence data?
+**Weighting improved overall model performance**, especially in addressing the imbalance between presences and absences.
 
-If we put all true absence data and the same amount of presence data into test dataset, and keep the rest as training dataset, we will have 136x2 = 272 rows of test dataset, and 646 rows of training dataset. Approximately 30/70.
+The **split_70_train (WT)** appears to be the most balanced and effective model.
 
-```{r}
+While **sensitivity** decreased, the gains in **specificity**, **AUC**, and **TSS** suggest more reliable and generalizable 
+
+**We should always consider weighting methods when the species binary dataset has an imbalance issue.**
+
+# 4. Background point and pseudo-absence points
+
+In Chapter 3, we explored the scenario where true-absence data is included in the training dataset. However, researchers often lack access to true-absence data when training models, or they may choose to reserve this valuable data for cross-validation purposes, as demonstrated by Elith et al. [@elith2006novel] and Valavi et al. [@valavi2022predictive].
+
+So, what options do we have when true-absence data isn’t available for training? One common approach is to generate background points or pseudo-absence points and include them in the training dataset as surrogates for true-absence data.
+
+For example, if we allocate all true-absence data along with an equal number of presence records to the test dataset and use the remaining data for training, we would end up with **272 rows** in the test dataset (136 true absences and 136 presences) and **646 rows** in the training dataset. This results in an approximate **30/70** split between test and training data.
+
+```{r 30_70_split}
 
  # Identify indices for ABSENCE and PRESENCE rows
   abs_idx <- which(gang_gang_act$occrrnS == "ABSENT")
@@ -1030,17 +1145,21 @@ If we put all true absence data and the same amount of presence data into test d
   
 ```
 
-```{r}
+```{r plot_training_test}
 
 # Get bounding box from the ACT boundary
 act_bbox <- sf::st_bbox(ACT)
 
-# Create a ggplot for the training data
+# Count the number of points in train and test datasets
+n_train <- nrow(train_data)
+n_test <- nrow(test_data)
+
+# Create ggplot for the training data with count annotation
 p_train <- ggplot() +
   geom_sf(data = ACT, fill = NA, color = "black") +
   geom_sf(data = train_data, aes(color = occrrnS)) +
   scale_color_manual(values = c("PRESENT" = "#11aa96", "ABSENT" = "#f6aa70")) +
-  ggtitle("Training Data") +
+  ggtitle(paste("Training Data (n =", n_train, ")")) +  # Add count to title
   coord_sf(
     xlim = c(act_bbox["xmin"], act_bbox["xmax"]), 
     ylim = c(act_bbox["ymin"], act_bbox["ymax"])
@@ -1052,12 +1171,12 @@ p_train <- ggplot() +
     legend.position = "bottom"
   )
 
-# Create a ggplot for the test data
+# Create ggplot for the test data with count annotation
 p_test <- ggplot() +
   geom_sf(data = ACT, fill = NA, color = "black") +
   geom_sf(data = test_data, aes(color = occrrnS)) +
   scale_color_manual(values = c("PRESENT" = "#11aa96", "ABSENT" = "#f6aa70")) +
-  ggtitle("Test Data") +
+  ggtitle(paste("Test Data (n =", n_test, ", 1:1)")) +  # Add count to title
   coord_sf(
     xlim = c(act_bbox["xmin"], act_bbox["xmax"]), 
     ylim = c(act_bbox["ymin"], act_bbox["ymax"])
@@ -1074,19 +1193,15 @@ combined_plot <- p_train + p_test + patchwork::plot_layout(ncol = 2)
 combined_plot
 ```
 
-Training data + background data
-
-background points
-
-random
-
-## 4.1 Random
+## 4.1 Random background points
 
 Many studies suggest that the number of background points should be sufficient to comprehensively sample and represent all environments in the study area, or at least a range of background point sizes should be tested. For example, Valavi et al. [@valavi2022predictive] tested their models with **100 to 100,000 background points**. Barbet-Massin et al. [@barbet2012selecting] tested 100, 300, 1000, 3000 or 10000 **background points**.
 
-We here will also test the effect of different sizes of background points on the performance of models. We will test the ratio of background points to true presences from 1:1, 5:1, 10:1, 15:1, 20:1, 30:1, and 50:1 with and without weighting methods.
+We here will also test the effect of different sizes of background points on the performance of models. We will test the ratio of background points to true presences from 1:1, 5:1, 10:1, 15:1, 20:1, 30:1, and 50:1 **with and without weighting methods**.
 
-```{r}
+This is the function generating required number of random background points within the extent of the study area.
+
+```{r random_bg_generation}
 
 # Convert SpatRaster to Raster
 studyarea <- raster(env_var_stack$`AusClim_bioclim_01_9s_1976-2005`)
@@ -1120,7 +1235,7 @@ random_bg_50to1 <- randomPoints(studyarea, n_pres * 50)
 
 ```
 
-```{r random_ba=g_points_function}
+```{r random_bg_points_function}
 
 combine_bg_with_presence <- function(bg_points, train_data, raster_obj, target_crs = 4283, occ_label = "bg") {
   # Convert the background points matrix to a data frame
@@ -1143,7 +1258,9 @@ combine_bg_with_presence <- function(bg_points, train_data, raster_obj, target_c
 
 ```
 
-```{r}
+We then combine the generated background points with true present data.
+
+```{r combine_bg_true_pre}
 
 combined_random_bg_1to1 <- combine_bg_with_presence(random_bg_1to1, train_data, studyarea)
 combined_random_bg_5to1 <- combine_bg_with_presence(random_bg_5to1, train_data, studyarea)
@@ -1154,49 +1271,35 @@ combined_random_bg_30to1 <- combine_bg_with_presence(random_bg_30to1, train_data
 combined_random_bg_50to1 <- combine_bg_with_presence(random_bg_50to1, train_data, studyarea)
 ```
 
-```{r}
-# Ensure the occrrnS column is a factor in the correct order
-combined_random_bg_1to1$occrrnS <- factor(combined_random_bg_1to1$occrrnS,
-                                                 levels = c("PRESENT", "bg"))
-combined_random_bg_5to1$occrrnS <- factor(combined_random_bg_5to1$occrrnS,
-                                                 levels = c("PRESENT", "bg"))
-combined_random_bg_10to1$occrrnS <- factor(combined_random_bg_10to1$occrrnS,
-                                                 levels = c("PRESENT", "bg"))
-combined_random_bg_15to1$occrrnS <- factor(combined_random_bg_15to1$occrrnS,
-                                                 levels = c("PRESENT", "bg"))
-combined_random_bg_20to1$occrrnS <- factor(combined_random_bg_20to1$occrrnS,
-                                                 levels = c("PRESENT", "bg"))
-combined_random_bg_30to1$occrrnS <- factor(combined_random_bg_30to1$occrrnS,
-                                                 levels = c("PRESENT", "bg"))
-combined_random_bg_50to1$occrrnS <- factor(combined_random_bg_50to1$occrrnS,
-                                                 levels = c("PRESENT", "bg"))
-```
+```{r plot_ratio}
 
-```{r}
-# Modified function: creates a map plot where "bg" points are drawn first,
-# then "PRESENT" points on top.
 create_map_plot <- function(bg_sf, title, point_size = 0.5) {
-  # Split the data into background points and presence points
+  # Ensure correct factor levels
+  bg_sf$occrrnS <- factor(bg_sf$occrrnS, levels = c("PRESENT", "bg"))
+  
+  # Split the data into background and present points
   bg_only <- bg_sf[bg_sf$occrrnS == "bg", ]
-  pa_points <- bg_sf[bg_sf$occrrnS == "PRESENT", ]
+  present_only <- bg_sf[bg_sf$occrrnS == "PRESENT", ]
   
   ggplot() +
     # Add the ACT polygon layer (without including it in the legend)
     geom_sf(data = ACT, fill = "lightblue", color = "black", alpha = 0.3, show.legend = FALSE) +
-    # Add background points first
-    geom_sf(data = bg_only, aes(color = occrrnS), size = point_size) +
-    # Add presence points on top
-    geom_sf(data = pa_points, aes(color = occrrnS), size = point_size) +
+    # Plot background points first with mapped color
+    geom_sf(data = bg_only, aes(color = "Background Points"), size = point_size, show.legend = TRUE) +
+    # Plot present points on top with mapped color
+    geom_sf(data = present_only, aes(color = "Present"), size = point_size, show.legend = TRUE) +
+    # Manual color mapping
     scale_color_manual(
       name = "Group",
-      values = c("PRESENT" = "#11aa96", "bg" = "grey"),
-      labels = c("Present", "Background Points")
+      values = c("Present" = "#11aa96", "Background Points" = "grey")
     ) +
+    # Legend with larger points
+    guides(color = guide_legend(override.aes = list(size = 3))) +
     ggtitle(title) +
     coord_sf(lims_method = "geometry_bbox") +
     theme_minimal() +
     theme(
-      legend.position = "right",  # Legend in each plot (to be collected)
+      legend.position = "right",
       plot.title = element_text(hjust = 0.5, size = 10, face = "bold"),
       axis.title = element_blank(),
       axis.text = element_blank(),
@@ -1204,7 +1307,7 @@ create_map_plot <- function(bg_sf, title, point_size = 0.5) {
     )
 }
 
-# Create plots for each background ratio (adjust 'point_size' as desired)
+# Create plots for each background ratio
 p1 <- create_map_plot(combined_random_bg_1to1, "1:1", point_size = 0.01)
 p2 <- create_map_plot(combined_random_bg_5to1, "5:1", point_size = 0.01)
 p3 <- create_map_plot(combined_random_bg_10to1, "10:1", point_size = 0.01)
@@ -1213,15 +1316,17 @@ p5 <- create_map_plot(combined_random_bg_20to1, "20:1", point_size = 0.01)
 p6 <- create_map_plot(combined_random_bg_30to1, "30:1", point_size = 0.01)
 p7 <- create_map_plot(combined_random_bg_50to1, "50:1", point_size = 0.01)
 
-# Combine the three plots in one row and collect a common legend at the bottom
+# Combine the plots with a shared legend at the bottom
 combined_plot <- (p1 + p2 + p3 + p4 + p5 + p6 + p7) +
-  plot_layout(ncol = 4, guides = "collect") +
+  plot_layout(ncol = 4, guides = "collect") +  # Collects the legend into one
   plot_annotation(theme = theme(legend.position = "bottom"))
 
 combined_plot
 ```
 
-```{r}
+Then, we combine occurrence data with environmental variables.
+
+```{r combine_env}
 train_data_list <- list(
   combined_random_bg_1to1_env = get_occurrence_data(combined_random_bg_1to1, env_var_stack, dropCols = c(2,3)),
   combined_random_bg_5to1_env = get_occurrence_data(combined_random_bg_1to1, env_var_stack, dropCols = c(2,3)),
@@ -1236,36 +1341,9 @@ test_data_env <- get_occurrence_data(test_data, env_var_stack, dropCols = c(2,3)
 
 ```
 
-no weighting
+When the ratio of background points to true presences exceeds 1:1—such as 5:1, 10:1, 15:1, 20:1, 30:1, and 50:1—an imbalanced dataset issue is introduced. To address this imbalance, we need to use weighting methods.
 
-results_table_no_wt
-
-```{r message=FALSE}
-
-results_list_no_wt <- lapply(train_data_list, function(train_data) {
-  fit_model_and_get_perf_no_wt(train_data, test_data_env)
-})
-
-
-# Build a data frame by extracting each metric from the results_list_no_wt
-results_table_no_wt <- data.frame(
-  AUC              = sapply(results_list_no_wt, function(x) x$auc),                    # AUROC
-  AUPR             = sapply(results_list_no_wt, function(x) x$aupr),                   # Area Under Precision-Recall Curve
-  CORR             = sapply(results_list_no_wt, function(x) x$corr),                   # Correlation
-  Accuracy         = sapply(results_list_no_wt, function(x) x$metrics_0.5$Accuracy),   # Accuracy at threshold 0.5
-  Sensitivity      = sapply(results_list_no_wt, function(x) x$metrics_0.5$Sensitivity),# Sensitivity (Recall)
-  Specificity      = sapply(results_list_no_wt, function(x) x$metrics_0.5$Specificity),# Specificity
-  Precision        = sapply(results_list_no_wt, function(x) x$metrics_0.5$Precision),  # Precision
-  F1               = sapply(results_list_no_wt, function(x) x$metrics_0.5$F1),         # F1 Score
-  Best_Threshold   = sapply(results_list_no_wt, function(x) x$best_threshold),         # Best threshold based on TSS
-  Max_TSS          = sapply(results_list_no_wt, function(x) x$max_tss),                # Maximum TSS
-  Best_Sensitivity = sapply(results_list_no_wt, function(x) x$best_sensitivity),       # Sensitivity at Best Threshold
-  Best_Specificity = sapply(results_list_no_wt, function(x) x$best_specificity)        # Specificity at Best Threshold
-)
-
-```
-
-```{r message=FALSE}
+```{r eval_wt_random_bg_1, message=FALSE}
 
 # 1) Fit weighted models and extract results
 results_list_wt <- lapply(train_data_list, function(train_data) {
@@ -1273,7 +1351,7 @@ results_list_wt <- lapply(train_data_list, function(train_data) {
 })
 
 # 2) Build a data frame by extracting each metric from the results_list_wt
-results_table_wt <- data.frame(
+results_table_wt_random <- data.frame(
   AUC              = sapply(results_list_wt, function(x) x$auc),                    # AUROC
   AUPR             = sapply(results_list_wt, function(x) x$aupr),                   # Area Under Precision-Recall Curve
   CORR             = sapply(results_list_wt, function(x) x$corr),                   # Correlation
@@ -1290,51 +1368,64 @@ results_table_wt <- data.frame(
 
 ```
 
-```{r}
+Print the results.
 
-# Suppose both data frames have identical columns
-combined_df <- bind_rows(
-  results_table_no_wt %>%
-    mutate(Source = "No_WT"),
-  results_table_wt %>%
-    mutate(Source = "WT")
-) %>%
+```{r eval_wt_random_bg_2}
+
+# Round numeric values to 3 decimal places
+results_table_wt_random <- results_table_wt_random %>%
   mutate(across(where(is.numeric), ~ round(.x, 3)))
 
 # Create the table with smaller font
-combined_df %>%
+results_table_wt_random %>%
   kable("html", caption = "Model Evaluation Metrics") %>%
   kable_styling(font_size = 12, full_width = FALSE)
 
 ```
 
-## 4.2 Buffer
+### 4.1.1 Results
 
-Besides completely random background points, we will also test a buffer-targeted random background point methods.
+(1) **Background Ratios up to 10:1**
 
-**Pseudo-Absence Strategy**
+-   Metrics remain stable with minimal changes, indicating the model is robust to moderate increases in background points.
 
--   *Key point:* Disk strategy with a range of \<500, 500-1000, 1000 - 1500, 1500 - 2000, \> 2000 meters.
+\(2\) **High Background Ratios (15:1 and 50:1)**
 
--   *Implication:*
+-   Sensitivity and precision decline, leading to lower F1 scores.
 
-    -   The disk strategy selects pseudo-absences outside a certain buffer zone from presence points.
+-   Specificity improves, but at the cost of missing more true positives.
 
-    -   The range of 1000–5000 meters should be carefully reviewed since it must balance avoiding areas within the species' potential dispersal kernel (150 meters) and including areas beyond the likely range of colonization.
+\(3\) **Overall Performance:**
 
-![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/Disk_pseudo_absence.png){alt="Mountain Ash, " width="200"}
+-   Increasing background points beyond **10:1** introduces diminishing returns and eventually harms model balance.
 
-```{r}
+-   A ratio of **5:1 to 10:1** appears to be a sweet spot, maintaining good sensitivity and specificity without introducing severe imbalances.
+
+### 4.1.2 Summary
+
+\(1\) **Increasing background points beyond a 10:1 ratio does not consistently improve model performance** and may even reduce sensitivity and overall balance.
+
+\(2\) **Moderate background ratios (5:1 to 10:1)** provide a balance between sufficient background sampling and maintaining model sensitivity.
+
+\(3\) At **very high ratios (15:1 and 50:1)**, the model starts favoring background points, leading to poorer detection of presences.
+
+## 4.2 The 'disk' approach
+
+Besides completely random background points, we will also test a 'disk' approach to generate random background point methods within a defined range around present records. As the below figure shown, these rings indicate potential areas where **pseudo-absence points** can be sampled, simulating **absence data** when real absences are unavailable.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Gang_gang_buffer.png)
+
+First, we extract present data from the training dataset.
+
+```{r true_presence}
 
 presence_in_train_data <- train_data[train_data$occrrnS == "PRESENT", ]
 
 ```
 
-buffer function
+The function generating background points in a defined disk round the presence data.
 
-```{r}
-library(sf)
-library(dplyr)
+```{r disk_function}
 
 # 1) Generate random-buffer pseudo-absences within a study area
 generate_pseudo_absences_random_buffer <- function(presence_in_train_data, 
@@ -1417,63 +1508,91 @@ generate_and_combine_pseudo_absences <- function(presence_in_train_data,
 }
 ```
 
-```{r warning=FALSE}
-buffer_bg_500 <- generate_and_combine_pseudo_absences(presence_in_train_data,
-                                                      train_data, 
-                                                          min_buffer = 0, 
-                                                          max_buffer = 500, 
-                                                          n_points_per_presence = 1,
-                                                          seed = 123,
-                                                      study_area = ACT,
-                                                          target_crs = 4283)
+Generate background points within these ranges around present records of Gang-gang Cockatoo in the training dataset:
 
-buffer_bg_500_1000 <- generate_and_combine_pseudo_absences(presence_in_train_data,
-                                                           train_data, 
-                                                          min_buffer = 500, 
-                                                          max_buffer = 1000, 
-                                                          n_points_per_presence = 1,
-                                                          seed = 123,
-                                                          study_area = ACT,
-                                                          target_crs = 4283)
+-   **Within 500m**
 
-buffer_bg_1000_1500 <- generate_and_combine_pseudo_absences(presence_in_train_data,
-                                                           train_data, 
-                                                          min_buffer = 1000, 
-                                                          max_buffer = 1500, 
-                                                          n_points_per_presence = 1,
-                                                          seed = 123,
-                                                          study_area = ACT,
-                                                          target_crs = 4283)
+-   **500 - 1000m**
 
-buffer_bg_1500_2000 <- generate_and_combine_pseudo_absences(presence_in_train_data,
-                                                            train_data, 
-                                                        min_buffer = 1500, 
-                                                        max_buffer = 2000,
-                                                        n_points_per_presence = 1, 
-                                                        seed = 123, 
-                                                        study_area = ACT,
-                                                        target_crs = 4283)
+-   **1000 - 1500m**
 
-buffer_bg_2000 <- generate_and_combine_pseudo_absences(presence_in_train_data,
-                                                       train_data, 
-                                                        min_buffer = 2000, 
-                                                        max_buffer = 10000,
-                                                        n_points_per_presence = 1, 
-                                                        seed = 123, 
-                                                       study_area = ACT,
-                                                        target_crs = 4283)
+-   **1500 - 2000m**
 
+-   **More than 2000m**
+
+```{r disk_bg, warning=FALSE, message=FALSE}
+
+suppressWarnings({ # We want to suppress some irrelevant warnings
+
+  disk_bg_500 <- generate_and_combine_pseudo_absences(
+    presence_in_train_data,
+    train_data, 
+    min_buffer = 0, 
+    max_buffer = 500, 
+    n_points_per_presence = 1,
+    seed = 123,
+    study_area = ACT,
+    target_crs = 4283
+  )
+
+  disk_bg_500_1000 <- generate_and_combine_pseudo_absences(
+    presence_in_train_data,
+    train_data, 
+    min_buffer = 500, 
+    max_buffer = 1000, 
+    n_points_per_presence = 1,
+    seed = 123,
+    study_area = ACT,
+    target_crs = 4283
+  )
+
+  disk_bg_1000_1500 <- generate_and_combine_pseudo_absences(
+    presence_in_train_data,
+    train_data, 
+    min_buffer = 1000, 
+    max_buffer = 1500, 
+    n_points_per_presence = 1,
+    seed = 123,
+    study_area = ACT,
+    target_crs = 4283
+  )
+
+  disk_bg_1500_2000 <- generate_and_combine_pseudo_absences(
+    presence_in_train_data,
+    train_data, 
+    min_buffer = 1500, 
+    max_buffer = 2000,
+    n_points_per_presence = 1, 
+    seed = 123, 
+    study_area = ACT,
+    target_crs = 4283
+  )
+
+  disk_bg_2000 <- generate_and_combine_pseudo_absences(
+    presence_in_train_data,
+    train_data, 
+    min_buffer = 2000, 
+    max_buffer = 10000,
+    n_points_per_presence = 1, 
+    seed = 123, 
+    study_area = ACT,
+    target_crs = 4283
+  )
+
+})
 
 ```
 
-```{r}
+Let's plot the generated disk background points.
+
+```{r plot_disk}
 
 # Create plots for each background ratio with smaller points
-p1 <- create_map_plot(buffer_bg_500, "Buffe < 500m", point_size = 0.01)
-p2 <- create_map_plot(buffer_bg_500_1000, "Buffer 500-1000m", point_size = 0.01)
-p3 <- create_map_plot(buffer_bg_1000_1500, "Buffer 1000-1500m", point_size = 0.01)
-p4 <- create_map_plot(buffer_bg_1500_2000, "Buffer 1500-2000m", point_size = 0.01)
-p5 <- create_map_plot(buffer_bg_2000, "Buffer > 2000m", point_size = 0.01)
+p1 <- create_map_plot(disk_bg_500, "Buffe < 500m", point_size = 0.01)
+p2 <- create_map_plot(disk_bg_500_1000, "Buffer 500-1000m", point_size = 0.01)
+p3 <- create_map_plot(disk_bg_1000_1500, "Buffer 1000-1500m", point_size = 0.01)
+p4 <- create_map_plot(disk_bg_1500_2000, "Buffer 1500-2000m", point_size = 0.01)
+p5 <- create_map_plot(disk_bg_2000, "Buffer > 2000m", point_size = 0.01)
 
 # Combine the three plots in one row and collect a common legend at the bottom
 combined_plot <- (p1 + p2 + p3+ p4 + p5) +
@@ -1483,49 +1602,183 @@ combined_plot <- (p1 + p2 + p3+ p4 + p5) +
 combined_plot
 ```
 
-```{r}
+From the above figure, we can see that as the range increases, the grey points (background points) move farther away from the present points.
+
+Now, let's combine the occurrence data with environmental variables.
+
+```{r combine_disk}
 train_data_list <- list(
-  combined_buffer_bg_500_env = get_occurrence_data(buffer_bg_500, env_var_stack, dropCols = c(2,3)),
-  combined_buffer_bg_500_1000_env = get_occurrence_data(buffer_bg_500_1000, env_var_stack, dropCols = c(2,3)),
-  combined_buffer_bg_1000_1500_env = get_occurrence_data(buffer_bg_1000_1500, env_var_stack, dropCols = c(2,3)),
-  combined_buffer_bg_1500_2000_env = get_occurrence_data(buffer_bg_1500_2000, env_var_stack, dropCols = c(2,3)),
-  combined_buffer_bg_2000_env = get_occurrence_data(buffer_bg_2000, env_var_stack, dropCols = c(2,3))
+  disk_bg_500_env = get_occurrence_data(disk_bg_500, env_var_stack, dropCols = c(2,3)),
+  disk_bg_500_1000_env = get_occurrence_data(disk_bg_500_1000, env_var_stack, dropCols = c(2,3)),
+  disk_bg_1000_1500_env = get_occurrence_data(disk_bg_1000_1500, env_var_stack, dropCols = c(2,3)),
+  disk_bg_1500_2000_env = get_occurrence_data(disk_bg_1500_2000, env_var_stack, dropCols = c(2,3)),
+  disk_bg_2000_env = get_occurrence_data(disk_bg_2000, env_var_stack, dropCols = c(2,3))
 )
 
 test_data_env <- get_occurrence_data(test_data, env_var_stack, dropCols = c(2,3))
 
 ```
 
-```{r message=FALSE}
+We can now run the GLM models with these datasets and generate the evaluation metrics. Please note that we created an equal number of background points and present points, so there is no imbalance issue in this case. Thus, we are not using 'wt' in the GLM function.
+
+```{r disk_glm, warning=FALSE, message=FALSE}
+
 results_list_no_wt <- lapply(train_data_list, function(train_data) {
   fit_model_and_get_perf_no_wt(train_data, test_data_env)
 })
-```
 
-```{r}
-# Extract model names
-model_names <- names(train_data_list)
 
-# Build a data frame by extracting each metric from the results_list
-results_table_no_wt <- data.frame(
-  AUC         = sapply(results_list_no_wt, function(x) x$auc),
-  Accuracy    = sapply(results_list_no_wt, function(x) x$metrics$Accuracy),
-  Sensitivity = sapply(results_list_no_wt, function(x) x$metrics$Sensitivity),
-  Specificity = sapply(results_list_no_wt, function(x) x$metrics$Specificity),
-  Precision   = sapply(results_list_no_wt, function(x) x$metrics$Precision),
-  F1          = sapply(results_list_no_wt, function(x) x$metrics$F1)
+# 2) Build a data frame by extracting each metric from the results_list_wt
+results_table_no_wt_disk <- data.frame(
+  AUC              = sapply(results_list_no_wt, function(x) x$auc),                    # AUROC
+  AUPR             = sapply(results_list_no_wt, function(x) x$aupr),                   # Area Under Precision-Recall Curve
+  CORR             = sapply(results_list_no_wt, function(x) x$corr),                   # Correlation
+  Accuracy         = sapply(results_list_no_wt, function(x) x$metrics_0.5$Accuracy),   # Accuracy at threshold 0.5
+  Sensitivity      = sapply(results_list_no_wt, function(x) x$metrics_0.5$Sensitivity),# Sensitivity (Recall)
+  Specificity      = sapply(results_list_no_wt, function(x) x$metrics_0.5$Specificity),# Specificity
+  Precision        = sapply(results_list_no_wt, function(x) x$metrics_0.5$Precision),  # Precision
+  F1               = sapply(results_list_no_wt, function(x) x$metrics_0.5$F1),         # F1 Score
+  Best_Threshold   = sapply(results_list_no_wt, function(x) x$best_threshold),         # Best threshold based on TSS
+  Max_TSS          = sapply(results_list_no_wt, function(x) x$max_tss),                # Maximum TSS
+  Best_Sensitivity = sapply(results_list_no_wt, function(x) x$best_sensitivity),       # Sensitivity at Best Threshold
+  Best_Specificity = sapply(results_list_no_wt, function(x) x$best_specificity)        # Specificity at Best Threshold
 )
 
-# Suppose both data frames have identical columns
-combined_df <- bind_rows(
-  results_table_no_wt %>%
-    mutate(Source = "No_WT")
-) %>%
+```
+
+Print the results of models.
+
+```{r disk_eval}
+
+# Round numeric values to 3 decimal places
+results_table_no_wt_disk <- results_table_no_wt_disk %>%
   mutate(across(where(is.numeric), ~ round(.x, 3)))
 
-# Now make a single table
-kable(combined_df, format = "pipe")
+# Create the table with smaller font
+results_table_no_wt_disk %>%
+  kable("html", caption = "Model Evaluation Metrics") %>%
+  kable_styling(font_size = 12, full_width = FALSE)
+
+
 ```
+
+### 4.2.1 Results
+
+\(1\) **Moderate Buffers Perform Best:**
+
+-   **500 - 1000m** buffer had the **best AUC (0.582)** and **F1 (0.594)**, indicating a good balance between ecological similarity and separation.
+
+\(2\) **Too Close or Too Far Decreases Performance:**
+
+-   **Within 500m**: Pseudo-absences too close to presences make it hard for the model to distinguish the two.
+
+-   **Beyond 2000m**: Pseudo-absences too far may not represent relevant environmental contrasts, leading to poor predictions.
+
+\(3\) **Sensitivity vs. Specificity Trade-off:**
+
+-   As background points move farther away, **Specificity** tends to improve, but **Sensitivity** decreases, leading to a trade-off between detecting presences and absences.
+
+\(4\) **Correlation Decreases With Distance:**
+
+-   The **CORR** metric peaks around **500 - 1000m** and then declines, even becoming negative beyond **2000m**, indicating the model struggles with very distant background points.
+
+### 4.2.3 Summary
+
+**(1) Optimal Buffer Distance:**
+
+-   A **moderate buffer** (e.g., **500 - 1000m**) seems to strike the best balance for pseudo-absence sampling in this context.
+
+\(2\) **Avoid Extremes:**
+
+-   Sampling **too close** or **too far** from presence points degrades model performance.
+
+# 5. Conclusion
+
+## 5.1 Comparison across all models
+
+Let's also compare the performance of all good models
+
+```{r compare_all}
+
+#Combine three tables
+combined_results_table <- bind_rows(results_including_true_absence_table_wt, results_table_no_wt_disk, results_table_wt_random)
+
+# Step 3: Display the combined table with kable
+combined_results_table %>%
+  kable("html", caption = "Combined Model Evaluation Metrics") %>%
+  kable_styling(font_size = 12, full_width = FALSE) %>%
+  column_spec(ncol(combined_results_table), bold = TRUE)  # Highlight the Source column
+```
+
+\(1\) **Best Overall Performance:**
+
+-   **Split Models** show the highest **AUC** scores.
+
+-   **split_70_train** has the best AUC (**0.697**) and CORR (**0.336**), indicating strong predictive performance.
+
+-   **split_90_train** and **split_50_train** follow closely with AUCs of **0.679** and **0.670**, respectively.
+
+\(2\) **Disk Strategy Performance:**
+
+-   Best AUC (**0.582**) achieved with **500–1000m** buffer.
+
+-   **Closer buffers (500m)** result in weaker performance (**AUC = 0.536**), likely due to environmental similarity between presence and background points.
+
+-   **Farther buffers (\>2000m)** degrade performance (**AUC = 0.538**) due to irrelevant background sampling.
+
+\(3\) **Random Strategy Performance:**
+
+-   Stable **AUC (\~0.580)** across most background-to-presence ratios (1:1 to 30:1).
+
+-   Slight performance drop at **50:1 ratio** (**AUC = 0.571**) suggests diminishing returns from adding more background points.
+
+-   **Sensitivity** remains high (\~0.713) across most ratios but at the expense of **Specificity (\~0.412)**.
+
+\(4\) **Best Trade-offs (Max_TSS):**
+
+-   **split_50_train** shows the highest **Max_TSS (0.324)**, indicating the best balance between Sensitivity and Specificity.
+
+-   In Random Strategy, **15:1 ratio** yields the highest **Max_TSS (0.176)**.
+
+\(5\) **Key Insights:**
+
+-   **Split models** outperform both Disk and Random background strategies in terms of AUC and overall predictive ability.
+
+-   **Disk strategy** performs best at moderate buffer distances (**500–1000m**), balancing environmental similarity and separation.
+
+-   **Random strategy** shows stable performance across most ratios, but excessive background points (50:1) can reduce effectiveness.5.2
+
+## 5.2 Summary
+
+Addressing imbalanced species data is crucial for producing reliable and accurate Species Distribution Models. Through this study, we demonstrated how resampling methods, background point generation techniques, and weighting strategies can significantly impact model performance. Weighted models and carefully selected background points help to balance the influence of presence and absence data, reducing bias and improving metrics like sensitivity, specificity, and AUROC. The Gang-gang Cockatoo case study highlighted the practical implications of these approaches, showing that even simple weighting methods can enhance model outputs. Ultimately, integrating these techniques into ecological modeling workflows supports better conservation planning and decision-making, ensuring more robust and interpretable SDMs within platforms like EcoCommons.
+
+# References
+
+Barbet-Massin, M., Jiguet, F., Albert, C., & Thuiller, W. (2012). *Selecting pseudo-absences for species distribution models: How, where and how many? Methods ecol evol 3: 327–338*.
+
+Benkendorf, D. J., Schwartz, S. D., Cutler, D. R., & Hawkins, C. P. (2023). Correcting for the effects of class imbalance improves the performance of machine-learning based species distribution models. *Ecological Modelling*, *483*, 110414.
+
+Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (2002). SMOTE: Synthetic minority over-sampling technique. *Journal of Artificial Intelligence Research*, *16*, 321–357.
+
+Chen, C., Liaw, A., Breiman, L., et al. (2004). Using random forest to learn imbalanced data. *University of California, Berkeley*, *110*(1-12), 24.
+
+Elith\*, J., H. Graham\*, C., P. Anderson, R., Dudı́k, M., Ferrier, S., Guisan, A., J. Hijmans, R., Huettmann, F., R. Leathwick, J., Lehmann, A., et al. (2006). Novel methods improve prediction of species’ distributions from occurrence data. *Ecography*, *29*(2), 129–151.
+
+Gaul, W., Sadykova, D., White, H. J., León-Sánchez, L., Caplat, P., Emmerson, M. C., & Yearsley, J. M. (2022). Modelling the distribution of rare invertebrates by correcting class imbalance and spatial bias. *Diversity and Distributions*, *28*(10), 2171–2186.
+
+Johnson, R. A., Chawla, N. V., & Hellmann, J. J. (2012). Species distribution modeling and prediction: A class imbalance problem. *2012 Conference on Intelligent Data Understanding*, 9–16.
+
+Menardi, G., & Torelli, N. (2014). Training and assessing classification rules with imbalanced data. *Data Mining and Knowledge Discovery*, *28*, 92–122.
+
+Phillips, S. J., Anderson, R. P., & Schapire, R. E. (2006). Maximum entropy modeling of species geographic distributions. *Ecological Modelling*, *190*(3-4), 231–259.
+
+Václavı́k, T., & Meentemeyer, R. K. (2009). Invasive species distribution modeling (iSDM): Are absence data and dispersal constraints needed to predict actual distributions? *Ecological Modelling*, *220*(23), 3248–3258.
+
+Valavi, R., Guillera-Arroita, G., Lahoz-Monfort, J. J., & Elith, J. (2022). Predictive performance of presence-only species distribution models: A benchmark study with reproducible code. *Ecological Monographs*, *92*(1), e01486.
+
+Zhang, Z., Mammola, S., & Zhang, H. (2020). Does weighting presence records improve the performance of species distribution models? A test using fish larval stages in the yangtze estuary. *Science of The Total Environment*, *741*, 140393.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
 
 EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
