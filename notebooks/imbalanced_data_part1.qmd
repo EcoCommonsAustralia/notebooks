@@ -1068,7 +1068,7 @@ combined_df <- bind_rows(
 
 # Change order of columsn so that Source is the first column
 combined_df <- combined_df %>%
-  select(Source, everything())
+  dplyr::select(Source, everything())
 
 # Create the table using row names
 kable(combined_df, "html", caption = "Model Evaluation Metrics", rownames = TRUE) %>%
@@ -1100,8 +1100,7 @@ We should always consider weighting methods when the species binary dataset has 
 
 ## 4 Summary
 
-Addressing imbalanced species data is crucial for producing reliable and accurate Species Distribution Models.
-Through this study, we demonstrated how resampling methods, background point generation techniques, and weighting strategies can significantly impact model performance. Weighted models and carefully selected background points help to balance the influence of presence and absence data, reducing bias and improving metrics like sensitivity, specificity, and AUROC. The Gang-gang Cockatoo case study highlighted the practical implications of these approaches, showing that even simple weighting methods can enhance model outputs. Ultimately, integrating these techniques into ecological modeling workflows supports better conservation planning and decision-making, ensuring more robust and interpretable SDMs within platforms like EcoCommons.
+Addressing imbalanced species data is crucial for producing reliable and accurate Species Distribution Models. In part 1 we showcased, via the Gang-gang Cockatoo case study, how to used weighted models to improve the performance of SDMs. While for some metrics the differences between weighted and unweighted models were not substantial, the weighted models better addressed the class imbalance issue, leading to more balanced and interpretable results. Ultimately, integrating these techniques into ecological modeling workflows supports better conservation planning and decision-making, ensuring more robust and interpretable SDMs within platforms like EcoCommons.
 
 # References
 *for both parts*
@@ -1135,7 +1134,7 @@ Zhang, Z., Mammola, S., & Zhang, H. (2020). Does weighting presence records impr
 EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
 ::: {align="center"}
-**Our partner**
+**Our partners**
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
