@@ -35,6 +35,7 @@ For this notebook we are going to use ConR, which includes a EOO.computing and A
 # Set the workspace to the current working directory
 #setwd("") # Uncomment and replace the path below with your own working directory if needed:
 
+# setting up a workspace
 workspace <- getwd()  # Get the current working directory and store it in 'workspace'
 
 # Increase the plot size by adjusting the options for plot dimensions in the notebook output
