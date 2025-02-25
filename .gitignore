@@ -10,3 +10,8 @@ renv.lock
 renv/.gitignore
 renv/activate.R
 renv/settings.json
+notebooks/Cycas_megacarpa_eoo.csv
+notebooks/eoo_aoo_files
+notebooks/Cycas_megacarpa_eoo.zip
+notebooks/eoo_aoo.html
+notebooks/__MACOSX/._Cycas_megacarpa_eoo.csv
