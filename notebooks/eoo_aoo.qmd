@@ -2,9 +2,9 @@
 
 # How to determine extent of occurrence (EOO) and area of occupancy (AOO) for a species
 
-Author details: Dr Jenna Wraith and Dr Sebastian Lopez Marcano
+Author details: Dr Jenna Wraith
 
-Editor details: Xiang Zhao
+Editor details: Dr Sebastian Lopez Marcano
 
 Contact details: support\@ecocommons.org.au
 
@@ -19,7 +19,7 @@ This notebook, developed by the EcoCommons team, showcases how to determine the 
 # Introduction
 
 ## A short explanation of the notebook
-This notebook calculates two important `ecological metrics, the Extent of Occurrence (EOO) and the Area of Occupancy (AOO), for the common wombat: *Vombatus Ursinus*. These metrics are commonly used to assess species conservation status by providing information on the geographic range and area occupied by the species.
+This notebook calculates two important ecological metrics, the Extent of Occurrence (EOO) and the Area of Occupancy (AOO), for the common wombat: *Vombatus Ursinus*. These metrics are commonly used to assess species conservation status by providing information on the geographic range and area occupied by the species.
 
 ## Extent of occurrence (EOO)
  The EOO represents the geographic spread of a species. It’s defined as the area within the smallest convex polygon that encompasses the known occurrences of the species. Ecologically, EOO is a  metric for assessing the geographic range of a species and is used in conservation to estimate risk. Species with a small EOO are potentially more likely to be susceptible to extinction because their populations are more likely to be impacted by habitat changes, climate fluctuations, and human activities across their limited range.
@@ -28,7 +28,7 @@ This notebook calculates two important `ecological metrics, the Extent of Occurr
 The AOO is a more fine-scale measurement of where a species is actually found within its range. This metric accounts for the specific locations where the species occupies habitat within the broader EOO and is calculated using a grid-based approach, typically with cells sized to 2x2 km as per IUCN standards. Lower AOO values imply that the species is confined to smaller, often isolated patches, which could increase its vulnerability.
 
 # Set-up: R Environment and Packages
-For this notebook we are going to use ConR, which includes a EOO.computing and AOO.computing functions to calculate the EOO and AOO for a species. We will also be using the ALA Galah package to access species occurence records.
+For this notebook we are going to use `ConR`, which includes a *EOO.computing* and *AOO.computing* functions to calculate the EOO and AOO for a species. We will also be using the Atlas of Living Australia `galah` package to access species occurence records.
 
 
 ```{r install_libraries}
