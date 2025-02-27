@@ -183,17 +183,19 @@ print(paste("The AOO value is:", AOO_result$aoo, "km²"))
 ```
 
 ```{r plot_map}
-# Get the bounding box for the species points
+# Get bounding box for the species points
 bbox <- st_bbox(species_points)
 
-# Create the ggplot with the layers
+# Create the ggplot with the template colours
 ggplot() +
   # Plot the land layer
-  geom_sf(data = land, fill = "lightgreen", color = "darkgreen") +
+  geom_sf(data = land, fill = "#D9E3F0", color = "#4A90E2") +
+  
   # Plot the EOO convex hull
-  geom_sf(data = EOO_sf, fill = NA, color = "red", linetype = "dashed", size = 3) +
+  geom_sf(data = EOO_sf, fill = NA, color = "#E74C3C", linetype = "dashed", size = 3) +
+  
   # Plot the species points
-  geom_sf(data = species_points, color = "blue", size = 2, shape = 16) +
+  geom_sf(data = species_points, color = "#11AA96", size = 2, shape = 16) +
   
   # Set coordinate limits based on the bounding box
   coord_sf(xlim = c(bbox["xmin"] - 0.5, bbox["xmax"] + 0.5), 
@@ -216,8 +218,8 @@ ggplot() +
   
   # Customize the theme
   theme_minimal() +
-  labs(title = "EOO and AOO for Vombatus Ursinus") +
-  theme(legend.position = "none")  # Remove legend if not needed
+  labs(title = "EOO and AOO for Vombatus ursinus") +
+  theme(legend.position = "none")
 
 ```
 
