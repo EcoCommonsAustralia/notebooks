@@ -1,0 +1,273 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Getting Shorebirds data in Australia Using Open Data and `spocc`
+
+Author details: Abhimanyu Raj Singh
+
+Editor details: Dr Sebastian Lopez Marcano
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
+
+Date: Februray 2025
+
+# Script information
+
+This notebook, developed by the EcoCommons team, showcases how to get species data from different data custodians.
+
+# Introduction
+
+Shorebirds are key indicators of wetland health. This notebook demonstrates how to use `spocc` to fetch and visualise species occurrence data for:
+
+-   **Bar-tailed Godwit (*Limosa lapponica*)**
+-   **Red-necked Stint (*Calidris ruficollis*)**
+-   **Curlew Sandpiper (*Calidris ferruginea*)**
+
+These are long distance migratory birds which make their way to Australia and Tasmania, we will guide you how to check for species data through multiple available data custodians.
+
+# Objectives
+
+1.  Overview and Conceptualisation
+2.  Get Data
+3.  Data Cleaning and Filtering
+4.  Data Visualisation
+5.  Save Data
+
+# **Workflow Overview**
+
+Following a standard protocol for species distribution models proposed by Zurell et al., (2020), a R environment set-up step and five main modelling steps are demonstrated in this notebook:
+
++--------------+--------------------------------+------------------------------------------------------------+
+| Step         | Main Step                      | Sub-steps                                                  |
++==============+================================+============================================================+
+| Set-up       | Set-up                         | S.1 Set up the working directory                           |
+|              |                                |                                                            |
+|              |                                | S.2 Install and load required R packages for this notebook |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 1       | Overview and Conceptualisation | 1.1 Notebook objective                                     |
+|              |                                |                                                            |
+|              |                                | 1.2 Taxon, location, predictors, scale                     |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 2       | Get Data                       | 2.1 Define and Query Species                               |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 3       | Data Cleaning and Filtering    | 3.1 Refine and Check                                       |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 4       | Data Visualisation             | 4.1 Map                                                    |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 5       | Save data                      | 5.1 Save as CSV and SHP                                    |
++--------------+--------------------------------+------------------------------------------------------------+
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
+
+# Set-up: R Environment and Packages
+
+Some housekeeping before we start. This process might take some time as many packages needed to be installed.
+
+## S.1 Set the working directory and create a folder for data.
+
+Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
+
+
+
+```{r}
+# Set the workspace to the current working directory
+# Uncomment and replace the path below with your own working directory if needed:
+# setwd("/Users/zhaoxiang/Documents/tmp/EC_GLM_notebook") 
+
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
+
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
+
+```
+
+
+
+## S.2 Install and load essential libraries.
+
+Install and load R packages.
+
+
+
+```{r install_libraries, message=FALSE, warning=FALSE}
+
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+# List of packages to check, install if needed, and load
+packages <- c("spocc", "tidyverse", "leaflet", "sf", "rnaturalearth", "rnaturalearthdata")
+
+# Function to display a cat message
+cat_message <- function(pkg, message_type) {
+  if (message_type == "installed") {
+    cat(paste0(pkg, " has been installed successfully!\n"))
+  } else if (message_type == "loading") {
+    cat(paste0(pkg, " is already installed and has been loaded!\n"))
+  }
+}
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+    cat_message(pkg, "installed")
+  } else {
+    cat_message(pkg, "loading")
+  }
+  library(pkg, character.only = TRUE)
+}
+
+library(spocc)
+library(tidyverse)
+library(leaflet)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+```
+
+
+
+## Step 2 Get data: Listing our Bird species
+
+
+
+```{r}
+# Define species of interest
+species_list <- c("Limosa lapponica", "Calidris ruficollis", "Calidris ferruginea")
+
+# Query multiple sources for species occurrences
+species_data <- lapply(species_list, function(species) {
+  occ(query = species, from = c("gbif", "inat", "obis"), limit = 500)
+})
+
+# Convert results to data frames
+species_dfs <- lapply(species_data, function(data) occ2df(data$gbif))
+
+# Assign species names
+for (i in seq_along(species_dfs)) {
+  species_dfs[[i]]$species <- species_list[i]
+}
+
+# Combine data into one dataframe
+occurrences <- bind_rows(species_dfs)
+
+## Preview Data
+for (i in seq_along(species_list)) {
+  cat("\nPreview of", species_list[i], "data:\n")
+  print(head(species_dfs[[i]], 10))  # Print the first 10 rows of each species' data
+}
+```
+
+
+
+## Step 3 Data Cleaning and Filtering
+
+
+
+```{r}
+# Remove NA values for latitude and longitude
+occurrences_clean <- occurrences %>%
+  filter(!is.na(longitude) & !is.na(latitude))
+
+# Load world countries and extract Australia
+world <- ne_countries(scale = "medium", returnclass = "sf")
+australia <- world %>% filter(admin == "Australia")
+
+# Convert occurrences to a spatial object
+occurrences_sf <- st_as_sf(occurrences_clean, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+
+# Filter occurrences for Queensland (approximate using Australia's boundary)
+occurrences_aus <- st_intersection(occurrences_sf, australia)
+
+# Print summary of filtered data
+print(nrow(occurrences_aus))
+print(head(occurrences_aus))
+```
+
+
+
+## Step 4 Data Visualisation
+
+
+
+```{r}
+# Define EcoCommons brand colors
+ec_colors <- c("#509E2F", "#2F6C99", "#F39200") # Green, Blue, Orange
+
+# Assign a color to each species
+occurrences_aus$color <- factor(occurrences_aus$species, labels = ec_colors)
+
+# Create an interactive map using Leaflet
+leaflet(data = occurrences_aus) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~longitude, ~latitude, 
+    radius = 3, color = ~color, 
+    popup = ~species
+  ) %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+  addLegend(
+    "bottomright", 
+    colors = ec_colors, 
+    labels = species_list, 
+    title = "Species"
+  )
+
+```
+
+
+
+## Step 5 Save data for Analysis
+
+
+
+```{r}
+# Save cleaned occurrence data to CSV
+write.csv(occurrences_aus, "shorebird_occurrences_AUS.csv", row.names = FALSE)
+
+# Save spatial data as a shapefile (if needed)
+
+# Ensure that occurrences_aus is an sf object
+if (!inherits(occurrences_aus, "sf")) {
+  occurrences_aus <- st_as_sf(occurrences_aus, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+  cat("Data has been converted to an sf object.\n")
+} else {
+  cat("Data is already an sf object.\n")
+}
+
+# Check the structure of the sf object
+print(st_geometry_type(occurrences_aus))  # Should print "POINT" if it's a point geometry
+
+# Now, try writing the shapefile
+st_write(occurrences_aus, "shorebird_occurrences_AUS.shp", delete_layer = TRUE)
+
+```
+
+
+
+> Thank You :) 😇
+
+# References
+
+Spocc package
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our partner**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
