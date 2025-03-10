@@ -124,6 +124,8 @@ library(rnaturalearthdata)
 
 ## Step 2 Get data: Listing our Bird species
 
+We use `spocc` to retrieve up to 500 occurrence records per species:
+
 ```{r}
 # Define species of interest
 species_list <- c("Limosa lapponica", "Calidris ruficollis", "Calidris ferruginea")
@@ -153,6 +155,8 @@ for (i in seq_along(species_list)) {
 
 ## Step 3 Data Cleaning and Filtering
 
+We remove invalid coordinates and filter occurrences within Australia’s boundary
+
 ```{r}
 # Remove NA values for latitude and longitude
 occurrences_clean <- occurrences %>%
@@ -175,8 +179,10 @@ print(head(occurrences_aus))
 
 ## Step 4 Data Visualisation
 
+We assign **EcoCommons theme colors** for better visualization.
+
 ```{r}
-# Define EcoCommons brand colors
+# Define EcoCommons theme colors
 ec_colors <- c("#509E2F", "#2F6C99", "#F39200") # Green, Blue, Orange
 
 # Assign a color to each species
@@ -201,6 +207,8 @@ leaflet(data = occurrences_aus) %>%
 ```
 
 ## Step 5 Save data for Analysis
+
+We save the cleaned data in **CSV and Shapefile formats** for additional modeling and GIS analysis.
 
 ```{r}
 # Save cleaned occurrence data to CSV
