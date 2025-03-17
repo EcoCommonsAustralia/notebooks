@@ -80,7 +80,7 @@ class TableEntry:
         )
 
     def format(self) -> str:
-        notebook_link = NOTEBOOK_LINK_PATTERN.format(self.display_name, NOTEBOOKS_ROOT_PATH, f"{self.notebook_name}")
+        notebook_name = self.display_name  # Keep only the display name, no link
         notebook_file_links = (
     f'<a href="{NOTEBOOKS_ROOT_PATH}/{self.notebook_name}">'
     f'<img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>'
@@ -94,7 +94,7 @@ class TableEntry:
         youtube_badge = YOUTUBE_BADGE_PATTERN.format(self.youtube_video_path) if self.youtube_video_path else ""
         github_badge = GITHUB_BADGE_PATTERN.format(self.github_repository_path) if self.github_repository_path else ""
         arxiv_badge = ARXIV_BADGE_PATTERN.format(self.arxiv_index, self.arxiv_index) if self.arxiv_index else ""
-        return f"| {notebook_link} | {notebook_file_links} | {open_in_colab_badge} | {econotebook_badge} {youtube_badge} | {github_badge} {arxiv_badge}|"
+        return f"| {notebook_name} | {notebook_file_links} | {open_in_colab_badge} | {econotebook_badge} {youtube_badge} | {github_badge} {arxiv_badge}|"
 
 
 def read_lines_from_file(path: str) -> List[str]:
