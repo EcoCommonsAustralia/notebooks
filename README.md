@@ -10,7 +10,12 @@
   <br>
 <br>
 
-[📔Notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks) \| [🗒️Blog](https://ecocommonsaustralia.github.io/notebook-blog/) \| [🌿EcoCommons Platform](https://www.ecocommons.org.au) \| [X](https://twitter.com/EcoCommonsAus) \| [⏰LinkedIn](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
+[📔Notebooks](https://github.com/EcoCommonsAustralia/notebooks) \| [🗒️Blog](https://ecocommonsaustralia.github.io/notebook-blog/) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/ecocommons.png" width="20"/> EcoCommons Platform](https://www.ecocommons.org.au) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/x-logo.png" width="20"/>](https://x.com/EcoCommonsAus) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/LinkedIn_icon.svg.png" width="15"/>](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/youtubelogo.png" width="30"/>](https://youtube.com/@ecocommons2208)
+
 
 <br>
 
