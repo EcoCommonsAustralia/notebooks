@@ -10,13 +10,13 @@
   <br>
 <br>
 
-[📔Notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks) \| [🗒️Blog](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site) \| [🌿EcoCommons Platform](https://www.ecocommons.org.au) \| [X](https://twitter.com/EcoCommonsAus) \| [⏰LinkedIn](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
+[📔Notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks) \| [🗒️Blog](https://ecocommonsaustralia.github.io/notebook-blog/) \| [🌿EcoCommons Platform](https://www.ecocommons.org.au) \| [X](https://twitter.com/EcoCommonsAus) \| [⏰LinkedIn](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
 
 <br>
 
 ## 🐢 Hello
 
-EcoCommons is a national digital platform hosted by the Queensland Cyber Infrastructure Foundation and supported by the Australian Research Data Commons. The platform provides a range of services to support the Australian ecological research community, including access to data and ecological modelling tools.
+EcoCommons is a national digital platform hosted by QCIF Ltd and supported by the Australian Research Data Commons, an NCRIS facility. The platform provides a range of services to support the Australian ecological research community, including access to data and ecological modelling tools.
 
 This repository contains examples and tutorials with the objective of mirroring the functionalities offered in the [EcoCommons platform](https://www.ecocommons.org.au/).
 
@@ -46,7 +46,7 @@ Welcome to the EcoCommons Notebooks! As ecological and environmental research ad
 
 EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
-# **Our partner**
+# **Our partners**
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
 
