@@ -10,21 +10,11 @@ Contact details: support\@ecocommons.org.au
 
 Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
 
-Date: Februray 2025
+Date: February 2025
 
 # Script information
 
-This notebook, developed by the EcoCommons team, showcases how to get species data from different data custodians.
-
-# Introduction
-
-Shorebirds are key indicators of wetland health. This notebook demonstrates how to use `spocc` to fetch and visualise species occurrence data for:
-
--   **Bar-tailed Godwit (*Limosa lapponica*)**
--   **Red-necked Stint (*Calidris ruficollis*)**
--   **Curlew Sandpiper (*Calidris ferruginea*)**
-
-These are long distance migratory birds which make their way to Australia and Tasmania, we will guide you how to check for species data through multiple available data custodians.
+This notebook was developed by the EcoCommons team to support researchers and conservationists in analyzing shorebird distribution data using open data sources. It demonstrates how to query, clean, visualize, and save species occurrence data using the `spocc` package in R.
 
 # Objectives
 
@@ -38,25 +28,23 @@ These are long distance migratory birds which make their way to Australia and Ta
 
 Following a standard protocol for species distribution models proposed by Zurell et al., (2020), a R environment set-up step and five main modelling steps are demonstrated in this notebook:
 
-+--------------+--------------------------------+------------------------------------------------------------+
-| Step         | Main Step                      | Sub-steps                                                  |
-+==============+================================+============================================================+
-| Set-up       | Set-up                         | S.1 Set up the working directory                           |
-|              |                                |                                                            |
-|              |                                | S.2 Install and load required R packages for this notebook |
-+--------------+--------------------------------+------------------------------------------------------------+
-| Step 1       | Overview and Conceptualisation | 1.1 Notebook objective                                     |
-|              |                                |                                                            |
-|              |                                | 1.2 Taxon, location, predictors, scale                     |
-+--------------+--------------------------------+------------------------------------------------------------+
-| Step 2       | Get Data                       | 2.1 Define and Query Species                               |
-+--------------+--------------------------------+------------------------------------------------------------+
-| Step 3       | Data Cleaning and Filtering    | 3.1 Refine and Check                                       |
-+--------------+--------------------------------+------------------------------------------------------------+
-| Step 4       | Data Visualisation             | 4.1 Map                                                    |
-+--------------+--------------------------------+------------------------------------------------------------+
-| Step 5       | Save data                      | 5.1 Save as CSV and SHP                                    |
-+--------------+--------------------------------+------------------------------------------------------------+
++--------------+-----------------------------+------------------------------------------------------------+
+| Step         | Main Step                   | Sub-steps                                                  |
++==============+=============================+============================================================+
+| Set-up       | Set-up                      | S.1 Set up the working directory                           |
+|              |                             |                                                            |
+|              |                             | S.2 Install and load required R packages for this notebook |
++--------------+-----------------------------+------------------------------------------------------------+
+| Step 1       | Conceptualisation           | Taxon, location, scale                                     |
++--------------+-----------------------------+------------------------------------------------------------+
+| Step 2       | Get Data                    | Define and Query Species                                   |
++--------------+-----------------------------+------------------------------------------------------------+
+| Step 3       | Data Cleaning and Filtering | Refine and Check                                           |
++--------------+-----------------------------+------------------------------------------------------------+
+| Step 4       | Data Visualisation          | Map                                                        |
++--------------+-----------------------------+------------------------------------------------------------+
+| Step 5       | Save data                   | Save as CSV and SHP                                        |
++--------------+-----------------------------+------------------------------------------------------------+
 
 In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
 
@@ -64,11 +52,11 @@ In the near future, this material may form part of comprehensive support materia
 
 # Set-up: R Environment and Packages
 
-Some housekeeping before we start. This process might take some time as many packages needed to be installed.
+Before starting, ensure your environment is correctly set up. This process may take some time as several packages need to be installed.
 
 ## S.1 Set the working directory and create a folder for data.
 
-Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
+Save the Quarto Markdown file (`.qmd`) to a folder of your choice, and then set the path to your folder as your working directory.
 
 ```{r}
 # Set the workspace to the current working directory
@@ -84,7 +72,7 @@ options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and heig
 
 ## S.2 Install and load essential libraries.
 
-Install and load R packages.
+Install and load the required R packages. This step will automatically check for missing packages, install them if needed, and load them into the environment.
 
 ```{r install_libraries, message=FALSE, warning=FALSE}
 
@@ -122,9 +110,21 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 ```
 
+## Step 1 Overview and Conceptulisation : Notebook objective Taxon, location, predictors, scale
+
+# Introduction
+
+Shorebirds are key indicators of wetland health. This notebook demonstrates how to use `spocc` to fetch and visualise species occurrence data for:
+
+-   **Bar-tailed Godwit (*Limosa lapponica*)**
+-   **Red-necked Stint (*Calidris ruficollis*)**
+-   **Curlew Sandpiper (*Calidris ferruginea*)**
+
+These are long distance migratory shore birds which make their way to Australia and Tasmania, we will guide you how to check for species data through multiple available data collection.
+
 ## Step 2 Get data: Listing our Bird species
 
-We use `spocc` to retrieve up to 500 occurrence records per species:
+We use `spocc` to retrieve up to **500 occurrence records** per species from multiple data sources (GBIF, iNaturalist, OBIS).
 
 ```{r}
 # Define species of interest
@@ -155,7 +155,7 @@ for (i in seq_along(species_list)) {
 
 ## Step 3 Data Cleaning and Filtering
 
-We remove invalid coordinates and filter occurrences within Australia’s boundary
+We remove invalid coordinates and filter occurrences within **Australia’s boundary**.
 
 ```{r}
 # Remove NA values for latitude and longitude
@@ -169,7 +169,7 @@ australia <- world %>% filter(admin == "Australia")
 # Convert occurrences to a spatial object
 occurrences_sf <- st_as_sf(occurrences_clean, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
 
-# Filter occurrences for Queensland (approximate using Australia's boundary)
+# Filter occurrences (approximate using Australia's boundary)
 occurrences_aus <- st_intersection(occurrences_sf, australia)
 
 # Print summary of filtered data
@@ -179,7 +179,7 @@ print(head(occurrences_aus))
 
 ## Step 4 Data Visualisation
 
-We assign **EcoCommons theme colors** for better visualization.
+We assign **EcoCommons theme colors** for better visualization 😉.
 
 ```{r}
 # Define EcoCommons theme colors
@@ -236,7 +236,17 @@ st_write(occurrences_aus, "shorebird_occurrences_AUS.shp", delete_layer = TRUE)
 
 # References
 
-Spocc package
+Owens H, Barve V, Chamberlain S (2025). *spocc: Interface to Species Occurrence Data Sources*. R package version 1.2.3, <https://docs.ropensci.org/spocc/> (user manual), <https://github.com/ropensci/spocc> (development).
+
+-   **tidyverse**: Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, et al. (2019). "Welcome to the tidyverse." *Journal of Open Source Software*, 4(43), 1686. <https://doi.org/10.21105/joss.01686>. ​[[cran.r-project.org+2PsyTeachR+2Bibguru+2]{.underline}](https://psyteachr.github.io/analysis-v3/appendix-x-How-to-cite-R.html?utm_source=chatgpt.com)
+
+-   **leaflet**: Cheng J, Karambelkar B, Xie Y (2023). *leaflet: Create Interactive Web Maps with the JavaScript 'Leaflet' Library*. R package version 2.1.2.​
+
+-   **sf**: Pebesma E (2018). "Simple Features for R: Standardized Support for Spatial Vector Data." *The R Journal*, 10(1), 439–446. <https://doi.org/10.32614/RJ-2018-009>. ​[[cran.r-project.org]{.underline}](https://cran.r-project.org/web/packages/sf/citation.html?utm_source=chatgpt.com)
+
+-   **rnaturalearth**: South A (2017). *rnaturalearth: World Map Data from Natural Earth*. R package version 0.1.0.​
+
+-   **rnaturalearthdata**: South A (2017). *rnaturalearthdata: World Vector Map Data from Natural Earth Used in 'rnaturalearth'*. R package version 0.1.0.​​
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
 
