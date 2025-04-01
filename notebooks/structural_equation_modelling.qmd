@@ -124,6 +124,98 @@ SEMs are particularly suitable for studying behavioural patterns in animals. In 
 
 The dataset contains tracking information of fish individuals swimming in a underwater pipe located in a natural estuary. The data was collected using an underwater camera and an AI algorithm with a fish tracker enabled. You do not need to use AI or cameras to collect data for SEMs; as long as you have continous data of individuals and their behaviours, you can use SEMs to understand the relationships between variables.
 
+The species of fish in the dataset is the **Moses perch** (Lutjanus russellii), a common species in the Indo-Pacific region. The IUCN status of this species is **Least Concern** and its a commercial and recreational fishery species. 
+
 ## 1 Load the data
-The dataset is stored in a CSV file. We will load the data and check the first few rows to understand the structure of the data.
+The dataset is stored in a CSV file and we will access it via a Dropbox link. We will load the data and check the first few rows to understand the structure of the data. The data contains behavioural attributes such as movement speed, depth, and spatial orientation. This data was mean centred and scaled to ensure that all variables are on the same scale. The variable `sinuosity` is a measure of how much the fish's path deviates from a straight line and it was calculated with the package `trajR`. 
+
+```{r}
+buff_mose <- read.csv('https://www.dropbox.com/s/p138pj5xg9aksc4/1min_buffered_mose.csv?dl=1')
+
+# View the first few rows of the dataset
+head(buff_mose)
 ```
+
+Important note: Each track in the dataset is treated as an independent observation, even though an individual may have been tracked several times. The data was collected across different days and seasons, and the AI algorithm used for species identification did not track individual fish as they swam past the camera. 
+
+### Data Preprocessing
+Before fitting an SEM, we need to clean the data by removing unnecessary columns.
+
+```{r}
+dat <- buff_mose %>% select(-c(X.2, X.1, X, time, tide_type, camera_location, spatial_angle_simple, distance_to_pipe, site))
+```
+
+## Step 3: Visualizing Data Distributions
+
+Checking the distribution of key variables helps ensure they meet the assumptions of SEM.
+
+```{r}
+# Histogram of time variable
+hist(buff_mose$time, main = "Histogram of Time", xlab = "Time (s)", col = "lightblue", border = "black")
+```
+
+## Step 4: Specifying the SEM Model
+
+We now define the SEM model. In this case, we model a latent variable `trait1`, which represents behavioural traits of fish, and test its relationship with tidal conditions.
+
+```{r}
+mod <- "
+  trait1 =~ spatial_angle + spatial_speed + detection_depth + sinuosity
+  trait1 ~ tide"
+```
+
+## Step 5: Preparing the Data for SEM
+
+Since SEM uses covariance matrices, we must ensure that all variables are numeric and calculate the covariance matrix.
+
+```{r}
+# Keep only numeric variables
+dat2 <- dat %>% transmute(across(where(is.numeric)))
+
+# Compute the covariance matrix
+dat_cov <- cov(dat2, use="pairwise.complete.obs")
+```
+
+## Step 6: Fitting the SEM Model
+
+We now fit the SEM using the `lavaan` package.
+
+```{r}
+fit <- sem(mod, data = dat2, sample.cov = dat_cov, sample.nobs = nrow(dat2))
+```
+
+## Step 7: Interpreting the Results
+
+We generate a summary of the fitted SEM model, which provides estimates of the relationships between variables.
+
+```{r}
+summary(fit)
+```
+
+## Step 8: Visualizing the SEM
+
+A graphical representation helps in understanding the relationships in the model.
+
+```{r}
+semPlot::semPaths(fit, what='est', residuals=FALSE)
+```
+
+# How to Interpret SEM Plots and Summaries
+
+### Understanding the SEM Plot
+The SEM plot visually represents relationships between variables. Key elements include:
+
+- **Arrows**: Indicate the direction of relationships. A single-headed arrow represents a causal effect, while a double-headed arrow represents a correlation.
+- **Path Coefficients**: Numbers on the arrows indicate the strength and direction of relationships.
+- **Residual Variances**: Represent the unexplained variance in each variable.
+
+### Interpreting the Model Summary
+The summary provides key statistical outputs:
+
+- **Path Coefficients**: Indicate how strongly one variable predicts another.
+- **Standard Errors**: Measure the accuracy of each estimate.
+- **P-values**: Indicate the statistical significance of relationships.
+- **Model Fit Indices**: Metrics such as RMSEA, CFI, and TLI indicate how well the model fits the data.
+
+By analyzing both the graphical representation and the statistical outputs, we can draw meaningful conclusions about the relationships in our dataset.
+

@@ -1,11 +1,11 @@
 library(tidyverse)
-library(renv)
+# library(renv)
 
-# Activate the project library
-renv::init()
+# # Activate the project library
+# renv::init()
 
-# Install the required packages ("lavaan", "semPlot", "corrplot")
-renv::install(c("lavaan", "semPlot", "corrplot"))
+# # Install the required packages ("lavaan", "semPlot", "corrplot")
+# renv::install(c("lavaan", "semPlot", "corrplot"))
 
 # Load the required packages
 library(lavaan)
@@ -17,6 +17,18 @@ buff_mose<-read.csv('https://www.dropbox.com/s/p138pj5xg9aksc4/1min_buffered_mos
 
 # histogram of time
 hist(buff_mose$time, main = "Histogram of time", xlab = "Time (s)", col = "lightblue", border = "black")
+
+# Display the detection depth of a tracker_id C5_20210429_115904_E_Twin-145.mp4_346 with y being the detection depth and x being the time
+buff_mose %>%
+  filter(tracker_id == "C5_20210429_115904_E_Twin-145.mp4_346") %>%
+  ggplot(aes(x = time, y = detection_depth)) +
+  geom_point() +
+  labs(title = "Detection depth of C5_20210429_115904_E_Twin-145.mp4_346",
+       x = "Time (s)",
+       y = "Detection depth (m)") +
+  theme_minimal()
+
+# Display the 
 
 
 # Filter out the X.2, X.1, X, time, tide_type, camera_location, spatial_angle_simple, distance_to_pipe
