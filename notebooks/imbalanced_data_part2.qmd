@@ -5,7 +5,7 @@ csl: apa.csl
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
 
-# Part 1: Imbalanced species data, background points, and weighting methods
+# Imbalanced species data, background points, and weighting methods - Part 2
 
 Author details: Xiang Zhao
 
@@ -15,11 +15,13 @@ Contact details: support\@ecocommons.org.au
 
 Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
 
-Date: February 2025
+Date: April 2025
 
 # Script and data info
 
-This notebook, developed by the EcoCommons team, showcases how to deal with imbalanced species datasets (presence and absence data) with weighting methods.
+This notebook is the continuation of the notebook ['**Part 1: Imbalanced species data, background points, and weighting methods'**](https://ecocommonsaustralia.github.io/notebook-blog/notebooks/data_prep/imbalanced_data_part1.html#objectives-part-1)**.**
+
+These two notebooks, developed by the EcoCommons team, showcases how to deal with imbalanced species datasets (presence and absence data) with weighting methods.
 
 # Abstract (Part 1 and Part 2)
 
@@ -31,30 +33,173 @@ This notebook explores strategies to address the challenges posed by imbalanced 
 
 # Objectives (Part 2)
 
-1.  Learn how to generate background points using two methods: completely random and buffered-random
+1.  Learn how to generate background points using two methods: completely random and buffered-random.
 2.  Learn how to compare model performance using different methods for generating background points and pseudo-absence data.
 
-# **Workflow Overview**:
+# **Workflow Overview**
 
 -   Set the working directory and load the necessary R packages. Create directories to store raw data files.
 
 -   Data Download: Download prepared imbalanced dataset(s) from the EcoCommons Google Drive.
 
--   Data preparation and split.
+-   Produce background points and pseudo-absence points
 
 -   Model evaluation and comparison.
 
-# Introduction
+# Set-up: R Environment and Packages
+
+Some housekeeping before we start. This process might take some time as many packages needed to be installed.
+
+## S.1 Set the working directory and create a folder for data.
+
+Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
+
+```{r workspace}
+
+# Set the workspace to the current working directory
+
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
+
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
+
+```
+
+Ideally, you would use the **`renv`** package to create an isolated environment for installing all the required R packages used in this notebook. However, since installing **`renv`** and its dependencies can be time-consuming, we recommend trying this after the workshop.
+
+```{r renv}
+
+# # Ensure "renv" package is installed
+# if (!requireNamespace("renv", quietly = TRUE)) {
+#   install.packages("renv")
+# }
+# 
+# # Check if renv has been initialised in the project
+# if (!file.exists("renv/activate.R")) {
+#   message("renv has not been initiated in this project. Initializing now...")
+#   renv::init()  # Initialise renv if not already set up
+# } else {
+#   source("renv/activate.R")  # Activate the renv environment
+#   message("renv is activated.")
+# }
+# 
+# # Check for the existence of renv.lock and restore the environment
+# if (file.exists("renv.lock")) {
+#   message("Restoring renv environment from renv.lock...")
+#   renv::restore()
+# } else {
+#   message("No renv.lock file found in the current directory. Skipping restore.")
+# }
+
+```
+
+## S.2 Install and load essential libraries.
+
+Install and load R packages.
+
+```{r install_libraries, message=FALSE, warning=FALSE}
+
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+# List of packages to check, install if needed, and load
+packages <- c("dplyr", "reshape2", "terra", "sf", "googledrive", "ggplot2", "corrplot", 
+              "pROC", "dismo", "spatstat.geom", "patchwork", "biomod2", "PRROC",
+              "leaflet", "car", "gridExtra", "htmltools", "RColorBrewer", "kableExtra", "tibble")
+
+# Function to display a cat message
+cat_message <- function(pkg, message_type) {
+  if (message_type == "installed") {
+    cat(paste0(pkg, " has been installed successfully!\n"))
+  } else if (message_type == "loading") {
+    cat(paste0(pkg, " is already installed and has been loaded!\n"))
+  }
+}
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+    cat_message(pkg, "installed")
+  } else {
+    cat_message(pkg, "loading")
+  }
+  library(pkg, character.only = TRUE)
+}
+
+
+# If you are using renv, you can snapshot the renv after loading all the packages.
+
+#renv::snapshot()
+
+```
+
+## S.3 Download case study datasets
+
+We have prepared the following data and uploaded them to our Google Drive for your use:
+
+-   **Species occurrence data:** Shapefile format (.shp)
+
+-   **Environmental variables:** Stacked Raster format (.tif)
+
+-   **Study area boundary:** Shapefile format (.shp)
+
+```{r download_data, message=FALSE}
+
+# De-authenticate Google Drive to access public files
+drive_deauth()
+
+# Define Google Drive file ID and the path for downloading
+zip_file_id <- "1GXOA330Ow2F7NqxdhuBfbz0a-CMT8DTb" 
+
+datafolder_path <- file.path(workspace)
+
+# Create a local path for the zipped file
+zip_file_path <- file.path(datafolder_path, "imbalanced_data.zip")
+
+# Function to download a file with progress messages
+download_zip_file <- function(file_id, file_path) {
+  cat("Downloading zipped file...\n")
+  drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
+  cat("Downloaded zipped file to:", file_path, "\n")
+}
+
+# Create local directory if it doesn't exist
+if (!dir.exists(datafolder_path)) {
+  dir.create(datafolder_path, recursive = TRUE)
+}
+
+# Download the zipped file
+cat("Starting to download the zipped file...\n")
+download_zip_file(zip_file_id, zip_file_path)
+
+# Unzip the downloaded file
+cat("Unzipping the file...\n")
+unzip(zip_file_path, exdir = datafolder_path)
+cat("Unzipped files to folder:", datafolder_path, "\n")
+
+```
+
+# 1. Introduction
 
 ## 1.1 Background points and Pseudo-absence points
 
-When working with presence-only records for your study species, a common approach is to sample a relatively large number of random points from the study area. These random points are referred to as **background** or **pseudo-absence points** [@valavi2022predictive].  
+When working with presence-only records for your study species, a common approach is to sample a relatively large number of random points from the study area. These random points are referred to as **background** or **pseudo-absence points** [@valavi2022predictive].
 
-There are two common approaches to generating background points. The first involves **randomly selecting background points** from the entire extent of the study area, allowing observations to be compared against the full range of environmental conditions within that area [@elith2006novel; @phillips2006maximum]. The second approach generates background points within a specified minimum-maximum radius around presence points—a method referred to as the **"disk" approach** in the EcoCommons platform.  
+There are two common approaches to generating background points. The first involves **randomly selecting background points** from the entire extent of the study area, allowing observations to be compared against the full range of environmental conditions within that area [@elith2006novel; @phillips2006maximum]. The second approach generates background points within a specified minimum-maximum radius around presence points—a method referred to as the **"disk" approach** in the EcoCommons platform.
 
 For more information about background points and pseudo-absence data, please check out our support article: [**Absence Data**](https://support.ecocommons.org.au/support/solutions/articles/6000255789-absence-data).
 
-# 4. Background points and pseudo-absence points
+Load the imbalanced_data.RData so that we can get all variables produced by the notebook Part 1.
+
+```{r load_images}
+
+# Load all variables from the saved workspace
+load("imbalanceddata_part1.RData")
+
+```
+
+# 2. Background points and pseudo-absence points
 
 In Chapter 3, we examined the scenario where true-absence data is included in the training dataset. However, researchers often lack access to true-absence data when training models, or they may opt to reserve this valuable data for cross-validation purposes, as demonstrated by Elith et al. [@elith2006novel] and Valavi et al. [@valavi2022predictive].
 
@@ -131,7 +276,7 @@ combined_plot <- p_train + p_test + patchwork::plot_layout(ncol = 2)
 combined_plot
 ```
 
-## 4.1 Random background points
+## 2.1 Random background points
 
 Many studies suggest that the number of background points should be sufficient to comprehensively sample and represent all environments in the study area, or at least a range of background point sizes should be tested. For example, Valavi et al. [@valavi2022predictive] tested their models with 100 to 100,000 background points. Barbet-Massin et al. [@barbet2012selecting] tested 100, 300, 1000, 3000 or 10000 background points.
 
@@ -142,6 +287,21 @@ This is the function generating required number of random background points with
 ```{r random_bg_generation}
 
 # Convert SpatRaster to Raster
+# Load the stacked raster layers
+env_var_stack <- rast("imbalanced_data/ACT_raster.tif")
+
+# Select the desired layers by their names
+selected_layers <- c("AusClim_bioclim_03_9s_1976-2005",
+                     "AusClim_bioclim_06_9s_1976-2005",
+                     "AusClim_bioclim_09_9s_1976-2005",
+                     "AusClim_bioclim_15_9s_1976-2005",
+                     "AusClim_bioclim_24_9s_1976-2005",
+                     "AusClim_bioclim_27_9s_1976-2005",
+                     "AusClim_bioclim_29_9s_1976-2005")
+
+# Subset the raster stack
+selected_rasters <- env_var_stack[[selected_layers]]
+
 studyarea <- raster(env_var_stack$`AusClim_bioclim_01_9s_1976-2005`)
 
 # Count the number of presence points in train_data (assuming presence is coded as 1)
@@ -321,33 +481,33 @@ results_table_wt_random %>%
 
 ```
 
-### 4.1.1 Results
+### 2.1.1 Results
 
-(1) **Background Ratios up to 10:1**
+**(1) Background Ratios up to 10:1**
 
 -   Metrics remain stable with minimal changes, indicating the model is robust to moderate increases in background points.
 
-\(2\) **High Background Ratios (15:1 and 50:1)**
+**(2)** **High Background Ratios (15:1 and 50:1)**
 
 -   Sensitivity and precision decline, leading to lower F1 scores.
 
 -   Specificity improves, but at the cost of missing more true positives.
 
-\(3\) **Overall Performance:**
+**(3)** **Overall Performance:**
 
 -   Increasing background points beyond **10:1** introduces diminishing returns and eventually harms model balance.
 
 -   A ratio of **5:1 to 10:1** appears to be a sweet spot, maintaining good sensitivity and specificity without introducing severe imbalances.
 
-### 4.1.2 Summary
+### 2.1.2 Summary
 
-\(1\) **Increasing background points beyond a 10:1 ratio does not consistently improve model performance** and may even reduce sensitivity and overall balance.
+**(1)** **Increasing background points beyond a 10:1 ratio does not consistently improve model performance** and may even reduce sensitivity and overall balance.
 
-\(2\) **Moderate background ratios (5:1 to 10:1)** provide a balance between sufficient background sampling and maintaining model sensitivity.
+**(2)** **Moderate background ratios (5:1 to 10:1)** provide a balance between sufficient background sampling and maintaining model sensitivity.
 
-\(3\) At **very high ratios (15:1 and 50:1)**, the model starts favoring background points, leading to poorer detection of presences.
+**(3)** **At very high ratios (15:1 and 50:1)**, the model starts favoring background points, leading to poorer detection of presences.
 
-## 4.2 The 'disk' approach
+## 2.2 The 'disk' approach
 
 Besides completely random background points, we will also test a 'disk' approach to generate random background point methods within a defined range around present records. As the below figure shown, these rings indicate potential areas where **pseudo-absence points** can be sampled, simulating **absence data** when real absences are unavailable.
 
@@ -600,39 +760,39 @@ results_table_no_wt_disk %>%
 
 ```
 
-### 4.2.1 Results
+### 2.2.1 Results
 
-\(1\) **Moderate Buffers Perform Best:**
+**(1) Moderate Buffers Perform Best:**
 
 -   500 - 1000m buffer had the best AUC (0.582) and F1 (0.594), indicating a good balance between ecological similarity and separation.
 
-\(2\) **Too Close or Too Far Decreases Performance**:
+**(2)** **Too Close or Too Far Decreases Performance**:
 
 -   Within 500m: Pseudo-absences too close to presences make it hard for the model to distinguish the two.
 
 -   Beyond 2000m: Pseudo-absences too far may not represent relevant environmental contrasts, leading to poor predictions.
 
-\(3\) **Sensitivity vs. Specificity Trade-off:**
+**(3)** **Sensitivity vs. Specificity Trade-off:**
 
 -   As background points move farther away, Specificity tends to improve, but Sensitivity decreases, leading to a trade-off between detecting presences and absences.
 
-\(4\) **Correlation Decreases With Distance:**
+**(4)** **Correlation Decreases With Distance:**
 
 -   The CORR metric peaks around 500 - 1000m and then declines, even becoming negative beyond 2000m, indicating the model struggles with very distant background points.
 
-### 4.2.3 Summary
+### 2.2.3 Summary
 
 **(1) Optimal Buffer Distance:**
 
 -   A moderate buffer (e.g., 500 - 1000m) seems to strike the best balance for pseudo-absence sampling in this context.
 
-\(2\) **Avoid Extremes:**
+**(2)** **Avoid Extremes:**
 
 -   Sampling too close or too far from presence points degrades model performance.
 
-# 5. Conclusion
+# 3. Conclusion
 
-## 5.1 Comparison across all models
+## 3.1 Comparison across all models
 
 Let's also compare the performance of all good models
 
@@ -648,7 +808,7 @@ combined_results_table %>%
   column_spec(ncol(combined_results_table), bold = TRUE)  # Highlight the Source column
 ```
 
-\(1\) **Best Overall Performance:**
+**(1)** **Best Overall Performance:**
 
 -   **Split Models** show the highest **AUC** scores.
 
@@ -656,7 +816,7 @@ combined_results_table %>%
 
 -   **split_90_train** and **split_50_train** follow closely with AUCs of **0.679** and **0.670**, respectively.
 
-\(2\) **Disk Strategy Performance:**
+**(2)** **Disk Strategy Performance:**
 
 -   Best AUC (**0.582**) achieved with **500–1000m** buffer.
 
@@ -664,7 +824,7 @@ combined_results_table %>%
 
 -   **Farther buffers (\>2000m)** degrade performance (**AUC = 0.538**) due to irrelevant background sampling.
 
-\(3\) **Random Strategy Performance:**
+**(3)** **Random Strategy Performance:**
 
 -   Stable **AUC (\~0.580)** across most background-to-presence ratios (1:1 to 30:1).
 
@@ -672,16 +832,70 @@ combined_results_table %>%
 
 -   **Sensitivity** remains high (\~0.713) across most ratios but at the expense of **Specificity (\~0.412)**.
 
-\(4\) **Best Trade-offs (Max_TSS):**
+**(4)** **Best Trade-offs (Max_TSS):**
 
 -   **split_50_train** shows the highest **Max_TSS (0.324)**, indicating the best balance between Sensitivity and Specificity.
 
 -   In Random Strategy, **15:1 ratio** yields the highest **Max_TSS (0.176)**.
 
-\(5\) **Key Insights:**
+**(5)** **Key Insights:**
 
 -   **Split models** outperform both Disk and Random background strategies in terms of AUC and overall predictive ability.
 
 -   **Disk strategy** performs best at moderate buffer distances (**500–1000m**), balancing environmental similarity and separation.
 
--   **Random strategy** shows stable performance across most ratios, but excessive background points (50:1) can reduce effectiveness.5.2
+-   **Random strategy** shows stable performance across most ratios, but excessive background points (50:1) can reduce effectiveness.
+
+# 4. Summary
+
+Including true-absence data in models is always beneficial when available. However, simply adding more absence data does not necessarily lead to better model performance.
+
+An imbalance between presence and absence records can negatively impact model accuracy. In such cases, it is important to apply weighting techniques to address this issue and improve predictive performance.
+
+When true absence data is unavailable, pseudo-absence points serve as a useful alternative. The selection strategy for these pseudo-absences should be informed by the ecological characteristics and distribution patterns of the target species.
+
+# References
+
+*for both parts*
+
+Barbet-Massin, M., Jiguet, F., Albert, C., & Thuiller, W. (2012). *Selecting pseudo-absences for species distribution models: How, where and how many? Methods ecol evol 3: 327–338*.
+
+Benkendorf, D. J., Schwartz, S. D., Cutler, D. R., & Hawkins, C. P. (2023). Correcting for the effects of class imbalance improves the performance of machine-learning based species distribution models. *Ecological Modelling*, *483*, 110414.
+
+Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (2002). SMOTE: Synthetic minority over-sampling technique. *Journal of Artificial Intelligence Research*, *16*, 321–357.
+
+Chen, C., Liaw, A., Breiman, L., et al. (2004). Using random forest to learn imbalanced data. *University of California, Berkeley*, *110*(1-12), 24.
+
+Elith\*, J., H. Graham\*, C., P. Anderson, R., Dudı́k, M., Ferrier, S., Guisan, A., J. Hijmans, R., Huettmann, F., R. Leathwick, J., Lehmann, A., et al. (2006). Novel methods improve prediction of species’ distributions from occurrence data. *Ecography*, *29*(2), 129–151.
+
+Gaul, W., Sadykova, D., White, H. J., León-Sánchez, L., Caplat, P., Emmerson, M. C., & Yearsley, J. M. (2022). Modelling the distribution of rare invertebrates by correcting class imbalance and spatial bias. *Diversity and Distributions*, *28*(10), 2171–2186.
+
+Johnson, R. A., Chawla, N. V., & Hellmann, J. J. (2012). Species distribution modeling and prediction: A class imbalance problem. *2012 Conference on Intelligent Data Understanding*, 9–16.
+
+Menardi, G., & Torelli, N. (2014). Training and assessing classification rules with imbalanced data. *Data Mining and Knowledge Discovery*, *28*, 92–122.
+
+Phillips, S. J., Anderson, R. P., & Schapire, R. E. (2006). Maximum entropy modeling of species geographic distributions. *Ecological Modelling*, *190*(3-4), 231–259.
+
+Václavı́k, T., & Meentemeyer, R. K. (2009). Invasive species distribution modeling (iSDM): Are absence data and dispersal constraints needed to predict actual distributions? *Ecological Modelling*, *220*(23), 3248–3258.
+
+Valavi, R., Guillera-Arroita, G., Lahoz-Monfort, J. J., & Elith, J. (2022). Predictive performance of presence-only species distribution models: A benchmark study with reproducible code. *Ecological Monographs*, *92*(1), e01486.
+
+Zhang, Z., Mammola, S., & Zhang, H. (2020). Does weighting presence records improve the performance of species distribution models? A test using fish larval stages in the yangtze estuary. *Science of The Total Environment*, *741*, 140393.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our partners**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
