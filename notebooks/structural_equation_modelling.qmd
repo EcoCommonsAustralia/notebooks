@@ -4,27 +4,27 @@
 
 Author details: Dr Sebastian Lopez Marcano
 
-Editor details: Xiang Zhao
+Editor details: TBD
 
 Contact details: support\@ecocommons.org.au
 
 Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
 
-Date: February 2025
+Date: May 2025
 
 # Script and data info:
 
 This notebook, developed by the EcoCommons team, showcases how to develop a structural equation model (SEM) to understand the 'hidden' relationships between different variables. The original material was developed by the FishID team from Griffith University, with support from Data61 CSIRO for Sebastian's PhD project. 
 
-**Note**: This notebook is not an exhaustive guide to SEMs. We highly recommend you read the [SEM Book from Jon Lefcheck](https://jslefche.github.io/sem_book/). 
+**Note**: This notebook is not a complete guide to SEMs. We highly recommend you read the [SEM Book by Jon Lefcheck](https://jslefche.github.io/sem_book/). 
 
 # Introduction
-Structural equation modelling (SEM) allows us to determine relationships between variables and understand how each of them conribute to a particular outcome. SEMs are particularly useful when we have a large number of variables, data points and the relationships and outcomes are not particularly clear. 
+Structural equation modelling (SEM) allows us to determine relationships between variables and understand how each of them contribute to a particular outcome. SEMs are particularly useful when we have a large number of variables, data points and the relationships and outcomes are not particularly clear. 
 
 To provide a simple example, SEMs can answer questions like "What factors influence how much I enjoy a pizza"?. We know that multiple factors can affect my or your pizza enjoyment (e.g., is the pizza hot, was the pizza homemade or from a Michelin star restaurant, etc.). 
 
 ## SEM Assumptions
-Assumptions in statistical models are important and sometimes are overlooked because finding answer takes priority over following the process. SEMs have a few assumptions that need to be before we can build a model and interpret the results.
+Assumptions in statistical models are important and sometimes are overlooked because finding an answer takes priority over following the process. SEMs have a few assumptions that need to be considered before we can build a model and interpret the results.
 
 1. **Linearity**: The relationships between variables are linear. 
 2. **Normality**: The data is normally distributed.
@@ -120,45 +120,63 @@ for (pkg in packages) {
 ```
 
 # Data Access and Preparation
-SEMs are particularly suitable for studying behavioural patterns in animals. In this example, we will use an adaptation of a dataset produced by the FishID project, Australia's largest solution for automated identification of fish species. 
+SEMs are particularly suitable for studying hidden patterns in data. These models have been particularly useful for understanding animal behaviour. In this example, we will use an adaptation of a dataset produced by the [FishID](https://fishid.org/) project, Australia's largest solution for automated identification of fish species. 
 
-The dataset contains tracking information of fish individuals swimming in a underwater pipe located in a natural estuary. The data was collected using an underwater camera and an AI algorithm with a fish tracker enabled. You do not need to use AI or cameras to collect data for SEMs; as long as you have continous data of individuals and their behaviours, you can use SEMs to understand the relationships between variables.
+The dataset contains tracking information of fish individuals swimming to and from an underwater pipe located in a natural estuary. The data was collected using an underwater camera and an AI algorithm with a fish tracker enabled. You do not need to use AI or cameras to collect data for SEMs; as long as you have continous data of individuals and their behaviours, you can use SEMs to understand the relationships between variables.
+
+Here is a visual representation of how the original data was collected. 
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/sem_notebook_diagram.png)
 
 The species of fish in the dataset is the **Moses perch** (Lutjanus russellii), a common species in the Indo-Pacific region. The IUCN status of this species is **Least Concern** and its a commercial and recreational fishery species. 
 
 ## 1 Load the data
-The dataset is stored in a CSV file and we will access it via a Dropbox link. We will load the data and check the first few rows to understand the structure of the data. The data contains behavioural attributes such as movement speed, depth, and spatial orientation. This data was mean centred and scaled to ensure that all variables are on the same scale. The variable `sinuosity` is a measure of how much the fish's path deviates from a straight line and it was calculated with the package `trajR`. 
+The dataset is stored in a CSV file and we will access it via a public Dropbox link. We will load the data and check the first few rows to understand the structure of the data. The data contains behavioural attributes such as movement speed, depth, and spatial orientation. This data was mean centred and scaled to ensure that all variables are on the same scale. The variable `sinuosity` is a measure of how much the fish's path deviates from a straight line and it was calculated with the package `trajR`. 
 
-```{r}
+```{r load_data}
 buff_mose <- read.csv('https://www.dropbox.com/s/p138pj5xg9aksc4/1min_buffered_mose.csv?dl=1')
 
-# View the first few rows of the dataset
-head(buff_mose)
+# View the structure of the data
+str(buff_mose)
 ```
 
-Important note: Each track in the dataset is treated as an independent observation, even though an individual may have been tracked several times. The data was collected across different days and seasons, and the AI algorithm used for species identification did not track individual fish as they swam past the camera. 
+Important note: Each track in the dataset is treated as an independent observation, even though an individual may have been tracked several times. The data was collected across different days and seasons, and the AI algorithm used for species identification did not track individual fish as they swam past the camera. Please review the visual representation of how the data was collected to understand the limitations of the dataset.
 
 ### Data Preprocessing
 Before fitting an SEM, we need to clean the data by removing unnecessary columns.
 
-```{r}
-dat <- buff_mose %>% select(-c(X.2, X.1, X, time, tide_type, camera_location, spatial_angle_simple, distance_to_pipe, site))
+```{r data_preprocessing}
+dat <- buff_mose %>% select(-c(X.2, X.1, X, time, tide_type, camera_location, spatial_angle_simple, distance_to_pipe, site, detection_length, spatial_dist, tracker_length))
+
+head(dat, 10)
 ```
 
-## Step 3: Visualizing Data Distributions
+Now lets explain the variables in the dataset:
+
+- **filename**: The name of the video file where the tracking 
+- **species**: The species of fish being tracked (Moses perch in this case).
+- **spatial_angle**: The angle of the fish's movement in degrees (2D).
+- **tracker_id**: The unique ID of the tracker used to track the fish.
+- **spatial_speed**: The speed of the fish's movement in px per second. 
+- **detection_depth**: The depth of the fish's movement in px.
+- **sinuosity**: A measure of the fish's path deviation from a straight line.
+- **tide**: Numerical - The tidal condition during the observation (e.g., low, high, etc.).
+
+
+
+## Step 3: Visualising Data Distributions
 
 Checking the distribution of key variables helps ensure they meet the assumptions of SEM.
 
-```{r}
-# Histogram of time variable
-hist(buff_mose$time, main = "Histogram of Time", xlab = "Time (s)", col = "lightblue", border = "black")
+```{r visualise_data}
+# Histogram of sinuosity variable
+hist(buff_mose$sinuosity, main = "Histogram of Sinuosity", xlab = "Sinuosity", col = "lightblue", border = "black")
 ```
 
 ## Step 4: Specifying the SEM Model
 
-We now define the SEM model. In this case, we model a latent variable `trait1`, which represents behavioural traits of fish, and test its relationship with tidal conditions.
+We now define the SEM model. In this case, we model a latent variable `trait1`, which represents behavioural traits of fish, and test its relationship with tidal conditions. We specify that the trait is influenced by the variables `spatial_angle` (in broad terms if it is moving left or right), `spatial_speed` (in broad terms if it is moving quick or slow), `detection_depth` (in broad terms if it is moving near the surface or the seafloor), and `sinuosity` (in broad terms if it is moving in a chaotic pattern or in a straight line). 
 
-```{r}
+```{r specify_model}
 mod <- "
   trait1 =~ spatial_angle + spatial_speed + detection_depth + sinuosity
   trait1 ~ tide"
@@ -168,7 +186,7 @@ mod <- "
 
 Since SEM uses covariance matrices, we must ensure that all variables are numeric and calculate the covariance matrix.
 
-```{r}
+```{r calculate_covariance}
 # Keep only numeric variables
 dat2 <- dat %>% transmute(across(where(is.numeric)))
 
@@ -180,7 +198,7 @@ dat_cov <- cov(dat2, use="pairwise.complete.obs")
 
 We now fit the SEM using the `lavaan` package.
 
-```{r}
+```{r fit_sem}
 fit <- sem(mod, data = dat2, sample.cov = dat_cov, sample.nobs = nrow(dat2))
 ```
 
@@ -188,34 +206,76 @@ fit <- sem(mod, data = dat2, sample.cov = dat_cov, sample.nobs = nrow(dat2))
 
 We generate a summary of the fitted SEM model, which provides estimates of the relationships between variables.
 
-```{r}
+```{r summary_sem}
 summary(fit)
 ```
 
+The summary output includes:
+
+- spatial angle was used as the baseline and fixed at 1 (standard practice in SEMs)
+- spatial speed had a negative loading on the latent variable trait1, indicating that as the fish's speed increases, the trait decreases.
+- detection depth and sinuosity had positive loadings on the latent variable trait1, indicating that as the fish's depth and sinuosity increase, the trait also increases.
+- tide had a positive effect on the latent variable trait1, indicating that as the tide increases, the trait also increases.
+
+The final interpretation is that as the tide rises, the fish's behaviour becomes more chaotic (higher sinuosity), they swim slower (lower spatial speed), and they swim deeper (higher detection depth).
+
 ## Step 8: Visualizing the SEM
 
-A graphical representation helps in understanding the relationships in the model.
+A graphical representation helps in understanding the relationships in the model. The package `semPlot` tends to shorten the names of the variables. Below, the variables from left to right are
+- `spatial_angle`
+- `spatial_speed`
+- `detection_depth`
+- `sinuosity`
 
-```{r}
+The latent variable is represented as `tr1` and the tidal condition is represented as `tid`.
+
+```{r sem_plot}
 semPlot::semPaths(fit, what='est', residuals=FALSE)
 ```
 
-# How to Interpret SEM Plots and Summaries
 
-### Understanding the SEM Plot
-The SEM plot visually represents relationships between variables. Key elements include:
+## Step 9: Connecting SEM outputs to Fish ecology
+The model has provided insights into the relationships between fish behaviour and tidal conditions. The chaotic, slow, deep swimming behaviour of the fish during high tide suggests that they may be foraging. Foraging activity often occurs during high tide when prey is more abundant and accessible. 
 
-- **Arrows**: Indicate the direction of relationships. A single-headed arrow represents a causal effect, while a double-headed arrow represents a correlation.
-- **Path Coefficients**: Numbers on the arrows indicate the strength and direction of relationships.
-- **Residual Variances**: Represent the unexplained variance in each variable.
+On the other hand, in low tide, the fish may be more active and aggressive, swimming faster and in a more linear path. This behaviour could be related to predator avoidance or diurnal migrations.
 
-### Interpreting the Model Summary
-The summary provides key statistical outputs:
+> The model and its interpretations are a simplified representation of the complex relationships between fish behaviour and tidal conditions. In reality, many other factors (e.g., prey availability, water temperature, etc.) may influence fish behaviour.
 
-- **Path Coefficients**: Indicate how strongly one variable predicts another.
-- **Standard Errors**: Measure the accuracy of each estimate.
-- **P-values**: Indicate the statistical significance of relationships.
-- **Model Fit Indices**: Metrics such as RMSEA, CFI, and TLI indicate how well the model fits the data.
 
-By analyzing both the graphical representation and the statistical outputs, we can draw meaningful conclusions about the relationships in our dataset.
+# How to kickstart your SEM model in environmental modelling
+SEMs can be used to understand complex relationships in species distribution models. SEMs can heklp us include indirect pathways (e.g., vegetation mediating temperature effects) and measurement errros. 
 
+Here is an example of how SEMs can be applied for species distribution modelling:
+
+## Model with a latent variable 'habitat_suitability' influencing species richness
+
+```{.r}
+model_2 <- '
+  habitat_suitability =~ forest_cover + water_proximity + elevation
+  species_richness ~ habitat_suitability
+'
+
+# Fit the model
+fit_2 <- sem(model_2, data = my_sdm_data)
+```
+
+# Conclusion
+In this notebook, we have demonstrated how to build a structural equation model (SEM) to understand the relationships between fish behaviour and tidal conditions. SEMs are powerful tools for exploring complex relationships in ecological data, and they can be applied to various research questions in environmental modelling. This notebook was not intended to be a complete guide to SEMs, but rather a starting point for researchers interested in using SEMs in their work.
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our partners**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
