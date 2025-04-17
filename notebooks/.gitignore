@@ -22,3 +22,5 @@ notebooks/eoo_development.r
 notebooks/.Renviron
 .ipynb_checkpoints/
 
+.Rapp.history
+
