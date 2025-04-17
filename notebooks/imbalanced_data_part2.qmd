@@ -190,11 +190,15 @@ There are two common approaches to generating background points. The first invol
 
 For more information about background points and pseudo-absence data, please check out our support article: [**Absence Data**](https://support.ecocommons.org.au/support/solutions/articles/6000255789-absence-data).
 
-Load the imbalanced_data.RData so that we can get all variables produced by the notebook Part 1.
+Load the imbalanced_data.RData so that we can get all variables produced by the '**Imbalanced Data Notebook Part 1**'.
 
 ```{r load_images}
 
 # Load all variables from the saved workspace
+file_id <- "1ZlUJml6kqO1jgAU7y1NmXi2iN5IDvUr-"
+
+drive_download(as_id(file_id), path = "imbalanceddata_part1.RData", overwrite = TRUE)
+
 load("imbalanceddata_part1.RData")
 
 ```
@@ -618,7 +622,9 @@ Generate background points within these ranges around present records of Gang-ga
 
 -   **More than 2000m**
 
-```{r disk_bg, warning=FALSE, message=FALSE}
+⚠️ Note: producing random points take few minus. ⚠️
+
+```{r disk_bg_500, warning=FALSE, message=FALSE}
 
 suppressWarnings({ # We want to suppress some irrelevant warnings
 
@@ -633,6 +639,14 @@ suppressWarnings({ # We want to suppress some irrelevant warnings
     target_crs = 4283
   )
 
+})
+
+```
+
+```{r disk_bg_500_1000, warning=FALSE, message=FALSE}
+
+suppressWarnings({ # We want to suppress some irrelevant warnings
+
   disk_bg_500_1000 <- generate_and_combine_pseudo_absences(
     presence_in_train_data,
     train_data, 
@@ -643,6 +657,13 @@ suppressWarnings({ # We want to suppress some irrelevant warnings
     study_area = ACT,
     target_crs = 4283
   )
+
+})
+```
+
+```{r disk_bg_1000_1500, warning=FALSE, message=FALSE}
+
+suppressWarnings({ # We want to suppress some irrelevant warnings
 
   disk_bg_1000_1500 <- generate_and_combine_pseudo_absences(
     presence_in_train_data,
@@ -655,30 +676,43 @@ suppressWarnings({ # We want to suppress some irrelevant warnings
     target_crs = 4283
   )
 
+})
+```
+
+```{r disk_bg_1500_2000, warning=FALSE, message=FALSE}
+
+suppressWarnings({ # We want to suppress some irrelevant warnings
+
   disk_bg_1500_2000 <- generate_and_combine_pseudo_absences(
     presence_in_train_data,
     train_data, 
     min_buffer = 1500, 
-    max_buffer = 2000,
-    n_points_per_presence = 1, 
-    seed = 123, 
-    study_area = ACT,
-    target_crs = 4283
-  )
-
-  disk_bg_2000 <- generate_and_combine_pseudo_absences(
-    presence_in_train_data,
-    train_data, 
-    min_buffer = 2000, 
-    max_buffer = 10000,
-    n_points_per_presence = 1, 
-    seed = 123, 
+    max_buffer = 2000, 
+    n_points_per_presence = 1,
+    seed = 123,
     study_area = ACT,
     target_crs = 4283
   )
 
 })
+```
 
+```{r disk_bg_2000, warning=FALSE, message=FALSE}
+
+suppressWarnings({ # We want to suppress some irrelevant warnings
+
+  disk_bg_2000 <- generate_and_combine_pseudo_absences(
+    presence_in_train_data,
+    train_data, 
+    min_buffer = 2000, 
+    max_buffer = 10000, 
+    n_points_per_presence = 1,
+    seed = 123,
+    study_area = ACT,
+    target_crs = 4283
+  )
+
+})
 ```
 
 Let's plot the generated disk background points.

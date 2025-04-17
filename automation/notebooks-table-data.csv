@@ -3,4 +3,5 @@ GLM,EC_GLM.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/E
 Marxan Connect,,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/sp/ecocommons-marxan-integration-poc.html,,https://github.com/EcoCommons-Australia-2024-2026/ecocommons-marxan-integration-poc.git,, False, skills
 Environmental Data Preparation (Raster),raster_preparation.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/raster_preparation.html,,,, False, skills
 Imbalanced dataset (Part 1),imbalanced_data_part1.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/imbalanced_data_part1.html,,,, False, skills
+Imbalanced dataset (Part 2),imbalanced_data_part2.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/imbalanced_data_part2.html,,,, False, skills
 Extent and Area of Ocurrence / Occupancy,eoo_aoo.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EOO_AOO/eoo_aoo.html,,,, False,skills

@@ -1,8 +1,8 @@
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
 
-# Species Distribution Analysis - Generalised Linear Model (GLM)
+# Species Distribution Analysis - Random Forest
 
-Author details: Abhimanyu Raj Singh and Xiang Zhao
+Author details: Xiang Zhao
 
 Editor details: Dr Sebastian Lopez Marcano
 
@@ -31,39 +31,39 @@ Using **Mountain Ash** (*Eucalyptus regnans*), a very tall and straight tree spe
 
 Following a standard protocol for species distribution models proposed by Zurell et al., (2020), a R environment set-up step and five main modelling steps are demonstrated in this notebook:
 
-+--------+--------------------------------+------------------------------------------------------------+
-| Step   | Main Step                      | Sub-steps                                                  |
-+========+================================+============================================================+
-| Set-up | Set-up                         | S.1 Set up the working directory                           |
-|        |                                |                                                            |
-|        |                                | S.2 Install and load required R packages for this notebook |
-|        |                                |                                                            |
-|        |                                | S.3 Download the case study datasets                       |
-+--------+--------------------------------+------------------------------------------------------------+
-| Step 1 | Overview and Conceptualisation | 1.1 Model objective                                        |
-|        |                                |                                                            |
-|        |                                | 1.2 Taxon, location, predictors, scale                     |
-+--------+--------------------------------+------------------------------------------------------------+
-| Step 2 | Data                           | 2.1 Biodiversity data                                      |
-|        |                                |                                                            |
-|        |                                | 2.2 Pseudo absence data                                    |
-|        |                                |                                                            |
-|        |                                | 2.3 Environmental data                                     |
-|        |                                |                                                            |
-|        |                                | 2.4 Combine data                                           |
-+--------+--------------------------------+------------------------------------------------------------+
-| Step 3 | Model fitting                  | 3.1 Multicollinearity and variable selection               |
-|        |                                |                                                            |
-|        |                                | 3.2 Data splitting                                         |
-|        |                                |                                                            |
-|        |                                | 3.3 Model fitting                                          |
-+--------+--------------------------------+------------------------------------------------------------+
-| Step 4 | Evaluation                     | 4.1 Interpretation                                         |
-|        |                                |                                                            |
-|        |                                | 4.2 Cross-valiadation                                      |
-+--------+--------------------------------+------------------------------------------------------------+
-| Step 5 | Predictions                    | 5.1 Mapping                                                |
-+--------+--------------------------------+------------------------------------------------------------+
++--------------+--------------------------------+------------------------------------------------------------+
+| Step         | Main Step                      | Sub-steps                                                  |
++==============+================================+============================================================+
+| Set-up       | Set-up                         | S.1 Set up the working directory                           |
+|              |                                |                                                            |
+|              |                                | S.2 Install and load required R packages for this notebook |
+|              |                                |                                                            |
+|              |                                | S.3 Download the case study datasets                       |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 1       | Overview and Conceptualisation | 1.1 Model objective                                        |
+|              |                                |                                                            |
+|              |                                | 1.2 Taxon, location, predictors, scale                     |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 2       | Data                           | 2.1 Biodiversity data                                      |
+|              |                                |                                                            |
+|              |                                | 2.2 Pseudo absence data                                    |
+|              |                                |                                                            |
+|              |                                | 2.3 Environmental data                                     |
+|              |                                |                                                            |
+|              |                                | 2.4 Combine data                                           |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 3       | Model fitting                  | 3.1 Multicollinearity and variable selection               |
+|              |                                |                                                            |
+|              |                                | 3.2 Data splitting                                         |
+|              |                                |                                                            |
+|              |                                | 3.3 Model fitting                                          |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 4       | Evaluation                     | 4.1 Interpretation                                         |
+|              |                                |                                                            |
+|              |                                | 4.2 Cross-valiadation                                      |
++--------------+--------------------------------+------------------------------------------------------------+
+| Step 5       | Predictions                    | 5.1 Mapping                                                |
++--------------+--------------------------------+------------------------------------------------------------+
 
 In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
 
@@ -586,197 +586,26 @@ Soil Type Classification: 3 - Dermosol, 4 - Chromosol, 5 - Ferrosol, 7 - Tenosol
 
 We will create a data frame that combines each presence/absence record of Mountain Ash with data from our 15 environmental variables.
 
+```{r}
+library(terra)
+
+
+mountain_ash_centralhighlands_vect <- vect(mountain_ash_centralhighlands)
+
+
+```
+
 ```{r combine}
 
-# Convert species occurrence data to terra-compatible SpatVector
-occurrence_vect <- vect(mountain_ash_centralhighlands)
-
-# Extract raster values at species occurrence points
-extracted_values <- terra::extract(env_var_stack, occurrence_vect)
-
-# Combine occurrence data with extracted raster values
-# (Keep geometry or drop it based on your needs)
-occurrence_data <- cbind(as.data.frame(mountain_ash_centralhighlands), extracted_values)
-
-# Remove rows with any NA values in predictors
-occurrence_data <- na.omit(occurrence_data)
-
-# we want to make sure the data type of soil types is factor.
-occurrence_data$Soil_Type <- as.factor(occurrence_data$Soil_Type)
-
-head(occurrence_data)
+myBiomodData <- BIOMOD_FormatingData(
+  resp.var = mountain_ash_centralhighlands_vect,
+  expl.var = env_var_stack,
+  resp.name = "My_Species"
+)
 
 ```
 
 # 3. Model fitting
-
-## 3.1 **Multicollinearity and Variable Selection**
-
-Testing for collinearity among continuous variables is an important step in many modeling processes, particularly in species distribution modeling and other regression-based analyses. Codllinearity occurs when two or more predictor variables in a dataset are highly correlated, which can lead to unstable estimates of regression coefficients and make it difficult to interpret the results.
-
-There are two common methods for testing collinearity among **continuous variables**.
-
-**Correlation matrix.**
-
-![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Corrplot_sample.png){alt="corrplot, " width="400"}
-
-```{r corrplot}
-
-layer_names <- c(
-  "Annual_Mean_Temp",
-  "Temp_Seasonality",
-  "Min_Temp_Coldest_Month",
-  "Mean_Temp_Warmest_Quarter",
-  "Annual_Mean_Radiation",
-  "Annual_Precipitation",
-  "Precip_Warmest_Quarter",
-  "Precip_Coldest_Quarter",
-  "Annual_Mean_Moisture",
-  "Moisture_Warmest_Quarter",
-  "Moisture_Coldest_Quarter",
-  "Elevation",
-  "Fires",
-  "Logging"
-)
-
-
-# Select columns by their names
-cor_data <- occurrence_data[, layer_names]
-
-# Check the structure of the numeric data
-str(cor_data)
-
-# Calculate the correlation matrix for the numeric columns
-cor_matrix <- cor(cor_data, use = "complete.obs", method = "pearson")
-
-
-corrplot(cor_matrix,
-         method = "color",            # Use colored squares for correlation
-         type = "upper",              # Show upper triangle only
-         order = "hclust",            # Reorder variables hierarchically
-         addCoef.col = "black",       # Show correlation coefficients in black
-         number.cex = 0.5,            # Reduce the size of correlation labels
-         tl.col = "black",            # Text label color
-         tl.srt = 30,                 # Rotate labels slightly for readability
-         tl.cex = 0.5,                # Reduce text size of variable labels (set smaller valu)
-         cl.cex = 0.8,                # Reduce text size of color legend
-         diag = FALSE,                # Hide diagonal
-         col = colorRampPalette(c("#11aa96", "#61c6fa", "#f6aa70"))(200),
-         sig.level = 0.01, insig = "blank")
-
-```
-
-**If you find corrplot is hard for you to make decisions, we can use Variance Inflation Factor (VIF)**. VIF is another statistical measure used to detect **multicollinearity** in a set of explanatory (independent) variables in a regression model.
-
-**Interpretation:**
-
-1.  **VIF = 1**: No correlation
-
-2.  **VIF \> 1 and \<= 5**: Moderate correlation; may not require corrective action.
-
-3.  **VIF \> 5**: Indicates high correlation. Multicollinearity may be problematic, and further investigation is recommended.
-
-4.  **VIF \> 10**: Strong multicollinearity. The variable is highly collinear with others, and steps should be taken to address this.
-
-```{r VIF_1}
-
-# Fit a GLM for species distribution
-glm_model <- glm(
-  occrrnS ~ Annual_Mean_Temp + Temp_Seasonality + Min_Temp_Coldest_Month +
-    Mean_Temp_Warmest_Quarter + Annual_Mean_Radiation + Annual_Precipitation +
-    Precip_Warmest_Quarter + Precip_Coldest_Quarter + Annual_Mean_Moisture +
-    Moisture_Warmest_Quarter + Moisture_Coldest_Quarter + Elevation + Fires + Logging,
-  data = occurrence_data,
-  family = binomial(link = "logit")  # Logistic regression
-)
-
-```
-
-```{r VIF_2}
-
-# Calculate VIF for the GLM
-vif_values <- vif(glm_model)
-
-# Convert VIF values to a data frame with two columns
-vif_table <- data.frame(
-  Variable = names(vif_values),  # Column 1: Variable names
-  VIF = round(vif_values, 2)     # Column 2: VIF values rounded to 2 decimals
-)
-
-# Rank the VIF table from high to low
-vif_table <- vif_table[order(vif_table$VIF, decreasing = TRUE), ]
-
-# Print the ranked table
-print(vif_table)
-
-```
-
-Rules of thumb for VIF:
-
-**Variables to Drop (Initial Recommendation):**
-
-1.  `Annual_Mean_Temp` (High VIF + highly correlated with many others).
-
-2.  `Mean_Temp_Warmest_Quarter` (High VIF + redundant with `Min_Temp_Coldest_Month`).
-
-3.  `Annual_Mean_Radiation` (High VIF + redundant with `Elevation`).
-
-4.  `Annual_Precipitation` (Redundant with `Annual_Mean_Moisture`).
-
-5.  `Precip_Warmest_Quarter` (Redundant with `Moisture_Warmest_Quarter`).
-
-Getting rid of some highly correlated variables and run VIF again.
-
-```{r VIF_3}
-
-# Fit a GLM for testing the VIF
-glm_model <- glm(
-  occrrnS ~ Temp_Seasonality + Min_Temp_Coldest_Month +
-    Precip_Coldest_Quarter + Moisture_Coldest_Quarter + Elevation + Fires + Logging,
-  data = occurrence_data,
-  family = binomial(link = "logit")  # Logistic regression
-)
-
-# Calculate VIF for the GLM
-vif_values <- vif(glm_model)
-
-# Convert VIF values to a data frame with two columns
-vif_table <- data.frame(
-  Variable = names(vif_values),  # Column 1: Variable names
-  VIF = round(vif_values, 2)     # Column 2: VIF values rounded to 2 decimals
-)
-
-# Rank the VIF table from high to low
-vif_table <- vif_table[order(vif_table$VIF, decreasing = TRUE), ]
-
-# Print the ranked table
-print(vif_table)
-
-```
-
-Now, from our 14 continuous variables, we choose above 7 variables and 1 categorical variable Soil_Types to make our final model.
-
-## 3.2 Data splitting
-
-For cross-validation purposes, we need to leave out some data as testing dataset. There are many strategies of splitting data for cross-validation, like random, k-fold, and leave-one-out etc. Here we will use the easiest one: random splitting.
-
-```{r data_split}
-
-# Set seed for reproducibility
-set.seed(123)
-
-# Split the data into training (80%) and testing (20%)
-train_index <- sample(1:nrow(occurrence_data), size = 0.8 * nrow(occurrence_data))
-
-# Create training and testing datasets
-train_data <- occurrence_data[train_index, ]
-test_data <- occurrence_data[-train_index, ]
-
-# Check the split
-cat("Training Set:", nrow(train_data), "rows\n")
-cat("Testing Set:", nrow(test_data), "rows\n")
-
-```
 
 ## 3.3 Model fitting
 
@@ -784,361 +613,50 @@ cat("Testing Set:", nrow(test_data), "rows\n")
 
 It is always helpful to create a null model as a benchmark to assess how the inclusion of explanatory variables improves the model.
 
-```{r null_model}
-
-# Let's make a null model as a benchmark
-
-# Fit a null model with only the intercept
-null_model <- glm(occrrnS ~ 1,
-                  data = train_data,
-                  family = binomial(link = "logit"))
-
-summary(null_model)
-
-```
-
 Now, we can fit a full model.
 
 ```{r model_fit}
 
-# Fit the GLM on the training data
-glm_model <- glm(
-  occrrnS ~ Temp_Seasonality + Min_Temp_Coldest_Month +
-    Precip_Coldest_Quarter + Moisture_Coldest_Quarter +
-    Elevation + Fires + Soil_Type + Logging,
-  data = train_data,
-  family = binomial(link = "logit")  # Logistic regression
-)
+library(biomod2)
+library(randomForest)  # good practice, even though biomod2 tries to load it
 
-# Summarize the model
-summary(glm_model)
+# Fit the GLM on the training data
+
+myBiomodModelOut <- BIOMOD_Modeling(
+  bm.format = myBiomodData,
+  modeling.id = 'AllModels',
+  models = c('RF'),
+  CV.strategy = 'random',
+  CV.nb.rep = 2,
+  CV.perc = 0.8,
+  OPT.strategy = 'bigboss',
+  metric.eval = c('TSS','ROC'),
+  var.import = 2,
+  seed.val = 42
+)
 
 ```
 
 # 4. Model evaluation
 
-## 4.1 Summary of Interpretation
+```{r}
 
-```{r model_compare}
-
-# Let's compare the performance of our model to a null model
-
-# Compare null model with full model using the analysis of deviance (Likelihood Ratio Test)
-anova(null_model, glm_model, test = "Chisq")
-
-# Compare the AIC of the null model and the full model
-AIC(null_model, glm_model)
-
-# Get the null deviance and residual deviance from the full model
-null_deviance <- glm_model$null.deviance
-residual_deviance <- glm_model$deviance
-
-# Calculate the deviance explained
-deviance_explained <- (null_deviance - residual_deviance) / null_deviance
-
-# Print the deviance explained as a percentage
-deviance_explained_percent <- deviance_explained * 100
-cat("Deviance Explained:", deviance_explained_percent, "%\n")
-
-```
-
-The **Likelihood Ratio Test (ANOVA)** shows that adding the predictors significantly improved the model's fit compared to the null model, as indicated by the high deviance reduction and a p-value of 0.
-
-The **AIC** for the full model is much lower than the null model, further indicating a better fit when balancing model complexity.
-
-The **Deviance Explained** of 42 % suggests that the full model explains almost half of the variability in mountain ash presence/absence, indicating that while the predictors contribute useful information, there is still substantial unexplained variability that may require further investigation or additional predictors.
-
-**Variable Importance** metric.
-
-It is a measure used to assess the relative importance of predictors (environmental variables) in the model.
-
-```{r VIP}
-
-# Function to plot effect size graph
-plot_effect_size <- function(glm_model) {
-  # Check if required libraries are installed
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Please install the 'ggplot2' package to use this function.")
-  }
-  library(ggplot2)
-
-  # Extract effect sizes (coefficients) from the model
-  coefs <- summary(glm_model)$coefficients
-  effect_sizes <- data.frame(
-    Variable = rownames(coefs)[-1],  # Exclude the intercept
-    Effect_Size = coefs[-1, "Estimate"],
-    Std_Error = coefs[-1, "Std. Error"]
-  )
-
-  # Sort by effect size
-  effect_sizes <- effect_sizes[order(-abs(effect_sizes$Effect_Size)), ]
-
-  # Plot the effect sizes with error bars
-  ggplot(effect_sizes, aes(x = reorder(Variable, Effect_Size), y = Effect_Size)) +
-    geom_bar(stat = "identity", fill = "#11aa96") +
-    geom_errorbar(aes(ymin = Effect_Size - Std_Error, ymax = Effect_Size + Std_Error), width = 0.2) +
-    coord_flip() +
-    labs(
-      title = "Effect Sizes of Variables",
-      x = "Variable",
-      y = "Effect Size (Coefficient Estimate)"
-    ) +
-    theme_minimal()
-}
-
-# Example usage of effect size plot
-plot_effect_size(glm_model)
-```
-
-## 4.2 Cross validation
-
-Now, we use the **testing data** to evaluate the model performance.
-
-```{r ROC}
-
-# Predict on the testing data
-predicted_probs <- predict(glm_model, newdata = test_data, type = "response")
-
-# Create an ROC curve and compute AUC
-roc_curve <- roc(test_data$occrrnS, predicted_probs)
-auc_value <- auc(roc_curve)
-
-# Extract ROC data for ggplot
-roc_data <- data.frame(
-  Sensitivity = roc_curve$sensitivities,
-  Specificity = 1 - roc_curve$specificities
-)
-
-# Plot the ROC curve using ggplot2
-ggplot(roc_data, aes(x = Specificity, y = Sensitivity)) +
-  geom_line(color = "#61cafa", linewidth = 0.5) +                  # ROC curve
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") + # Diagonal line
-  labs(
-    title = paste("ROC Curve (AUC =", round(auc_value, 2), ")"),
-    x = "1 - Specificity",
-    y = "Sensitivity"
-  ) +
-  theme_minimal() +                                           # Minimal theme
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"), # Centered and bold title
-    axis.title = element_text(size = 12),                   # Axis label font size
-    axis.text = element_text(size = 10)                     # Axis tick font size
-  )
-```
-
-```{r species_response_curves}
-
-plot_species_response <- function(glm_model, predictors, data) {
-  # Check if required libraries are installed
-  if (!requireNamespace("ggplot2", quietly = TRUE) || !requireNamespace("gridExtra", quietly = TRUE)) {
-    stop("Please install the 'ggplot2' and 'gridExtra' packages to use this function.")
-  }
-  library(ggplot2)
-  library(gridExtra)
-
-  # Create empty list to store response plots
-  response_plots <- list()
-
-  # Loop through each predictor variable
-  for (predictor in predictors) {
-    # Create new data frame to vary predictor while keeping others constant
-    pred_range <- seq(
-      min(data[[predictor]], na.rm = TRUE),
-      max(data[[predictor]], na.rm = TRUE),
-      length.out = 100
-    )
-    const_data <- data[1, , drop = FALSE]  # Use first row to keep other predictors constant
-    response_data <- const_data[rep(1, 100), ]  # Duplicate the row
-    response_data[[predictor]] <- pred_range
-
-    # Predict probabilities
-    predicted_response <- predict(glm_model, newdata = response_data, type = "response")
-
-    # Create data frame for plotting
-    plot_data <- data.frame(
-      Predictor_Value = pred_range,
-      Predicted_Probability = predicted_response
-    )
-
-    # Add presence and absence data
-    presence_absence_data <- data.frame(
-      Predictor_Value = data[[predictor]],
-      Presence_Absence = data$occrrnS
-    )
-
-    # Generate the response plot
-    p <- ggplot() +
-      geom_line(data = plot_data, aes(x = Predictor_Value, y = Predicted_Probability), color = "#61c6fa", linewidth = 1) +
-      geom_point(data = presence_absence_data[presence_absence_data$Presence_Absence == 1, ], aes(x = Predictor_Value, y = Presence_Absence), color = "#11aa96", alpha = 0.6) +
-      geom_point(data = presence_absence_data[presence_absence_data$Presence_Absence == 0, ], aes(x = Predictor_Value, y = Presence_Absence), color = "#f6aa70", alpha = 0.6) +
-      labs(x = predictor, y = NULL) +
-      theme_minimal() +
-      theme(axis.title.y = element_blank())
-
-    # Store the plot in the list
-    response_plots[[predictor]] <- p
-  }
-
-  # Arrange all plots in one combined plot with a single shared y-axis label
-  grid.arrange(
-    grobs = response_plots, 
-    ncol = 3,
-    left = "Predicted Probability / Presence-Absence"
-  )
-}
-
-# Example usage:
-predictors <- c("Temp_Seasonality", "Min_Temp_Coldest_Month", "Precip_Coldest_Quarter", "Moisture_Coldest_Quarter", "Elevation", "Fires", "Logging")
-plot_species_response(glm_model, predictors, train_data)
-
-```
-
-```{r density_histogram_plot}
-
-# Density and Histogram Plot Function
-plot_density_histogram <- function(predicted_probs, actual_labels) {
-  # Combine data into a data frame
-  plot_data <- data.frame(
-    Predicted_Probability = predicted_probs,
-    Presence_Absence = factor(actual_labels, levels = c(0, 1), labels = c("Absence", "Presence"))
-  )
-  
-  # Plot density and histogram
-  ggplot(plot_data, aes(x = Predicted_Probability, fill = Presence_Absence)) +
-    geom_histogram(aes(y = after_stat(density)), bins = 10, alpha = 0.6, position = "identity") +  # Histogram with density
-    geom_density(alpha = 0.4) +  # Density curve
-    labs(
-      title = "Density and Histogram of Predicted Probabilities",
-      x = "Predicted Probability",
-      y = "Density",
-      fill = "Presence/Absence"
-    ) +
-    scale_fill_manual(values = c("#f6aa70", "#11aa96")) +  # Custom colors
-    theme_minimal() +
-    theme(
-      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-      axis.title = element_text(size = 12),
-      axis.text = element_text(size = 10),
-      legend.position = "top"
-    )
-}
-
-# Example usage:
-# Replace `predicted_probs` with your predicted probabilities and `test_data$occrrnS` with your actual labels
-plot_density_histogram(predicted_probs, test_data$occrrnS)
-
-```
-
-# 5. Mapping and Interpolation
-
-If you remember, we started with these point records of mountain ash
-
-![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/point_data.png){width="300px" alt="Point data"}
-
-Now, let's predict a continuous mapping of the distribution of mountain ash in the central highlands.
-
-```{r prediction}
-
-# Predict the presence probability across the entire raster extent
-predicted_raster <- predict(env_var_stack, glm_model, type = "response")
-
-# Define a custom color palette
-custom_palette <- colorRampPalette(c("#f6aa70", "#61cafa", "#11aa96"))
-
-
-# Plot the raster with the custom color palette
-plot(
-  predicted_raster, 
-  main = "Predicted Probability of Presence of Mountain Ash in Central Highlands",
-  col = custom_palette(100) # Use 100 colors for smooth transitions
+myBiomodProjection <- BIOMOD_Projection(
+  bm.mod = myBiomodModelOut,
+  new.env = env_var_stack,
+  proj.name = 'current',
+  selected.models = 'all',
+  binary.meth = 'TSS',
+  compress = 'xz',
+  build.clamping.mask = FALSE
 )
 ```
 
-We can also use an independent mountain ash data to cross-validate your mapping.
+```{r}
 
-```{r forest_types_vic}
+myBiomodProjection
 
-forest_type_vic <- st_read("mountain_ash_centralhighlands/FORTYPE500.shp")
-
-forest_type_central_highlands <- st_intersection(forest_type_vic, central_highlands)
-
-ggplot(data = forest_type_central_highlands) +
-  geom_sf(aes(fill = as.factor(X_DESC)), color = NA) +
-  scale_fill_manual(
-    name = "Forest Type",
-    values = c(
-      "#D55E00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", 
-      "#CC79A7", "#E69F00", "#000000", "#8E44AD", 
-      "#3498DB", "#F39C12","#27AE60", "#E74C3C", "#BDC3C7"
-    )
-  ) +
-  labs(title = "Forest Types in the Central Highlands") +
-  theme_minimal() +
-  theme(
-    legend.position = "right",
-    legend.text = element_text(size = 8),      # Smaller legend text
-    legend.title = element_text(size = 10),   # Smaller legend title
-    plot.title = element_text(size = 16, face = "bold"), # Larger plot title
-    axis.text = element_text(size = 10),      # Adjust axis text
-    axis.title = element_text(size = 12)      # Adjust axis title
-  ) +
-  coord_sf(expand = FALSE)
-
-```
-
-```{r mountain_ash_forest}
-
-mountain_ash_forest <- forest_type_central_highlands[forest_type_central_highlands$X_DESC == "Mountain Ash", ]
-
-# Plot the filtered shapefile
-ggplot(data = mountain_ash_forest) +
-  geom_sf(fill = "NA", color = "red", size = 0.1) +  # Blue fill and black border
-  labs(
-    title = "Mountain Ash Forest in Central Highlands",
-    caption = "Data Source: FORTYPE500.shp"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.text = element_text(size = 10),
-    axis.title = element_blank(),
-    legend.position = "none"  # No legend needed since this is a single type
-  )
-
-```
-
-```{r cross-validation_forest}
-
-custom_palette <- c("#f6aa70", "#61cafa", "#11aa96")
-
-
-pal <- colorNumeric(
-  palette = custom_palette,      # Use custom colors
-  domain = values(predicted_raster),
-  na.color = "transparent"       # Make NA values transparent
-)
-
-# Create the leaflet map
-leaflet() %>%
-  addProviderTiles(providers$Esri.WorldImagery) %>%
-  # Add raster layer
-  addRasterImage(predicted_raster, color = pal, opacity = 0.7, project = TRUE) %>%
-  # Add shapefile layer
-  addPolygons(
-    data = mountain_ash_forest,
-    color = "red",              # Border color of shapefile polygons
-    weight = 1,                  # Border width
-    fillColor = "lightblue",     # Fill color of shapefile polygons
-    fillOpacity = 0.3            # Transparency for fill
-  ) %>%
-  # Add legend for raster
-  addLegend(
-    pal = pal,
-    values = values(predicted_raster),
-    title = "Probability",
-    position = "bottomright"
-  )
-
+plot(myBiomodProjection)
 ```
 
 # References
