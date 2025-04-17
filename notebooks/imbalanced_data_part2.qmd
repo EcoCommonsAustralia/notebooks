@@ -36,7 +36,7 @@ This notebook explores strategies to address the challenges posed by imbalanced 
 1.  Learn how to generate background points using two methods: completely random and buffered-random.
 2.  Learn how to compare model performance using different methods for generating background points and pseudo-absence data.
 
-# **Workflow Overview**
+# Workflow Overview
 
 -   Set the working directory and load the necessary R packages. Create directories to store raw data files.
 
