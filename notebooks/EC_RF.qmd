@@ -42,7 +42,7 @@ For example, the above decision tree means:
 
 -   If **temperature ≤ 15°C** and **elevation ≥ 500 m** then predict **present**
 
-This is a **small decision tree** that splits the landscape into four groups using two environmental variables. A real random forest would grow many of these, each on a random subset of data and predictors, and combine their results.
+This is a **small decision tree** that splits the landscape into four groups using three environmental variables. A real random forest would grow many of these, each on a random subset of data and predictors, and combine their results.
 
 ## **K.3 Bootstrap sampling and out-of-bag (OOB)**
 
@@ -50,9 +50,9 @@ A bootstrap sampling means random sampling with replacement. When Random Forest 
 
 The out-of-bag data are the observations that were not included in the bootstrap sample for a particular tree.
 
-![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Out_of_Bag%20Set.png)
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Out_of_Bag_Set.png)
 
-Figure adapted from By IlIlIIlIIIlIlll - Own work, CC BY-SA 4.0, <https://commons.wikimedia.org/w/index.php?curid=97377491>
+Figure adapted from Smith et al. (2024) and Kwon and Zou (2023).
 
 Random Forest uses these OOB samples as a built-in validation set: For each observation, it's passed down all the trees where it was OOB. The final OOB prediction is the majority vote (for classification) across those trees. On average, about 1/3 of the data is left our per tree for later in evaluation.
 
@@ -60,7 +60,7 @@ Random Forest uses these OOB samples as a built-in validation set: For each obse
 
 # Objectives
 
-1.  Familiarise your with the five main steps of running Random Forest for a tree species.
+1.  Familiarise yourself with the five main steps of running Random Forest for a tree species.
 2.  Learn how to adjust this Quarto Markdown notebook to run your own RF-based SDM.
 3.  Get accustomed to the style of the EcoCommons Notebooks.
 4.  Know the differences between GLM and RF.
@@ -82,7 +82,7 @@ Following a standard protocol for species distribution models proposed by Zurell
 |              |                                |                                                            |
 |              | Data                           | 1.2 Biodiversity data                                      |
 |              |                                |                                                            |
-|              |                                | 2.3 Environmental data                                     |
+|              |                                | 1.3 Environmental data                                     |
 |              |                                |                                                            |
 |              |                                | 1.4 Combine data                                           |
 +--------------+--------------------------------+------------------------------------------------------------+
@@ -93,6 +93,8 @@ Following a standard protocol for species distribution models proposed by Zurell
 | Step 3       | Evaluation                     | 3.1 Model interpretation                                   |
 |              |                                |                                                            |
 |              |                                | 3.2 Cross-validation                                       |
+|              |                                |                                                            |
+|              |                                | 3.3 Mapping and Interpolation                              |
 +--------------+--------------------------------+------------------------------------------------------------+
 | Step 4       | Model comparison               | 4.1 Number of trees of Random Forest                       |
 |              |                                |                                                            |
@@ -134,7 +136,7 @@ Install and load R packages.
 options(repos = c(CRAN = "https://cran.rstudio.com/"))
 
 # List of packages to check, install if needed, and load
-packages <- c("caret", "dplyr", "terra", "sf", "googledrive", "ggplot2", "corrplot", "pROC", "dismo", "spatstat.geom", "patchwork", "biomod2", "leaflet", "car", "gridExtra", "htmltools", "RColorBrewer", "knitr", "kableExtra")
+packages <- c("caret", "dplyr", "terra", "sf", "googledrive", "ggplot2", "corrplot", "pROC", "dismo", "spatstat.geom", "patchwork", "biomod2", "leaflet", "car", "gridExtra", "htmltools", "RColorBrewer", "knitr", "kableExtra", "randomForest")
 
 # Function to display a cat message
 cat_message <- function(pkg, message_type) {
@@ -173,7 +175,7 @@ We have prepared the following data and uploaded them to our Google Drive for yo
 drive_deauth()
 
 # Define Google Drive file ID and the path for downloading
-zip_file_id <- "19CSqIcgMu_GhVQcGp0btYDQEtb1Miuju"
+zip_file_id <- "1wblHSFm1kkZLytNmpEBHnmEajR-bsA35"
 datafolder_path <- file.path(workspace)
 
 # Create a local path for the zipped file
@@ -212,7 +214,7 @@ cat("Unzipped files to folder:", datafolder_path, "\n")
 
 Photographer: [Reiner Richter, ALA](https://biocache.ala.org.au/occurrences/52a0b6eb-3656-4190-a8d6-ba4846b884a5)
 
-**Mountain Ash (*Eucalyptus regnans*)**, is a remarkably tall and straight tree native to Victoria and Tasmania. This species thrives in cool, temperate rainforests characterized by high rainfall, deep, well-drained soils, mild temperatures, and high humidity. It is typically found at altitudes ranging from 200 to 1,000 meters above sea level (Burns et al., 2015).
+**Mountain Ash (*Eucalyptus regnans*)**, is a remarkably tall and straight tree native to Victoria and Tasmania. This species thrives in cool, temperate rainforest characterized by high rainfall, deep, well-drained soils, mild temperatures, and high humidity. It is typically found at altitudes ranging from 200 to 1,000 meters above sea level (Burns et al., 2015).
 
 The Mountain Ash faces two main forms of disturbance: **bushfires**, which are its primary natural disturbance, and **logging**, which represents the primary human-induced threat to its habitat (Burns et al., 2015; Nevill et al., 2010).
 
@@ -391,7 +393,7 @@ We use R package 'randomForest' to build our model.
 
 **'ntree'** sets the number of trees to build in the Random Forest. More trees usually have better performance and stability. However, it also means slower computation. Typical values of 'ntree' are 500 - 1000 (sometimes 100-200 is enough for fast testing).
 
-**'importance' is TRUE** tells the model to calculate variable importance metrics. This will give you which predictors are most importance for explaining the response.
+**'importance' is TRUE** tells the model to calculate variable importance metrics. This will give you which predictors are most important for explaining the response.
 
 ```{r model_fit_RF}
 
@@ -475,7 +477,7 @@ kable(var_imp, caption = "Random Forest Variable Importance") %>%
 
 -   Elevation (1 = 41.35 vs. 0 = 24.37)
 
-### 3.1.2 Generalised Linear Model
+### 3.1.2 Generalised Linear Model {#generalised-linear-model-1}
 
 ```{r GLM_perform}
 
@@ -528,6 +530,122 @@ plot(rf_roc, col = "#11aa96", lwd = 1, main = "AUC ROC Curve of the Random Fores
 # Add AUC as text on the plot
 auc_value <- auc(rf_roc)
 text(0.6, 0.2, paste("AUC =", round(auc_value, 3)), col = "#11aa96")
+```
+
+## 3.3 Mapping and Interpolation
+
+If you remember, we started with these point records of mountain ash
+
+![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/point_data.png){width="300px" alt="Point data"}
+
+Now, let's predict a continuous mapping of the distribution of mountain ash in the central highlands.
+
+```{r prediction}
+
+# Predict the presence probability across the entire raster extent
+prediction_rf <- terra::predict(env_var_stack, rf_model, type = "prob", index = 2)
+
+```
+
+```{r plot_rf_prediction}
+
+# Define a custom color palette
+custom_palette <- colorRampPalette(c("#f6aa70", "#61cafa", "#11aa96"))
+
+# Plot the raster with the custom color palette
+plot(
+  prediction_rf,
+  main = "Predicted Probability of the Presence of\nMountain Ash in Central Highlands\nwith Random Forest",
+  col = custom_palette(100),
+  cex.main = 0.8
+)
+```
+
+We can also use an independent mountain ash data to cross-validate your mapping.
+
+```{r forest_types_vic}
+
+forest_type_vic <- st_read("mountain_ash_centralhighlands_RF/FORTYPE500.shp")
+
+forest_type_central_highlands <- st_intersection(forest_type_vic, central_highlands)
+
+ggplot(data = forest_type_central_highlands) +
+  geom_sf(aes(fill = as.factor(X_DESC)), color = NA) +
+  scale_fill_manual(
+    name = "Forest Type",
+    values = c(
+      "#D55E00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", 
+      "#CC79A7", "#E69F00", "#000000", "#8E44AD", 
+      "#3498DB", "#F39C12","#27AE60", "#E74C3C", "#BDC3C7"
+    )
+  ) +
+  labs(title = "Forest Types in the Central Highlands") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    legend.text = element_text(size = 8),      # Smaller legend text
+    legend.title = element_text(size = 10),   # Smaller legend title
+    plot.title = element_text(size = 16, face = "bold"), # Larger plot title
+    axis.text = element_text(size = 10),      # Adjust axis text
+    axis.title = element_text(size = 12)      # Adjust axis title
+  ) +
+  coord_sf(expand = FALSE)
+
+```
+
+```{r mountain_ash_forest}
+
+mountain_ash_forest <- forest_type_central_highlands[forest_type_central_highlands$X_DESC == "Mountain Ash", ]
+
+# Plot the filtered shapefile
+ggplot(data = mountain_ash_forest) +
+  geom_sf(fill = "NA", color = "red", size = 0.1) +  # Blue fill and black border
+  labs(
+    title = "Mountain Ash Forest in Central Highlands",
+    caption = "Data Source: FORTYPE500.shp"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.text = element_text(size = 10),
+    axis.title = element_blank(),
+    legend.position = "none"  # No legend needed since this is a single type
+  )
+
+```
+
+```{r cross-validation_forest}
+
+custom_palette <- c("#f6aa70", "#61cafa", "#11aa96")
+
+
+pal <- colorNumeric(
+  palette = custom_palette,      # Use custom colors
+  domain = values(prediction_rf),
+  na.color = "transparent"       # Make NA values transparent
+)
+
+# Create the leaflet map
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+  # Add raster layer
+  addRasterImage(prediction_rf, color = pal, opacity = 0.7, project = TRUE) %>%
+  # Add shapefile layer
+  addPolygons(
+    data = mountain_ash_forest,
+    color = "red",              # Border color of shapefile polygons
+    weight = 1,                  # Border width
+    fillColor = "lightblue",     # Fill color of shapefile polygons
+    fillOpacity = 0.3            # Transparency for fill
+  ) %>%
+  # Add legend for raster
+  addLegend(
+    pal = pal,
+    values = values(prediction_rf),
+    title = "Probability",
+    position = "bottomright"
+  )
+
 ```
 
 # 4. Model comparison
@@ -761,7 +879,70 @@ print(comparison_table)
 
 The **Random Forest model outperforms the GLM model across all major performance metrics**. It has higher accuracy, better class separation (AUC), stronger precision and recall balance (F1), and greater agreement with actual outcomes (Kappa). This suggests RF is a more robust classifier on this dataset, both in predictive power and error balance.
 
-### 4.2.4 When to use what
+### 4.2.4 Prediction map comparison
+
+```{r prediction_compare}
+
+# Predict the presence probability using the GLM model over the raster stack
+prediction_glm <- terra::predict(env_var_stack, glm_model, type = "response")
+
+# Calculate difference raster
+prediction_diff <- prediction_rf - prediction_glm
+
+```
+
+```{r plot_projction_compare}
+
+# Define custom color palette
+custom_palette <- colorRampPalette(c("#f6aa70", "#61cafa", "#11aa96"))
+diff_palette <- colorRampPalette(c("red", "white", "blue"))
+
+# 1. Random Forest prediction
+plot(
+  prediction_rf,
+  main = "Random Forest Prediction",
+  col = custom_palette(100),
+  cex.main = 1
+)
+
+# 2. GLM prediction
+plot(
+  prediction_glm,
+  main = "GLM Prediction",
+  col = custom_palette(100),
+  cex.main = 1
+)
+
+# 3. Difference map
+plot(
+  prediction_diff,
+  main = "Difference (RF - GLM)",
+  col = diff_palette(100),
+  cex.main = 1
+)
+```
+
+**Interpretation of Color Scale**
+
+-   **Red areas** → **GLM predicts higher probabilities** than Random Forest (RF).
+
+-   **Blue areas** → **RF predicts higher probabilities** than GLM.
+
+-   **White areas** → Both models predict similar probabilities (difference near 0).
+
+**Spatial Insight**
+
+-   There is a **clear spatial structure** in model disagreement. Some regions are consistently blue or red, suggesting systematic differences in how each model interprets environmental features.
+
+**What to do next**
+
+-   Investigate **which environmental variables** contribute most to these differences.
+
+-   Consider plotting **variable importance** for both models to understand their decision mechanisms.
+
+-   Optionally, explore these differences using **residual maps**, **partial dependence plots**, or a **stacked ensemble model**.
+
+### 4.2.5 When to use what
 
 ⚠️ Here comes the question: **if Random Forest model is always better, then when should we use GLM?**
 
@@ -773,7 +954,7 @@ Use GLM when:
 
 > 1.  **Interpretability is important**
 >
-> GLM gives explicit coefficients for each predictor. Refering to [3.1.2 Generalised Linear Model], you get p-values, confidence intervals, and direction (positive/negative effect), which RF does not provide.
+> GLM gives explicit coefficients for each predictor. Refering to [3.1.2 Generalised Linear Model](#generalised-linear-model-1), you get p-values, confidence intervals, and direction (positive/negative effect), which RF does not provide.
 >
 > 2.  **You need statistical inference**
 >
@@ -818,9 +999,13 @@ Breiman, L. (2001), *Random Forests*, Machine Learning 45(1), 5-32.
 
 Burns, E. L., Lindenmayer, D. B., Stein, J., Blanchard, W., McBurney, L., Blair, D., & Banks, S. C. (2015). Ecosystem assessment of mountain ash forest in the C entral H ighlands of V ictoria, south‐eastern A ustralia. *Austral Ecology*, *40*(4), 386-399.
 
-von Takach Dukai, B. (2019). The genetic and demographic impacts of contemporary disturbance regimes in mountain ash forests.
+Kwon, Y., & Zou, J. (2023, July). Data-oob: Out-of-bag estimate as a simple and efficient data value. In *International conference on machine learning* (pp. 18135-18152). PMLR.
 
-Nevill, P. G., Bossinger, G., & Ades, P. K. (2010). Phylogeography of the world’s tallest angiosperm, Eucalyptus regnans: evidence for multiple isolated Quaternary refugia. *Journal of Biogeography*, *37*(1), 179-192. 
+Nevill, P. G., Bossinger, G., & Ades, P. K. (2010). Phylogeography of the world’s tallest angiosperm, Eucalyptus regnans: evidence for multiple isolated Quaternary refugia. *Journal of Biogeography*, *37*(1), 179-192.
+
+Smith, H. L., Biggs, P. J., French, N. P., Smith, A. N., & Marshall, J. C. (2024). Out of (the) bag—encoding categorical predictors impacts out-of-bag samples. *PeerJ Computer Science*, *10*, e2445. 
+
+von Takach Dukai, B. (2019). The genetic and demographic impacts of contemporary disturbance regimes in mountain ash forests.
 
 Zurell, D., Franklin, J., König, C., Bouchet, P. J., Dormann, C. F., Elith, J., Fandos, G., Feng, X., Guillera‐Arroita, G., & Guisan, A. (2020). A standard protocol for reporting species distribution models. *Ecography*, *43*(9), 1261-1277.
 

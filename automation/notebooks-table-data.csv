@@ -4,4 +4,5 @@ Marxan Connect,,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/sp
 Environmental Data Preparation (Raster),raster_preparation.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/raster_preparation.html,,,, False, skills
 Imbalanced dataset (Part 1),imbalanced_data_part1.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/imbalanced_data_part1.html,,,, False, skills
 Imbalanced dataset (Part 2),imbalanced_data_part2.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/imbalanced_data_part2.html,,,, False, skills
-Extent and Area of Ocurrence / Occupancy,eoo_aoo.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EOO_AOO/eoo_aoo.html,,,, False,skills
+Extent and Area of Ocurrence / Occupancy,eoo_aoo.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EOO_AOO/eoo_aoo.html,,,, False,models
+Random Forest,EC_RF.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EC_RF/EC_RF.html,,,, False,models
