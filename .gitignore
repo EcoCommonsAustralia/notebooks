@@ -24,3 +24,14 @@ __MACOSX
 notebooks/imbalanced_data.zip
 notebooks/imbalanced_data.html
 notebooks/imbalanced_data_part1.html
+renv
+notebooks/structural_equation_modelling.html
+notebooks/structural_equation_modelling/figure-html
+notebooks/structural_equation_modelling/libs
+notebooks/structural_equation_modelling_files/libs/quarto-html
+notebooks/structural_equation_modelling_files/figure-html/
+notebooks/structural_equation_modelling_files/libs/clipboard/clipboard.min.js
+notebooks/structural_equation_modelling_files/libs/bootstrap/bootstrap-icons.css
+notebooks/structural_equation_modelling_files/libs/bootstrap/bootstrap-icons.woff
+notebooks/structural_equation_modelling_files/libs/bootstrap/bootstrap.min.css
+notebooks/structural_equation_modelling_files/libs/bootstrap/bootstrap.min.js
