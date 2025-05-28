@@ -1,22 +1,20 @@
----
-title: "Getting Shorebirds Data in Australia Using Open Data and `spocc`"
-author: "Abhimanyu Raj Singh"
-editor:
-  name: "Dr Sebastian Lopez Marcano"
-date: "June 2025"
-format:
-  html: default
-execute:
-  echo: true
-  warning: false
-  message: false
----
-
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Getting Shorebirds Data in Australia Using Open Data and `spocc`
+
+Author details: Abhimanyu Raj Singh
+
+Editor details: Xiang Zhao
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
+
+Date: June 2025
 
 ## 🚀 Before You Start
 
-> -   Ensure you have a **stable internet connection**, as species data is fetched live from GBIF, iNaturalist, and OBIS using `spocc`.
+> -   Ensure you have a **stable internet connection**, as species data is fetched live from biodiversity data portals using `spocc`.
 > -   This notebook may take a few minutes when downloading large datasets or installing missing packages.
 > -   Recommended to run in **RStudio** or **Posit Workbench/VS Code** with **Quarto** installed for best experience.
 
@@ -24,25 +22,49 @@ execute:
 
 This notebook was developed by the EcoCommons team to support researchers and conservationists in gathering shorebird distribution data using open data sources. It demonstrates how to query, clean, visualise, and save species occurrence data using the `spocc` package [@spocc] (Chamberlain et al., 2024), in R.
 
-We focus on three migratory shorebird species, each assigned a specific colour for visualisation:
+**`spocc`** – Species Occurrence Data Aggregator The spocc package provides a unified interface to search and retrieve species occurrence data from multiple biodiversity data sources into a single workflow. It streamlines data acquisition for ecological modelling and biodiversity analysis by handling different APIs in one place.
 
--   Bar-tailed Godwit (*Limosa lapponica*) — Green `#509E2F`
--   Red-necked Stint (*Calidris ruficollis*) — Blue `#2F6C99`
--   Curlew Sandpiper (*Calidris ferruginea*) — Orange `#F39200`
+We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages. Please note, exploring these datasets on their own platforms is always the most effective method for accessing their data.
+
+**GBIF** – Global Biodiversity Information Facility An international network providing open access to data on all types of life on Earth, supporting global biodiversity research and conservation.
+
+**iNaturalist** – Citizen Science Biodiversity Network A community-driven platform where people record and share species observations, contributing to real-time biodiversity mapping across the globe.
+
+**OBIS** – Ocean Biodiversity Information System The world's largest marine biodiversity database, offering access to global data on the distribution of marine life for science, policy, and conservation.
+
+We focus on three key migratory shorebird species, each represented by a distinct colour for clarity in visualisations:
+
+-   **Bar-tailed Godwit** (*Limosa lapponica*) — Green `#509E2F`
+-   **Red-necked Stint** (*Calidris ruficollis*) — Blue `#2F6C99`
+-   **Curlew Sandpiper** (*Calidris ferruginea*) — Orange `#F39200`
+
+\[![Bar-tailed Godwit (Limosa lapponica) by Jordan Aquilina](images/Limosa%20lapponica%20by%20Jordan%20Aquilina.png){fig-align="center" width="400"}\](https://biocache.ala.org.au/occurrences/49381266-f7a1-425c-ba68-c710aee8e6fc)
+
+\[![Red-necked Stint(Calidris ruficollis) by Sandy Horne](images/Calidris%20ruficollis%20by%20Sandy%20Horne.png){fig-align="center" width="400"}\](https://biocache.ala.org.au/occurrences/81339a01-2f69-4603-9e9a-9453156cd714)
+
+\[![Curlew Sandpiper (Calidris ferruginea) by andrewpavlov](images/Calidris%20ferruginea%20by%20andrewpavlov.png){fig-align="center" width="400"}\](https://biocache.ala.org.au/occurrences/e8817581-58d0-4904-b782-05999067a21e)
+
+Each year, Australia welcomes millions of migratory species—from delicate shorebirds to majestic seabirds—journeying thousands of kilometres along flyways like the East Asian–Australasian Flyway.
+
+Species such as the Bar-tailed Godwit, Red-necked Stint, and Curlew Sandpiper arrive from as far as Siberia and Alaska, using Australia’s rich wetlands as critical stopovers and overwintering sites. These incredible travellers embody the resilience of nature and highlight the importance of conserving international migratory routes and coastal habitats.
 
 **Objectives:**
 
 | Step | Description |
-|:----------------------|:-----------------------------------------------|
+|:---|:---|
 | **1. Set the Working Directory** | Prepare the environment and load necessary R packages. |
 | **2. Get Data** | Retrieve occurrence data for target shorebird species from GBIF, iNaturalist, and OBIS. Merge all sources together. |
 | **3. Data Cleaning and Filtering** | Clean the data, remove invalid points, and restrict to Australia’s boundary. |
 | **4. Data Visualisation** | Visualize cleaned occurrences interactively using Leaflet maps with species-specific colours assigned explicitly to each species. |
 | **5. Save Data** | Save the final datasets as CSV and Shapefile inside the `data/` folder. |
 
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
 
 # Step 1: Set the working directory
+
+Set the working directory and prepare the environment. Install necessary packages if missing and load them.
 
 ```{r setup-workspace}
 workspace <- getwd()
@@ -60,6 +82,8 @@ for (pkg in packages) {
 ```
 
 # Step 2: Get Data
+
+We define the target species and retrieve occurrence data from GBIF, iNaturalist, and OBIS. We combine all sources together into a single tidy data-frame for further processing.
 
 ```{r get-data}
 species_list <- c("Limosa lapponica", "Calidris ruficollis", "Calidris ferruginea")
@@ -106,6 +130,8 @@ for (i in seq_along(species_list)) {
 
 # Step 3: Data Cleaning and Filtering
 
+We clean the data by removing missing coordinates and converting points into spatial format. We then filter records to only those falling within Australia’s political boundaries.
+
 ```{r clean-filter-data}
 occurrences_clean <- occurrences %>%
   filter(!is.na(longitude) & !is.na(latitude))
@@ -123,6 +149,8 @@ print(head(occurrences_aus))
 ```
 
 # Step 4: Data Visualisation
+
+We use Leaflet to plot the cleaned occurrences on an interactive map. Each species is colour-coded by directly mapping species names to specific colours.
 
 ```{r visualise-data}
 species_color_map <- c(
@@ -150,6 +178,8 @@ leaflet(data = occurrences_aus) %>%
 ```
 
 # Step 5: Save Data
+
+We save the final occurrence data-set as both CSV and Shape-file. The files are stored in a "data" folder to support further analysis or GIS integration.
 
 ```{r save-data}
 if (!dir.exists("data")) {
