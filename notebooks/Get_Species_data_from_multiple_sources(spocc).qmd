@@ -24,7 +24,7 @@ This notebook was developed by the EcoCommons team to support researchers and co
 
 **`spocc`** – Species Occurrence Data Aggregator The spocc package provides a unified interface to search and retrieve species occurrence data from multiple biodiversity data sources into a single workflow. It streamlines data acquisition for ecological modelling and biodiversity analysis by handling different APIs in one place.
 
-We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages. Please note, exploring these datasets on their own platforms is always the most effective method for accessing their data.
+We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages. 
 
 **GBIF** – Global Biodiversity Information Facility An international network providing open access to data on all types of life on Earth, supporting global biodiversity research and conservation.
 
