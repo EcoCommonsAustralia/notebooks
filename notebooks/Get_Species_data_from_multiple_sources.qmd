@@ -73,7 +73,7 @@ workspace <- getwd()
 options(repr.plot.width = 16, repr.plot.height = 8)
 
 options(repos = c(CRAN = "https://cran.rstudio.com/"))
-packages <- c("spocc", "tidyverse", "leaflet", "sf", "rnaturalearth", "rnaturalearthdata")
+packages <- c("spocc", "tidyverse", "pbapply", "leaflet", "sf", "rnaturalearth", "rnaturalearthdata")
 
 for (pkg in packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -90,8 +90,8 @@ We define the target species and retrieve occurrence data from GBIF, iNaturalist
 ```{r get-data}
 species_list <- c("Limosa lapponica", "Calidris ruficollis", "Calidris ferruginea")
 
-species_data <- lapply(species_list, function(species) {
-  invisible(occ(query = species, from = c("gbif", "inat", "obis"), limit = 500))
+species_data <- pblapply(species_list, function(species) {
+  occ(query = species, from = c("gbif", "inat", "obis"), limit = 500)
 })
 
 species_dfs <- lapply(species_data, function(data) {
