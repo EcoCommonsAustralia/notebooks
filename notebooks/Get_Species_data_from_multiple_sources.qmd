@@ -24,7 +24,7 @@ This notebook was developed by the EcoCommons team to support researchers and co
 
 **`spocc`** – Species Occurrence Data Aggregator The spocc package provides a unified interface to search and retrieve species occurrence data from multiple biodiversity data sources into a single workflow. It streamlines data acquisition for ecological modelling and biodiversity analysis by handling different APIs in one place.
 
-We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages. 
+We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages.
 
 **GBIF** – Global Biodiversity Information Facility An international network providing open access to data on all types of life on Earth, supporting global biodiversity research and conservation.
 
@@ -38,11 +38,11 @@ We focus on three key migratory shorebird species, each represented by a distinc
 -   **Red-necked Stint** (*Calidris ruficollis*) — Blue `#2F6C99`
 -   **Curlew Sandpiper** (*Calidris ferruginea*) — Orange `#F39200`
 
-\[![Bar-tailed Godwit (Limosa lapponica) by Jordan Aquilina](images/Limosa%20lapponica%20by%20Jordan%20Aquilina.png){fig-align="center" width="400"}\](https://biocache.ala.org.au/occurrences/49381266-f7a1-425c-ba68-c710aee8e6fc)
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Limosa%20lapponica%20by%20Jordan%20Aquilina.png){fig-align="center" width="492"}
 
-\[![Red-necked Stint(Calidris ruficollis) by Sandy Horne](images/Calidris%20ruficollis%20by%20Sandy%20Horne.png){fig-align="center" width="400"}\](https://biocache.ala.org.au/occurrences/81339a01-2f69-4603-9e9a-9453156cd714)
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Calidris%20ruficollis%20by%20Sandy%20Horne.png){fig-align="center" width="491"}
 
-\[![Curlew Sandpiper (Calidris ferruginea) by andrewpavlov](images/Calidris%20ferruginea%20by%20andrewpavlov.png){fig-align="center" width="400"}\](https://biocache.ala.org.au/occurrences/e8817581-58d0-4904-b782-05999067a21e)
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Calidris%20ferruginea%20by%20andrewpavlov.png){fig-align="center" width="489"}
 
 Each year, Australia welcomes millions of migratory species—from delicate shorebirds to majestic seabirds—journeying thousands of kilometres along flyways like the East Asian–Australasian Flyway.
 
@@ -51,7 +51,7 @@ Species such as the Bar-tailed Godwit, Red-necked Stint, and Curlew Sandpiper ar
 **Objectives:**
 
 | Step | Description |
-|:---|:---|
+|:-----------------------------------|:-----------------------------------|
 | **1. Set the Working Directory** | Prepare the environment and load necessary R packages. |
 | **2. Get Data** | Retrieve occurrence data for target shorebird species from GBIF, iNaturalist, and OBIS. Merge all sources together. |
 | **3. Data Cleaning and Filtering** | Clean the data, remove invalid points, and restrict to Australia’s boundary. |
@@ -89,7 +89,7 @@ We define the target species and retrieve occurrence data from GBIF, iNaturalist
 species_list <- c("Limosa lapponica", "Calidris ruficollis", "Calidris ferruginea")
 
 species_data <- lapply(species_list, function(species) {
-  occ(query = species, from = c("gbif", "inat", "obis"), limit = 500)
+  invisible(occ(query = species, from = c("gbif", "inat", "obis"), limit = 500))
 })
 
 species_dfs <- lapply(species_data, function(data) {
@@ -123,9 +123,6 @@ for (i in seq_along(species_list)) {
   cat("\nPreview of", species_list[i], "data:\n")
   print(head(species_dfs[[i]], 10))
 }
-
-
-
 ```
 
 # Step 3: Data Cleaning and Filtering
@@ -205,7 +202,7 @@ st_write(occurrences_aus, "data/shorebird_occurrences_AUS.shp", delete_layer = T
 -   South, A. (2017). *rnaturalearth: World Map Data from Natural Earth*. R package version 0.1.0.
 -   South, A. (2017). *rnaturalearthdata: World Vector Map Data from Natural Earth Used in 'rnaturalearth'*. R package version 0.1.0.
 
-![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
 
 EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
