@@ -16,6 +16,10 @@ Date: June 2025
 
 This notebook, developed by the EcoCommons team, showcases how to calculate, analyse and compare species richness and species diversity (Shannon) across different landscapes and sites for bird survey data. This method can be applied to other animals or plants that use a similar surveying method.
 
+![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/ph_rosella.jpeg)
+
+Pale-headed Rosella - *Platycercus adscitus*: Photographer: [Chris Murray](https://birdsoftheworld.org/bow/species/pahros1/cur/introduction?media=photos)
+
 # Introduction
 
 Understanding how to calculate species richness and Shannon diversity is essential for assessing biodiversity in ecological studies. These metrics provide valuable insights into both the number of species present (richness) and the evenness of species distribution (diversity), helping ecologists monitor ecosystem health, detect changes over time, and inform conservation and management decisions.
@@ -68,7 +72,7 @@ Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set th
 workspace <- getwd()  # Get the current working directory and store it in 'workspace'
 
 # Increase the plot size by adjusting the options for plot dimensions in the notebook output
-options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
+options(repr.plot.width = 6, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
 
 ```
 
@@ -196,7 +200,7 @@ str(richness_df)
 head(richness_df)
 ```
 
-## 3.4 Landscape richness statistical comparisons
+## 3.4 Species richness statistical comparisons by landscape
 
 Descriptive statistics and t-test comparing Forest and Urban landscapes.
 
@@ -214,7 +218,7 @@ t_test_landscape <- t.test(Species_Richness ~ Landscape, data = richness_df)
 print(t_test_landscape)
 ```
 
-## 3.4 Plot landscape species richness
+## 3.4 Plot species richness by landscape
 
 ```{r richness_landscape_plot}
 # Extract p-value from t-test
@@ -278,8 +282,7 @@ ggplot(richness_df, aes(x = Landscape, y = Species_Richness, fill = Landscape)) 
   guides(fill = guide_legend(title.position = "top"))
 ```
 
-
-## 3.5 Site richness statistical comparisons
+## 3.5 Species richness statistical comparisons by site
 
 Calculate descriptive statistics, conduct ANOVA with Tukey's post-hoc test to identify any significant differences in richness between sites and where differences occur.
 
@@ -306,7 +309,7 @@ tukey_all_sites <- TukeyHSD(anova_all_sites)
 tukey_all_sites$Site
 ```
 
-## 3.6 Plot site species richness
+## 3.6 Plot species richness by site
 
 ```{r richness_site_plot}
 # Assign letters for displaying any significant differences between sites when plotting
@@ -491,41 +494,159 @@ shannon_df <- abundance_wide %>%
   select(Site, Time, Landscape, SiteTime, Shannon)
 # View Shannon values
 head(shannon_df)
+str(shannon_df)
 ```
 
-## 4.2
+## 4.2 Shannon diversity statistical comparisons by landscape
 
+```{r landscape descriptive and ttest}
+shannon_landscape_summary <- shannon_df %>%
+  group_by(Landscape) %>%
+  summarise(
+    Mean = mean(Shannon),
+    SD = sd(Shannon),
+    SE = SD / sqrt(n())
+  )
+print(shannon_landscape_summary)
 
-```{r }
+# T-test: Forest vs Urban
+shannon_ttest <- t.test(Shannon ~ Landscape, data = shannon_df)
+print(shannon_ttest)
 ```
 
-## 4.3
+## 4.3 Plot Shannon diversity by landscape
 
-```{r }
+```{r shannon diversity landscape plot}
+y_max <- max(shannon_df$Shannon)
+y_breaks <- pretty(c(0, y_max))
+ggplot(shannon_df, aes(x = Landscape, y = Shannon, fill = Landscape)) +
+  geom_boxplot(
+    alpha = 0.8,
+    width = 0.6,
+    outlier.shape = 21,
+    outlier.size = 2.5,
+    outlier.stroke = 0.4,
+    outlier.colour = "black"
+  ) +
+  scale_fill_manual(values = c("Forest" = "#228B22", "Urban" = "#FFA500")) +
+  scale_y_continuous(
+    breaks = y_breaks,
+    labels = function(b) { as.character(b) },
+    expand = expansion(mult = c(0, 0.05)),
+    limits = c(0, NA)
+  ) +
+  annotate(
+    "text",
+    x = 1.5,
+    y = max(shannon_df$Shannon) + 0.1,
+    label = "* p < 0.001",
+    size = 5,
+    family = "sans"  # No bold
+  ) +
+  labs(
+    title = "Shannon Diversity by Landscape",
+    x = "Landscape",
+    y = "Shannon Diversity Index",
+    fill = "Landscape"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.ticks.length = unit(-0.2, "cm"),
+    axis.ticks = element_line(color = "black", linewidth = 0.5),
+    axis.text.x = element_text(margin = margin(t = 6)),
+    axis.text.y = element_text(margin = margin(r = 6)),
+    panel.grid.major.x = element_blank(),
+    legend.position = c(1, 0.8),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left",
+    legend.background = element_blank(),
+    legend.title = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    plot.margin = margin(10, 100, 10, 10)
+  ) +
+  guides(fill = guide_legend(title.position = "top"))
 ```
 
-## 4.4
+## 4.4 Shannon diversity statistical comparisons by site
 
-```{r }
+```{r Shannon diversity statistical comparisons}
+#ANOVA: Sites within Landscapes
+shannon_anova_nested <- aov(Shannon ~ Landscape + Site %in% Landscape, data = shannon_df)
+summary(shannon_anova_nested)
+
+# All-site comparison with Tukey HSD
+shannon_anova_all_sites <- aov(Shannon ~ Site, data = shannon_df)
+shannon_tukey_all <- TukeyHSD(shannon_anova_all_sites)
+print(shannon_tukey_all)
 ```
 
-## 4.5
+## 4.5 Plot Shannon diversity by site
 
-```{r }
+```{r shannon diversity landscape plot}
+# Add significance letters
+shannon_letters <- multcompView::multcompLetters4(shannon_anova_all_sites, shannon_tukey_all)
+site_letters_shannon <- data.frame(Site = names(shannon_letters$Site$Letters),
+                                   Letters = shannon_letters$Site$Letters)
+shannon_df <- left_join(shannon_df, site_letters_shannon, by = "Site")
+
+
+# ---- Shannon diversity by site ----#
+
+y_max <- max(shannon_df$Shannon)
+y_breaks <- pretty(c(0, y_max))
+ggplot(shannon_df, aes(x = Site, y = Shannon, fill = Landscape)) +
+  geom_boxplot(
+    alpha = 0.8,
+    width = 0.6,
+    outlier.shape = 21,
+    outlier.size = 2.5,
+    outlier.stroke = 0.4,
+    outlier.colour = "black"
+  ) +
+  geom_text(
+    data = site_letters_shannon,
+    aes(x = Site, y = max(shannon_df$Shannon) + 0.2, label = Letters),
+    inherit.aes = FALSE,
+    size = 5,
+    family = "sans"
+  ) +
+  scale_fill_manual(values = c("Forest" = "#228B22", "Urban" = "#FFA500")) +
+  scale_y_continuous(
+    breaks = y_breaks,
+    labels = function(b) {
+    as.character(b)
+    },
+    expand = expansion(mult = c(0, 0.05)),
+    limits = c(0, NA)
+  ) +
+  labs(
+    title = "Shannon Diversity by Site within Landscape",
+    x = "Site",
+    y = "Shannon Diversity Index",
+    fill = "Landscape"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.ticks.length = unit(-0.2, "cm"),
+    axis.ticks = element_line(color = "black", linewidth = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, margin = margin(t = 6)),
+    axis.text.y = element_text(margin = margin(r = 6)),
+    panel.grid.major.x = element_blank(),
+    legend.position = c(1, .8),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left",
+    legend.background = element_blank(),  
+    legend.title = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+    plot.margin = margin(10, 100, 10, 10)
+  )
 ```
 
-## 4.6
-
-```{r }
-```
-
-
-
-
-
-
-
-![](images/clipboard-3696207453.png)
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
 
 EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
