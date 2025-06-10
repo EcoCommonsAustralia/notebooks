@@ -28,7 +28,7 @@ Understanding how to calculate species richness and Shannon diversity is essenti
 
 ## K.1 Species richness
 
-Species richness is a fundamental measure of biodiversity, reflecting the total number of species within a defined area or ecological community. It serves as a key indicator of habitat complexity and ecosystem health, providing a baseline for understanding patterns of species distribution and the potential effects of environmental change (Gotelli and Colwell 2001; Gotelli et al. 2009).
+Species richness is a fundamental measure of biodiversity, reflecting the total number of species within a defined area or ecological community. It serves as a key indicator of habitat complexity and ecosystem health, providing a baseline for understanding patterns of species distribution and the potential effects of environmental change (Gotelli & Colwell 2001; Gotelli et al. 2009).
 
 ## K.2 Shannon diversity
 
@@ -46,7 +46,7 @@ Landscape-level comparisons allow ecologists to assess how species assemblages a
 
 # Workflow Overview
 
--   Step 1: Setup - Install and load required packages (libraries)
+-   Step 1: Set-up - Install and load required packages (libraries)
 -   Step 2: Loading and preparing data
 -   Step 3: Species richness calculations, comparisons, and visualisations
 -   Step 4: Shannon diversity calculations, comparisons, and visualisations
@@ -55,28 +55,24 @@ In the near future, this material may form part of comprehensive support materia
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
 
-# Set-up: R environment and packages
+# Step 1: Set-up R environment and packages
 
 Some housekeeping before we start. This process might take some time as many packages needed to be installed.
 
-## S.1 Set the working directory and create a folder for data.
+## 1.1 Set the working directory and create a folder for data.
 
 Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
 
 ```{r workspace}
 
 # Set the workspace to the current working directory
-# Uncomment and replace the path below with your own working directory if needed:
-# setwd("/Users/zhaoxiang/Documents/tmp/EC_RF_notebook") 
+# setwd('/Users/ryannewis/Documents/2. EcoCommons Projects/EC_Notebooks/ECNotebook_Richness+Shannon') #Currently set to local drive, change this 
 
-workspace <- getwd()  # Get the current working directory and store it in 'workspace'
-
-# Increase the plot size by adjusting the options for plot dimensions in the notebook output
-options(repr.plot.width = 6, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
-
+setwd('/Users/ryannewis/Documents/GitHub/Repositories/Richness_diversity/notebooks')
+#setwd('path_to_your_folder')
 ```
 
-## S.2 Install and load required packages
+## 1.2 Install and load required packages
 
 Install and load R packages and libraries.
 
@@ -104,8 +100,7 @@ if (length(missing_packages) > 0) {
 # Load all required packages
 lapply(required_packages, library, character.only = TRUE)
 ```
-
-## S.3 Loading and preparing data
+# Step 2: Downloading, loading and preparing data
 
 If you're using your own bird survey data, here's how to prepare it. The analysis in this notebook expects your data in **long format** (see step 1.). The script will pivot your data to wide format where needed
 
@@ -120,15 +115,25 @@ Expected Format (Long Format): Each row should represent one observation of spec
 
 Column names **must** be exactly: "Site", "Time", "Landscape", "Species", "Abundance" (or whatever you have named them in your own dataset) This notebook will automatically convert the long-format data to wide format when needed (e.g., for diversity index calculations).
 
-Reading in Your CSV File (if already in long format) and checking data structure
+Now we will load in your CSV File (in long format) and check the data structure
 
--   Replace "example_birdsurvey_data.csv" with the actual path to your file
+-   Replace "example_birdsurvey_data.csv" with the actual path to your file when doing analysis of your own data
 
 ```{r loading_checking_data}
-#Set working drive 
-setwd('/Users/ryannewis/Documents/2. EcoCommons Projects/EC_Notebooks/ECNotebook_Richness+Shannon')
+# Load example dataset from EcoCommons GitHub
+your_data <- read.csv("https://raw.githubusercontent.com/EcoCommonsAustralia/notebooks/Richness_diversity/notebooks/example_birdsurvey_data.csv")
 
-your_data <- read.csv("example_birdsurvey_data.csv", stringsAsFactors = FALSE)
+#If you want to download a copy of the dataset to your local computer use the code below. Today we will just be calling the dataset which will remain in in the R environment for the session.
+# download.file(
+#   "https://raw.githubusercontent.com/EcoCommonsAustralia/notebooks/Richness_diversity/notebooks/example_birdsurvey_data.csv")
+
+#Then you would load the data directly from your local drive
+#your_data <- read.csv("example_birdsurvey_data.csv", stringsAsFactors = FALSE)
+
+#Alternatively can save this dataset locally by running this line at any time
+#write.csv(your_data, "example_birdsurvey_data.csv", row.names = FALSE)
+
+
 # Check the data structure
 str(your_data)
 head(your_data)
@@ -143,7 +148,7 @@ if (!all(required_cols %in% colnames(your_data))) {
 summary(your_data)
 if (anyNA(your_data)) warning("Your data contains missing values. Please clean it before proceeding.")
 
-# Once you are happy with your dataset, you can reassign the variable name to species_data and continue with the rest of the notebook
+# Once you are happy with your dataset, reassign the variable name to species_data and continue with the rest of the notebook
 species_data <- your_data
 ```
 
@@ -151,7 +156,7 @@ species_data <- your_data
 
 This section will deal with Species richness calculations, comparisons and visualisations
 
-## 3.1 Check data structure before caluclating species richness
+## 3.1 Check data structure before calculating species richness
 
 ```{r richness_data_structure}
 species_summary <- species_data %>%
@@ -481,7 +486,9 @@ ggplot() +
 
 # Step 4: Shannon diversity
 
-This section will deal with Shannon diversity calculations, comparisons and visualisations
+This section will deal with Shannon diversity calculations, comparisons and visualisations.
+
+Reiterate why we are doing Shannon diversity....maybe expand on the Shannon section at the top. Why it compliments ricness!! TODO
 
 ## 4.1 Shannon diversity index calculations
 
