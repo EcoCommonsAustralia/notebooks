@@ -60,7 +60,7 @@ Following a standard protocol for species distribution models proposed by Zurell
 +-------------+--------------------------------+------------------------------------------------------------+
 | Step 4      | Evaluation                     | 4.1 Interpretation                                         |
 |             |                                |                                                            |
-|             |                                | 4.2 Cross-valiadation                                      |
+|             |                                | 4.2 Cross-validation \|                                    |
 +-------------+--------------------------------+------------------------------------------------------------+
 | Step 5      | Predictions                    | 5.1 Mapping                                                |
 +-------------+--------------------------------+------------------------------------------------------------+
@@ -608,11 +608,11 @@ head(occurrence_data)
 
 ```
 
-# 3 Model fitting
+# 3. Model fitting
 
 ## 3.1 **Multicollinearity and Variable Selection**
 
-Testing for collinearity among continuous variables is an important step in many modeling processes, particularly in species distribution modeling and other regression-based analyses. Codllinearity occurs when two or more predictor variables in a dataset are highly correlated, which can lead to unstable estimates of regression coefficients and make it difficult to interpret the results.
+Testing for collinearity among continuous variables is an important step in many modeling processes, particularly in species distribution modeling and other regression-based analyses. Collinearity occurs when two or more predictor variables in a dataset are highly correlated, which can lead to unstable estimates of regression coefficients and make it difficult to interpret the results.
 
 There are two common methods for testing collinearity among **continuous variables**.
 

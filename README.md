@@ -10,13 +10,18 @@
   <br>
 <br>
 
-[📔Notebooks](https://github.com/EcoCommons-Australia-2024-2026/notebooks) \| [🗒️Blog](https://ecocommons-australia-2024-2026.github.io/ec-notebook_site) \| [🌿EcoCommons Platform](https://www.ecocommons.org.au) \| [X](https://twitter.com/EcoCommonsAus) \| [⏰LinkedIn](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
+[📔Notebooks](https://github.com/EcoCommonsAustralia/notebooks) \| [🗒️Blog](https://ecocommonsaustralia.github.io/notebook-blog/) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/ecocommons.png" width="20"/> EcoCommons Platform](https://www.ecocommons.org.au) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/x-logo.png" width="20"/>](https://x.com/EcoCommonsAus) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/LinkedIn_icon.svg.png" width="15"/>](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all) |
+[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/youtubelogo.png" width="30"/>](https://youtube.com/@ecocommons2208)
+
 
 <br>
 
 ## 🐢 Hello
 
-EcoCommons is a national digital platform hosted by the Queensland Cyber Infrastructure Foundation and supported by the Australian Research Data Commons. The platform provides a range of services to support the Australian ecological research community, including access to data and ecological modelling tools.
+EcoCommons is a national digital platform hosted by QCIF Ltd and supported by the Australian Research Data Commons, an NCRIS facility. The platform provides a range of services to support the Australian ecological research community, including access to data and ecological modelling tools.
 
 This repository contains examples and tutorials with the objective of mirroring the functionalities offered in the [EcoCommons platform](https://www.ecocommons.org.au/).
 
@@ -31,6 +36,7 @@ This repository contains examples and tutorials with the objective of mirroring 
 | GLM | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_GLM.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/EC_GLM/EC_GLM.html)  |  |
 | Extent and Area of Ocurrence / Occupancy | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EOO_AOO/eoo_aoo.html)  |  |
 | Random Forest | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EC_RF/EC_RF.html)  |  |
+
 ## 🌍 Geo/ecological skills (5 notebooks)
 | **notebook** | **notebook file** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |
 |:------------:|:---------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|
@@ -39,6 +45,7 @@ This repository contains examples and tutorials with the objective of mirroring 
 | Imbalanced dataset (Part 1) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/imbalanced_data_part1.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/imbalanced_data_part1.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/imbalanced_data_part1.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/imbalanced_data_part1.html)  |  |
 | Imbalanced dataset (Part 2) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/imbalanced_data_part2.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/imbalanced_data_part2.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/imbalanced_data_part2.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/imbalanced_data_part2.html)  |  |
 | Get Species data from multiple sources | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb) | [![EcoNotebooks Blog](https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/notebook_icon.png)](https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/Get_Species_data_from_multiple_sources.html)  |  |
+
 <!--- AUTOGENERATED-NOTEBOOKS-TABLE -->
 
 ## 🐛 Bugs and 🫡 Contribution
@@ -49,7 +56,7 @@ Welcome to the EcoCommons Notebooks! As ecological and environmental research ad
 
 EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
-# **Our partner**
+# **Our partners**
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
 
@@ -60,4 +67,3 @@ If you use EcoCommons in your research, please cite the platform as follows:
 > EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
 
 You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
-:::
