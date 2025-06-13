@@ -14,7 +14,7 @@ Date: June 2025
 
 # Script and Data Information
 
-This notebook, developed by the EcoCommons team, showcases how to calculate, analyse and compare species richness and species diversity (Shannon) across different landscapes and sites for bird survey data. This method can be applied to other animals or plants that use a similar surveying method.
+This notebook, developed by the EcoCommons team, showcases how to calculate, analyse and compare species richness and species diversity (Shannon) across different landscapes and sites for bird survey data. This method can be applied to other animals, plants or biological communities that use a similar surveying method.
 
 ![](https://github.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/raw/main/images/ph_rosella.jpeg)
 
@@ -22,7 +22,7 @@ Pale-headed Rosella - *Platycercus adscitus*: Photographer: [Chris Murray](https
 
 # Introduction
 
-Understanding how to calculate species richness and Shannon diversity is essential for assessing biodiversity in ecological studies (Hill 1973; Gotelli and Colwell 2001; Chao and Chiu 2016). These metrics provide valuable insights into both the number of species present (richness) and the evenness of species distribution (diversity), helping ecologists monitor ecosystem health, detect changes over time, and inform conservation and management decisions.
+Understanding how to calculate species richness and Shannon diversity is essential for assessing baseline biodiversity in ecological studies (Hill 1973; Gotelli and Colwell 2001; Chao and Chiu 2016). These metrics provide valuable insights into both the number of species present (richness) and the evenness of species distribution (Shannon diversity), helping ecologists monitor ecosystem health, detect changes over time, and inform conservation and management decisions.
 
 # Key Concepts
 
@@ -46,7 +46,7 @@ Landscape-level comparisons allow ecologists to assess how species assemblages a
 
 # Workflow Overview
 
--   Step 1: Set-up - Install and load required packages (libraries)
+-   Step 1: Set-up - Install and load required R packages (libraries)
 -   Step 2: Loading and preparing data
 -   Step 3: Species richness calculations, comparisons, and visualisations
 -   Step 4: Shannon diversity calculations, comparisons, and visualisations
@@ -57,7 +57,7 @@ In the near future, this material may form part of comprehensive support materia
 
 # Step 1: Set-up R environment and packages
 
-Some housekeeping before we start. This process might take some time as many packages needed to be installed.
+Some housekeeping before we start. This process might take some time as multiple packages may need to be installed.
 
 ## 1.1 Set the working directory and create a folder for data.
 
@@ -118,7 +118,7 @@ Table 1. Expected data structure (long format): Each row should represent one ob
 | Urban_Site1  | January | Urban     | Bird A  | 5         |
 | Urban_Site2  | January | Urban     | Bird B  | 9         |
 
-Column names **must** be exactly: "Site", "Time", "Landscape", "Species", "Abundance" (or whatever you have named them in your own dataset) This notebook will automatically convert the long-format data to wide format when needed (e.g., for diversity index calculations).
+Column names **must** be exactly: "Site", "Time", "Landscape", "Species", "Abundance" to work directly with the code in this notebook. This notebook will automatically convert the long-format data to wide format when needed (e.g., for diversity index calculations).
 
 Now we will load in the CSV data file (in long format) and check the data structure.
 
@@ -157,7 +157,7 @@ if (anyNA(your_data)) warning("Your data contains missing values. Please clean i
 species_data <- your_data
 ```
 
-Check that the dataset you have uploaded is correct (e.g. number of observations, variable names).
+-   Check that the dataset you have uploaded is correct (e.g. number of observations, variable names).
 
 # Step 3: Species richness
 
@@ -175,7 +175,7 @@ species_summary <- species_data %>%
 head(species_summary)
 ```
 
--   Check that your data is in the correct structure, as above.
+-   Check that your data is in the correct structure, as above. Note that the code block also added a column labelled SiteTime, as this will be a valuable variable for downstream analysis.
 
 ## 3.2 Pivot data to wide format and to do species richness calculations
 
@@ -216,11 +216,11 @@ richness_df <- abundance_wide %>%
 head(richness_df)
 ```
 
--   Checking each row of species ricnness calculations has been completed corrected.
+-   Checking each row of species ricnness calculations has been completed correctly.
 
 ## 3.4 Species richness statistical comparisons by landscape
 
-Descriptive statistics summary for Forest and Urban landscape richness.
+Descriptive summary for Forest and Urban landscape bird species richness.
 
 ```{r richness_landscape_descriptive_stats}
 landscape_summary <- richness_df %>%
@@ -234,27 +234,25 @@ print(landscape_summary)
 
 ```
 
--   The descriptive summary shows that the Forest landscape has a higher mean species richness of birds compared to the Urban landscape.
-
-# Run a t-test (Welch) to check for significant differences in species richness between landscapes
+-   The descriptive summary shows that the Forest landscape (41.11) has a higher mean species richness of birds compared to the Urban landscape (11.44). But we still need to run a statistical test to check for significance.
 
 ```{r richness_landscape_ttest }
 t_test_landscape_richness <- t.test(Species_Richness ~ Landscape, data = richness_df)
 print(t_test_landscape_richness)
 ```
 
--   The result of the t-test shows that the Forest landscape has significantly higher bird species richness compared to the Urban landscape (p \< 0.0001).
+-   The result of the t-test shows that the Forest landscape (41.11) has significantly higher bird species richness compared to the Urban landscape (11.44) (p \< 0.0001).
 
 ## 3.4 Plot species richness by landscape
 
 ```{r richness_landscape_plot, message=FALSE, warning=FALSE}
-# Extract p-value from t-test
+
 p_val <- t_test_landscape_richness$p.value
 
-# Format p-value with * symbol for significance
+
 p_label <- paste0("* p < ", format.pval(p_val, digits = 3, eps = .001))  # → * p < 0.001 style
 
-# Calculate y-axis breaks (include 0 but no tick at 0)
+
 y_max_rich <- max(richness_df$Species_Richness)
 y_breaks_rich <- pretty(c(0, y_max_rich))
 y_breaks_rich <- y_breaks_rich[y_breaks_rich >= 0]
@@ -270,11 +268,11 @@ ggplot(richness_df, aes(x = Landscape, y = Species_Richness, fill = Landscape)) 
   ) +
   annotate(
     "text",
-    x = 1.5,  # Midpoint between "Forest" (1) and "Urban" (2)
+    x = 1.5,  
     y = max(richness_df$Species_Richness) + 3,
     label = p_label,
-    size = 5,        # Match size with Shannon plot
-    family = "sans"  # Normal, not bold
+    size = 5,        
+    family = "sans"  
   ) +
   scale_fill_manual(values = c("Forest" = "#228B22", "Urban" = "#FFA500")) +
   scale_y_continuous(
@@ -309,7 +307,7 @@ ggplot(richness_df, aes(x = Landscape, y = Species_Richness, fill = Landscape)) 
   guides(fill = guide_legend(title.position = "top"))
 ```
 
--   Box plot showing that the Forest landscape has significantly higher bird species richness compared to the Urban landscape (p \< 0.0001).
+-   Box-plot showing that the Forest landscape (41.11) has significantly higher bird species richness compared to the Urban landscape (11.44) (p \< 0.0001).
 
 ## 3.5 Species richness statistical comparisons by site
 
@@ -327,7 +325,7 @@ site_summary_richness <- richness_df %>%
 print(site_summary_richness)
 ```
 
--   The descriptive summary of species richness for sites shows that all 3 forest sites are higher than the 3 Urban sites. But we still need to run a statistical test to check for significance
+-   The descriptive summary of mean species richness for sites shows that all 3 forest sites are higher than the 3 Urban sites. But we still need to run a statistical test to check for significance
 
 Conduct an ANOVA with Tukey's post-hoc test to identify any significant differences in species richness between sites and where differences occur.
 
@@ -345,12 +343,12 @@ tukey_all_sites <- TukeyHSD(anova_all_sites)
 tukey_all_sites$Site
 ```
 
--   Output from the post-hoc test shows that there is significantly higher bird species richness in all Forest sites compared to all Urban sites. However, there is no significant difference in bird species richness between sites within the same landscape. Check table for exact significance levels.
+-   ANOVA results show a significant difference in landscape Shannon diversity but not sites within landscape. Further, output form the Tukey post-hoc test shows that there is significantly higher bird species richness in all Forest sites compared to all Urban sites. However, there is no significant difference in bird species richness between sites within the same landscape. Check table for exact significance levels for pairwise comparisons.
 
 ## 3.6 Plot species richness by site
 
 ```{r richness_site_plot, message=FALSE, warning=FALSE}
-# Assign letters for displaying any significant differences between sites when plotting
+
 letters_df <- multcompView::multcompLetters4(anova_all_sites, tukey_all_sites)
 site_letters <- data.frame(Site = names(letters_df$Site$Letters),
                            Letters = letters_df$Site$Letters)
@@ -372,7 +370,7 @@ ggplot(richness_df, aes(x = Site, y = Species_Richness, fill = Landscape)) +
     aes(x = Site, y = max(richness_df$Species_Richness) + 3, label = Letters),
     inherit.aes = FALSE,
     size = 5,
-    family = "sans"  # Match overall plot font
+    family = "sans"  
   ) +
   scale_fill_manual(values = c("Forest" = "#228B22", "Urban" = "#FFA500")) +
   scale_y_continuous(
@@ -519,9 +517,10 @@ ggplot() +
     title.position = "top",
     override.aes = list(shape = 21, fill = c("#228B22", "#FFA500"), color = "black", size = 5, stroke = 0.8)
   ))
+
 ```
 
--   Plot suggests an effect of time on mean bird species richness between Jan - May in the Forest landscape, however, Tukey post-hoc analysis/correction indicated that this was not the case.
+-   Plot trend suggests an effect of time on mean bird species richness between Jan - May in the Forest landscape, however, Tukey post-hoc analysis/correction indicated that this was not the case.
 
 # Step 4: Shannon diversity
 
@@ -543,7 +542,7 @@ head(shannon_df)
 #str(shannon_df)
 ```
 
--   Checking each row of Shannon diversity calculations has been completed corrected.
+-   Check each row of Shannon diversity calculations has been completed corrected.
 
 ## 4.2 Shannon diversity statistical comparisons by landscape
 
@@ -560,7 +559,7 @@ shannon_landscape_summary <- shannon_df %>%
 print(shannon_landscape_summary)
 ```
 
--   The descriptive summary shows that the Forest landscape has a higher mean Shannon diversity of birds compared to the Urban landscape.
+-   The descriptive summary shows that the Forest landscape (3.64) has a higher mean Shannon diversity of birds compared to the Urban landscape (2.18).
 
 # Run a t-test (Welch) to check for significant differences in Shannon diversity between landscapes
 
@@ -570,7 +569,7 @@ shannon_ttest_landscape <- t.test(Shannon ~ Landscape, data = shannon_df)
 print(shannon_ttest_landscape)
 ```
 
--   The result of the t-test shows that the Forest landscape has significantly higher bird Shannon diversity compared to the Urban landscape (p \< 0.0001).
+-   The result of the t-test shows that the Forest landscape (3.64) has significantly higher bird Shannon diversity compared to the Urban landscape (2.18) (p \< 0.0001).
 
 ## 4.3 Plot Shannon diversity by landscape
 
@@ -627,9 +626,9 @@ ggplot(shannon_df, aes(x = Landscape, y = Shannon, fill = Landscape)) +
   guides(fill = guide_legend(title.position = "top"))
 ```
 
--   Box plot showing that the Forest landscape has significantly higher bird Shannon diversity compared to the Urban landscape (p \< 0.0001).
+-   Box plot showing that the Forest landscape (3.64) has significantly higher bird Shannon diversity compared to the Urban landscape (2.18) (p \< 0.0001).
 
-## 4.4 Shannon diversity statistical comparisons by site
+## 4.4 Shannon diversity statistical comparisons (ANOVA) by site
 
 ```{r Shannon diversity statistical comparisons}
 #ANOVA: Sites within Landscapes
@@ -642,7 +641,7 @@ shannon_tukey_all <- TukeyHSD(shannon_anova_all_sites)
 print(shannon_tukey_all)
 ```
 
--   Output from the post-hoc test shows that there is significantly higher bird Shannon diversity in all Forest sites compared to all Urban sites. However, there is no significant difference in bird Shannon diversity between sites within the same landscape. Check table for exact significance levels.
+-   ANOVA results show a significant difference in landscape Shannon diversity but not sites within landscape. Further, output from the Tukey post-hoc test shows that there is significantly higher bird Shannon diversity in all Forest sites compared to all Urban sites. However, there is no significant difference in bird Shannon diversity between sites within the same landscape. Check table for exact significance levels for pairwise comparisons.
 
 ## 4.5 Plot Shannon diversity by site
 
@@ -712,7 +711,7 @@ ggplot(shannon_df, aes(x = Site, y = Shannon, fill = Landscape)) +
 
 ## Summary
 
-In this notebook we explored how to calculate species richness and Shannon diversity. We then conducted statistical comparisons between these metrics for Forest and Urban landscapes and for sites within and between these landscapes to assess the potential impact of landscape and site on these metrics. Finally, we produced commonly used output plots to visualise the results of these comparisons.
+In this notebook we explored how to calculate species richness and Shannon diversity. We then conducted statistical comparisons between Forest and Urban landscapes and for sites within and between these landscapes, to assess the potential impact of landscape and site on these metrics. Finally, we produced commonly used output plots to visualise the results of these comparisons.
 
 The methodology used in this notebook could be applied to flora, fauna or other biological communities in both terrestrial or aquatic environments as an effective baseline measurement of diversity, from which extended analysis could be performed. This may include for example, species distribution models (SDMs) to further ascertain key drivers impacting the diversity and geographic distribution of the target species.
 
