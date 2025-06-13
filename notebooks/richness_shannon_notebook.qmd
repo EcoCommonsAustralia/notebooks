@@ -709,13 +709,13 @@ ggplot(shannon_df, aes(x = Site, y = Shannon, fill = Landscape)) +
 
 -   Box-plot showing that there is significantly higher bird Shannon diversity in all Forest sites compared to all Urban sites. However, there is no significant difference in bird Shannon diversity between sites within the same landscape. Sites with the same letter (e.g. a + a) indicates no significant difference in Shannon diversity, sites with different letters (e.g. a + b) display significantly different bird Shannon diversity.
 
-## Summary
+# Summary
 
 In this notebook we explored how to calculate species richness and Shannon diversity. We then conducted statistical comparisons between Forest and Urban landscapes and for sites within and between these landscapes, to assess the potential impact of landscape and site on these metrics. Finally, we produced commonly used output plots to visualise the results of these comparisons.
 
 The methodology used in this notebook could be applied to flora, fauna or other biological communities in both terrestrial or aquatic environments as an effective baseline measurement of diversity, from which extended analysis could be performed. This may include for example, species distribution models (SDMs) to further ascertain key drivers impacting the diversity and geographic distribution of the target species.
 
-## References
+# References
 
 Chao, A., & Chiu, C.-H. (2016). Species richness: Estimation and comparison. In *Wiley StatsRef: Statistics Reference Online* (pp. 1–26). Wiley. https://doi.org/10.1002/9781118445112.stat03432.pub2
 
