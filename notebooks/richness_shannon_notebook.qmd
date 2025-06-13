@@ -233,7 +233,7 @@ print(t_test_landscape_richness)
 
 ```{r richness_landscape_plot, message=FALSE, warning=FALSE}
 # Extract p-value from t-test
-p_val <- t_test_landscape$p.value
+p_val <- t_test_landscape_richness$p.value
 
 # Format p-value with * symbol for significance
 p_label <- paste0("* p < ", format.pval(p_val, digits = 3, eps = .001))  # → * p < 0.001 style
@@ -297,7 +297,7 @@ ggplot(richness_df, aes(x = Landscape, y = Species_Richness, fill = Landscape)) 
 
 Calculate descriptive statistics for each site within each landscape.
 
-```{r descriptive_summary_richness_by_site}
+```{r descriptive_summary_richness_by_site, message=FALSE, warning=FALSE}
 # Descriptive statistics for species richness by site
 site_summary_richness <- richness_df %>%
   group_by(Landscape, Site) %>%
