@@ -72,6 +72,8 @@ setwd('/Users/ryannewis/Documents/GitHub/Repositories/Richness_diversity/noteboo
 #setwd('path_to_your_folder')
 ```
 
+Now your local working drive is set.
+
 ## 1.2 Install and load required packages
 
 Install and load R packages and libraries.
@@ -100,6 +102,8 @@ if (length(missing_packages) > 0) {
 # Load all required packages
 lapply(required_packages, library, character.only = TRUE)
 ```
+
+Now all required packages have been installed and loaded.
 
 # Step 2: Downloading and preparing data
 
@@ -153,6 +157,8 @@ if (anyNA(your_data)) warning("Your data contains missing values. Please clean i
 species_data <- your_data
 ```
 
+Check that the dataset you have uploaded is correct (e.g. number of observations, variable names).
+
 # Step 3: Species richness
 
 This section will deal with Species richness calculations, comparisons and visualisations
@@ -168,6 +174,8 @@ species_summary <- species_data %>%
 #str(species_summary)
 head(species_summary)
 ```
+
+-   Check that your data is in the correct structure, as above.
 
 ## 3.2 Pivot data to wide format and to do species richness calculations
 
@@ -194,6 +202,8 @@ abundance_wide <- abundance_wide %>%
 head(abundance_wide)
 ```
 
+-   Check that the wide-pivoted dataset is correct.
+
 ## 3.3 Species richness calculations
 
 Calculate bird species richness for each sampling event in each site and landscape
@@ -205,6 +215,8 @@ richness_df <- abundance_wide %>%
 #str(richness_df)
 head(richness_df)
 ```
+
+-   Checking each row of species ricnness calculations has been completed corrected.
 
 ## 3.4 Species richness statistical comparisons by landscape
 
@@ -222,12 +234,16 @@ print(landscape_summary)
 
 ```
 
+-   The descriptive summary shows that the Forest landscape has a higher mean species richness of birds compared to the Urban landscape.
+
 # Run a t-test (Welch) to check for significant differences in species richness between landscapes
 
 ```{r richness_landscape_ttest }
 t_test_landscape_richness <- t.test(Species_Richness ~ Landscape, data = richness_df)
 print(t_test_landscape_richness)
 ```
+
+-   The result of the t-test shows that the Forest landscape has significantly higher bird species richness compared to the Urban landscape (p \< 0.0001).
 
 ## 3.4 Plot species richness by landscape
 
@@ -293,6 +309,8 @@ ggplot(richness_df, aes(x = Landscape, y = Species_Richness, fill = Landscape)) 
   guides(fill = guide_legend(title.position = "top"))
 ```
 
+-   Box plot showing that the Forest landscape has significantly higher bird species richness compared to the Urban landscape (p \< 0.0001).
+
 ## 3.5 Species richness statistical comparisons by site
 
 Calculate descriptive statistics for each site within each landscape.
@@ -309,7 +327,9 @@ site_summary_richness <- richness_df %>%
 print(site_summary_richness)
 ```
 
-Conduct an ANOVA with Tukey's post-hoc test to identify any significant differences in richness between sites and where differences occur.
+-   The descriptive summary of species richness for sites shows that all 3 forest sites are higher than the 3 Urban sites. But we still need to run a statistical test to check for significance
+
+Conduct an ANOVA with Tukey's post-hoc test to identify any significant differences in species richness between sites and where differences occur.
 
 ```{r ANOVA_richness_by_site}
 
@@ -324,6 +344,8 @@ anova_all_sites <- aov(Species_Richness ~ Site, data = richness_df)
 tukey_all_sites <- TukeyHSD(anova_all_sites)
 tukey_all_sites$Site
 ```
+
+-   Output from the post-hoc test shows that there is significantly higher bird species richness in all Forest sites compared to all Urban sites. However, there is no significant difference in bird species richness between sites within the same landscape. Check table for exact significance levels.
 
 ## 3.6 Plot species richness by site
 
@@ -387,9 +409,11 @@ ggplot(richness_df, aes(x = Site, y = Species_Richness, fill = Landscape)) +
   guides(fill = guide_legend(title.position = "top"))
 ```
 
+-   Box-plot showing that there is significantly higher bird species richness in all Forest sites compared to all Urban sites. However, there is no significant difference in bird species richness between sites within the same landscape. Sites with the same letter (e.g. a + a) indicates no significant difference in species richness, sites with different letters (e.g. a + b) display significantly different bird species richness.
+
 ## 3.7 Landscape temporal trend comparison
 
-Here we investigate (linear mixed-effect model) and visualise potential differences in species richness over a temporal scale (each sampling event throughout the year)
+Here we investigate (via linear mixed-effect model) and visualise potential differences in species richness over a temporal scale (each sampling event throughout the year)
 
 ```{r richness_lme_time}
 #Converts time into a categorical variable
@@ -402,6 +426,8 @@ summary(richness_lme)
 #Post-hoc pairwise comparisons of Time within each Landscape
 emmeans(richness_lme, pairwise ~ Time | Landscape)
 ```
+
+-   Output from the linear mixed-effect model initially shows a significant difference in the mean species richness observed in the Forest landscape between Jan - May. However, after the adjustment of the p value for multiple testing, the p value (0.07) no longer indicates there is a significant different netween mean species richness in Forests between Jan - May.
 
 ## 3.8 Plot temporal trends of landscape species richness. This displays the mean bird species rich of sites within each landscape for each sampling event.
 
@@ -495,6 +521,8 @@ ggplot() +
   ))
 ```
 
+-   Plot suggests an effect of time on bird species richness between Jan - May in the Forest landscape, however, post-hoc analysis showed that this was not the case.
+
 # Step 4: Shannon diversity
 
 This section will deal with Shannon diversity calculations, comparisons and visualisations.
@@ -515,6 +543,8 @@ head(shannon_df)
 #str(shannon_df)
 ```
 
+-   Checking each row of Shannon diversity calculations has been completed corrected.
+
 ## 4.2 Shannon diversity statistical comparisons by landscape
 
 Descriptive statistics summary for Forest and Urban landscape bird Shannon diversity
@@ -530,6 +560,8 @@ shannon_landscape_summary <- shannon_df %>%
 print(shannon_landscape_summary)
 ```
 
+-   The descriptive summary shows that the Forest landscape has a higher mean Shannon diversity of birds compared to the Urban landscape.
+
 # Run a t-test (Welch) to check for significant differences in Shannon diversity between landscapes
 
 ```{r shannon_landscape_ttest}
@@ -537,6 +569,8 @@ print(shannon_landscape_summary)
 shannon_ttest_landscape <- t.test(Shannon ~ Landscape, data = shannon_df)
 print(shannon_ttest_landscape)
 ```
+
+-   The result of the t-test shows that the Forest landscape has significantly higher bird Shannon diversity compared to the Urban landscape (p \< 0.0001).
 
 ## 4.3 Plot Shannon diversity by landscape
 
@@ -593,6 +627,8 @@ ggplot(shannon_df, aes(x = Landscape, y = Shannon, fill = Landscape)) +
   guides(fill = guide_legend(title.position = "top"))
 ```
 
+-   Box plot showing that the Forest landscape has significantly higher bird Shannon diversity compared to the Urban landscape (p \< 0.0001).
+
 ## 4.4 Shannon diversity statistical comparisons by site
 
 ```{r Shannon diversity statistical comparisons}
@@ -605,6 +641,8 @@ shannon_anova_all_sites <- aov(Shannon ~ Site, data = shannon_df)
 shannon_tukey_all <- TukeyHSD(shannon_anova_all_sites)
 print(shannon_tukey_all)
 ```
+
+-   Output from the post-hoc test shows that there is significantly higher bird Shannon diversity in all Forest sites compared to all Urban sites. However, there is no significant difference in bird Shannon diversity between sites within the same landscape. Check table for exact significance levels.
 
 ## 4.5 Plot Shannon diversity by site
 
@@ -669,6 +707,8 @@ ggplot(shannon_df, aes(x = Site, y = Shannon, fill = Landscape)) +
     plot.margin = margin(10, 100, 10, 10)
   )
 ```
+
+-   Box-plot showing that there is significantly higher bird Shannon diversity in all Forest sites compared to all Urban sites. However, there is no significant difference in bird Shannon diversity between sites within the same landscape. Sites with the same letter (e.g. a + a) indicates no significant difference in Shannon diversity, sites with different letters (e.g. a + b) display significantly different bird Shannon diversity.
 
 ## Summary
 
