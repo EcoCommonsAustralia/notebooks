@@ -427,7 +427,7 @@ summary(richness_lme)
 emmeans(richness_lme, pairwise ~ Time | Landscape)
 ```
 
--   Output from the linear mixed-effect model initially shows a significant difference in the mean species richness observed in the Forest landscape between Jan - May. However, after the adjustment of the p value for multiple testing, the p value (0.07) no longer indicates there is a significant different netween mean species richness in Forests between Jan - May.
+-   Output from the linear mixed-effect model initially showed a significant difference in the mean species richness observed in the Forest landscape between Jan - May. However, no post-hoc pairwise comparisons were statistically significant after Tukey post-hoc correction.
 
 ## 3.8 Plot temporal trends of landscape species richness. This displays the mean bird species rich of sites within each landscape for each sampling event.
 
@@ -521,7 +521,7 @@ ggplot() +
   ))
 ```
 
--   Plot suggests an effect of time on bird species richness between Jan - May in the Forest landscape, however, post-hoc analysis showed that this was not the case.
+-   Plot suggests an effect of time on mean bird species richness between Jan - May in the Forest landscape, however, Tukey post-hoc analysis/correction indicated that this was not the case.
 
 # Step 4: Shannon diversity
 
