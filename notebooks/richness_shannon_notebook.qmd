@@ -67,7 +67,7 @@ Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set th
 
 # Set the workspace to the current working directory
 #setwd('path_to_your_folder')
-setwd('/Users/ryannewis/Documents/GitHub/Repositories/Richness_diversity/notebooks')
+#setwd('/Users/ryannewis/Documents/GitHub/Repositories/Richness_diversity/notebooks')
 
 ```
 
@@ -240,7 +240,7 @@ t_test_landscape_richness <- t.test(Species_Richness ~ Landscape, data = richnes
 print(t_test_landscape_richness)
 ```
 
--   The result of the t-test shows that the Forest landscape (41.11) has significantly higher bird species richness compared to the Urban landscape (11.44) (p \< 0.0001).
+-   The result of the t-test shows that the Forest landscape (41.11) has significantly higher bird species richness compared to the Urban landscape (11.44) (p < 0.0001).
 
 ## 3.4 Plot species richness by landscape
 
