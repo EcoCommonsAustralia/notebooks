@@ -66,10 +66,9 @@ Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set th
 ```{r set workspace}
 
 # Set the workspace to the current working directory
-# setwd('/Users/ryannewis/Documents/2. EcoCommons Projects/EC_Notebooks/ECNotebook_Richness+Shannon') #Currently set to local drive, change this 
-
-setwd('/Users/ryannewis/Documents/GitHub/Repositories/Richness_diversity/notebooks')
 #setwd('path_to_your_folder')
+setwd('/Users/ryannewis/Documents/GitHub/Repositories/Richness_diversity/notebooks')
+
 ```
 
 Now your local working drive is set.
