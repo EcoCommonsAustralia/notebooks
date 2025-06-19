@@ -1,6 +1,6 @@
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
 
-# Getting Shorebirds Data in Australia Using Open Data and `spocc` R package
+# Getting Shorebird Data in Australia Using Global Biodiversity Data Portals via `spocc` R Package
 
 Author details: Abhimanyu Raj Singh
 
