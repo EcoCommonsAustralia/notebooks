@@ -1,0 +1,227 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Getting Shorebird Data in Australia Using Global Biodiversity Data Portals via `spocc` R Package
+
+Author details: Abhimanyu Raj Singh
+
+Editor details: Xiang Zhao
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
+
+Date: June 2025
+
+## 🚀 Before You Start
+
+> -   Ensure you have a **stable internet connection**, as species data is fetched live from biodiversity data portals using `spocc` R package.
+> -   This notebook may take a few minutes when downloading large datasets or installing missing packages.
+> -   Recommended to run in **RStudio** or **Posit Workbench/VS Code** with **Quarto** installed for best experience.
+
+# Introduction
+
+This notebook was developed by the EcoCommons team to support researchers and conservationists in gathering shorebird distribution data using open data sources. It demonstrates how to query, clean, visualise, and save species occurrence data using the `spocc` R package [@spocc] (Chamberlain et al., 2024), in R.
+
+**`spocc`** – Species Occurrence Data Aggregator 
+
+The spocc package provides a unified interface to search and retrieve species occurrence data from multiple biodiversity data sources into a single workflow. It streamlines data acquisition for ecological modelling and biodiversity analysis by handling different APIs in one place.
+
+We will introduce three of the most popular and largest biodiversity data portals that provide users with the ability to download their data via their platforms or several R packages.
+
+**GBIF** – Global Biodiversity Information Facility An international network providing open access to data on all types of life on Earth, supporting global biodiversity research and conservation.
+
+**iNaturalist** – Citizen Science Biodiversity Network A community-driven platform where people record and share species observations, contributing to real-time biodiversity mapping across the globe.
+
+**OBIS** – Ocean Biodiversity Information System The world's largest marine biodiversity database, offering access to global data on the distribution of marine life for science, policy, and conservation.
+
+We focus on three key migratory shorebird species, each represented by a distinct colour for clarity in visualisations:
+
+-   **Bar-tailed Godwit** (*Limosa lapponica*) — Green `#509E2F`
+-   **Red-necked Stint** (*Calidris ruficollis*) — Blue `#2F6C99`
+-   **Curlew Sandpiper** (*Calidris ferruginea*) — Orange `#F39200`
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Limosa%20lapponica%20by%20Jordan%20Aquilina.png){fig-align="center" width="492"}
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Calidris%20ruficollis%20by%20Sandy%20Horne.png){fig-align="center" width="491"}
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Calidris%20ferruginea%20by%20andrewpavlov.png){fig-align="center" width="489"}
+
+Each year, Australia welcomes millions of migratory species—from delicate shorebirds to majestic seabirds—journeying thousands of kilometres along flyways like the East Asian–Australasian Flyway.
+
+Species such as the Bar-tailed Godwit, Red-necked Stint, and Curlew Sandpiper arrive from as far as Siberia and Alaska, using Australia’s rich wetlands as critical stopovers and overwintering sites. These incredible travellers embody the resilience of nature and highlight the importance of conserving international migratory routes and coastal habitats.
+
+**Objectives:**
+
+| Step | Description |
+|:-----------------------------------|:-----------------------------------|
+| **1. Set the Working Directory** | Prepare the environment and load necessary R packages. |
+| **2. Get Data** | Retrieve occurrence data for target shorebird species from GBIF, iNaturalist, and OBIS. Merge all sources together. |
+| **3. Data Cleaning and Filtering** | Clean the data, remove invalid points, and restrict to Australia’s boundary. |
+| **4. Data Visualisation** | Visualize cleaned occurrences interactively using Leaflet maps with species-specific colours assigned explicitly to each species. |
+| **5. Save Data** | Save the final datasets as CSV and Shapefile inside the `data/` folder. |
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
+
+# Step 1: Set the working directory
+
+Set the working directory and prepare the environment. Install necessary packages if missing and load them.
+
+```{r setup-workspace}
+workspace <- getwd()
+options(repr.plot.width = 16, repr.plot.height = 8)
+
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+packages <- c("spocc", "tidyverse", "pbapply", "leaflet", "sf", "rnaturalearth", "rnaturalearthdata")
+
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+  library(pkg, character.only = TRUE)
+}
+```
+
+# Step 2: Get Data
+
+We define the target species and retrieve occurrence data from GBIF, iNaturalist, and OBIS. We combine all sources together into a single tidy data-frame for further processing.
+
+```{r get-data}
+species_list <- c("Limosa lapponica", "Calidris ruficollis", "Calidris ferruginea")
+
+species_data <- pblapply(species_list, function(species) {
+  occ(query = species, from = c("gbif", "inat", "obis"), limit = 500)
+})
+
+species_dfs <- lapply(species_data, function(data) {
+  gbif_df <- occ2df(data$gbif)
+  inat_df <- occ2df(data$inat)
+  obis_df <- occ2df(data$obis)
+
+  # Keep only longitude, latitude, name
+  gbif_df <- gbif_df %>% select(longitude, latitude, name)
+  inat_df <- inat_df %>% select(longitude, latitude, name)
+  obis_df <- obis_df %>% select(longitude, latitude, name)
+
+  # Make sure longitude and latitude are numeric
+  gbif_df$longitude <- as.numeric(gbif_df$longitude)
+  gbif_df$latitude  <- as.numeric(gbif_df$latitude)
+  inat_df$longitude <- as.numeric(inat_df$longitude)
+  inat_df$latitude  <- as.numeric(inat_df$latitude)
+  obis_df$longitude <- as.numeric(obis_df$longitude)
+  obis_df$latitude  <- as.numeric(obis_df$latitude)
+
+  bind_rows(gbif_df, inat_df, obis_df)
+})
+
+for (i in seq_along(species_dfs)) {
+  species_dfs[[i]]$species <- species_list[i]
+}
+
+occurrences <- bind_rows(species_dfs)
+
+for (i in seq_along(species_list)) {
+  cat("\nPreview of", species_list[i], "data:\n")
+  print(head(species_dfs[[i]], 10))
+}
+```
+
+# Step 3: Data Cleaning and Filtering
+
+We clean the data by removing missing coordinates and converting points into spatial format. We then filter records to only those falling within Australia’s political boundaries.
+
+```{r clean-filter-data}
+occurrences_clean <- occurrences %>%
+  filter(!is.na(longitude) & !is.na(latitude))
+
+australia <- ne_countries(scale = "medium", returnclass = "sf") %>% filter(admin == "Australia")
+
+occurrences_sf <- st_as_sf(occurrences_clean, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+
+occurrences_aus <- st_intersection(occurrences_sf, australia)
+occurrences_aus <- occurrences_aus %>%
+  select(longitude, latitude, species, geometry)
+
+print(nrow(occurrences_aus))
+print(head(occurrences_aus))
+```
+
+# Step 4: Data Visualisation
+
+We use Leaflet to plot the cleaned occurrences on an interactive map. Each species is colour-coded by directly mapping species names to specific colours.
+
+```{r visualise-data}
+species_color_map <- c(
+  "Limosa lapponica" = "#509E2F",
+  "Calidris ruficollis" = "#2F6C99",
+  "Calidris ferruginea" = "#F39200"
+)
+
+occurrences_aus$color <- unname(species_color_map[occurrences_aus$species])
+
+leaflet(data = occurrences_aus) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~longitude, ~latitude,
+    radius = 3, color = ~color,
+    popup = ~species
+  ) %>%
+  addProviderTiles(providers$Esri.WorldImagery) %>%
+  addLegend(
+    "bottomright",
+    colors = unname(species_color_map),
+    labels = names(species_color_map),
+    title = "Species"
+  )
+```
+
+# Step 5: Save Data
+
+We save the final occurrence data-set as both CSV and Shape-file. The files are stored in a "data" folder to support further analysis or GIS integration.
+
+```{r save-data}
+if (!dir.exists("data")) {
+  dir.create("data")
+}
+
+write.csv(occurrences_aus, "data/shorebird_occurrences_AUS.csv", row.names = FALSE)
+
+if (!inherits(occurrences_aus, "sf")) {
+  occurrences_aus <- st_as_sf(occurrences_aus, coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+}
+
+st_write(occurrences_aus, "data/shorebird_occurrences_AUS.shp", delete_layer = TRUE)
+```
+
+# References
+
+-   Owens, H., Barve, V., Chamberlain, S. (2025). *spocc: Interface to Species Occurrence Data Sources*. R package version 1.2.3. Available at: <https://docs.ropensci.org/spocc/> and <https://github.com/ropensci/spocc>
+-   Chamberlain, S., Barve, V., Mcglinn, D., Oldoni, D., Desmet, P., Geffert, L., & Ram, K. (2024). *spocc: Interface to Species Occurrence Data Sources*. R package version 1.2.4. Available at: <https://CRAN.R-project.org/package=spocc>
+-   Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L.D., François, R., et al. (2019). *Welcome to the tidyverse*. Journal of Open Source Software, 4(43), 1686. <https://doi.org/10.21105/joss.01686>
+-   Cheng, J., Karambelkar, B., Xie, Y. (2023). *leaflet: Create Interactive Web Maps with the JavaScript 'Leaflet' Library*. R package version 2.1.2.
+-   Pebesma, E. (2018). *Simple Features for R: Standardized Support for Spatial Vector Data*. The R Journal, 10(1), 439–446. <https://doi.org/10.32614/RJ-2018-009>
+-   South, A. (2017). *rnaturalearth: World Map Data from Natural Earth*. R package version 0.1.0.
+-   South, A. (2017). *rnaturalearthdata: World Vector Map Data from Natural Earth Used in 'rnaturalearth'*. R package version 0.1.0.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our partner**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
+
+# **Support**
+
+If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.

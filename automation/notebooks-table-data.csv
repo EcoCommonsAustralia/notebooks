@@ -7,3 +7,4 @@ Imbalanced dataset (Part 2),imbalanced_data_part2.ipynb,https://EcoCommonsAustra
 Extent and Area of Ocurrence / Occupancy,eoo_aoo.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EOO_AOO/eoo_aoo.html,,,, False,models
 Random Forest,EC_RF.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/EC_RF/EC_RF.html,,,, False,models
 Richness and Diversity,richness_shannon_notebook.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/Rich_Div/richness_shannon_notebook.html,,,, False, skills
+Get Species data from multiple sources,Get_Species_data_from_multiple_sources.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/Get_Species_data_from_multiple_sources.html,,,, False,skills
