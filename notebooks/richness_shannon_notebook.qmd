@@ -119,6 +119,10 @@ Table 1. Expected data structure (long format): Each row should represent one ob
 
 Column names **must** be exactly: "Site", "Time", "Landscape", "Species", "Abundance" to work directly with the code in this notebook. This notebook will automatically convert the long-format data to wide format when needed (e.g., for diversity index calculations).
 
+The image below depicts the study design for the example bird survey used in this notebook workflow. The design incorporates and compares 2 contrasting landscapes: Forest and Urban. Each landscape has 3 sites in which bird surveys were conducted.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/Rich_Div_NB_graphic.png){fig-align="center" width="611"}
+
 Now we will load in the CSV data file (in long format) and check the data structure.
 
 -   Replace "example_birdsurvey_data.csv" with the actual path to your file when doing analysis of your own data
@@ -240,7 +244,7 @@ t_test_landscape_richness <- t.test(Species_Richness ~ Landscape, data = richnes
 print(t_test_landscape_richness)
 ```
 
--   The result of the t-test shows that the Forest landscape (41.11) has significantly higher bird species richness compared to the Urban landscape (11.44) (p < 0.0001).
+-   The result of the t-test shows that the Forest landscape (41.11) has significantly higher bird species richness compared to the Urban landscape (11.44) (p \< 0.0001).
 
 ## 3.4 Plot species richness by landscape
 
