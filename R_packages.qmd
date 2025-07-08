@@ -70,7 +70,7 @@ tidyverse,
 vegan,
 viridis,
 visreg,
-xfun,
+xfun
   
 
 Remotes:
