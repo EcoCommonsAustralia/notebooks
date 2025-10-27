@@ -1,0 +1,555 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Single-Species Single-Season Occupancy Model - Practical
+
+Author details: Xiang Zhao, Dr Zachary Amir
+
+Editor details: Dr Zachary Amir
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
+
+Date: October 2025
+
+# Script information
+
+There are two notebooks about Single-Species Single-Season Occupancy Model, one is conceptual, and another is pratical. This one is the **practical** one which gives a brief introduction to the concepts of Single-Species Single-Season Occupancy Model with some simulated data.
+
+This notebook, developed by the EcoCommons team, showcases how to build Single-Species Single-Season Occupancy Model with camera trapping data with 'unmarked" R package.
+
+# Introduction
+
+# Objectives
+
+# **Workflow Overview**
+
++---------------------------------------------------------------+-----------------------------------+-------------------------------------------------------------------+
+| Notebooks                                                     | Main Content                      | Sub-content                                                       |
++===============================================================+===================================+===================================================================+
+| Single-Species Single-Season Occupancy Model - **Conceptual** | Overview and Conceptualisation    | 1.1 What is Occupancy modelling?                                  |
+|                                                               |                                   |                                                                   |
+|                                                               |                                   | 1.2 Single-species, single-season occupancy model and assumptions |
+|                                                               |                                   |                                                                   |
+|                                                               |                                   | 1.3 Single-species, single-season occupancy model with covariates |
++---------------------------------------------------------------+-----------------------------------+-------------------------------------------------------------------+
+| Single-Species Single-Season Occupancy Model - **Practical**  | Occupancy model with camera traps | 1.1 Camera Trap                                                   |
+|                                                               |                                   |                                                                   |
+|                                                               |                                   | 1.2 Camera trap surveys in Queensland's Wet Tropics 2022-2023     |
+|                                                               |                                   |                                                                   |
+|                                                               |                                   | 1.3 How to prepare camera trap data for occupancy model           |
+|                                                               |                                   |                                                                   |
+|                                                               |                                   | 1.4 Occupancy model with WildObs data                             |
++---------------------------------------------------------------+-----------------------------------+-------------------------------------------------------------------+
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
+
+# Set-up: R Environment and Packages
+
+Some housekeeping before we start. This process might take some time as many packages needed to be installed.
+
+## S.1 Set the working directory and create a folder for data.
+
+Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
+
+```{r workspace}
+
+# Set the workspace to the current working directory
+# Uncomment and replace the path below with your own working directory if needed:
+# setwd("/Users/zhaoxiang/Documents/tmp/EC_GLM_notebook") 
+
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
+
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
+
+```
+
+Ideally, you would use the **`renv`** package to create an isolated environment for installing all the required R packages used in this notebook. However, since installing **`renv`** and its dependencies can be time-consuming, we recommend trying this after the workshop.
+
+```{r renv}
+
+# # Ensure "renv" package is installed
+# if (!requireNamespace("renv", quietly = TRUE)) {
+#   install.packages("renv")
+# }
+# 
+# # Check if renv has been initialized in the project
+# if (!file.exists("renv/activate.R")) {
+#   message("renv has not been initiated in this project. Initializing now...")
+#   renv::init()  # Initialize renv if not already set up
+# } else {
+#   source("renv/activate.R")  # Activate the renv environment
+#   message("renv is activated.")
+# }
+# 
+# # Check for the existence of renv.lock and restore the environment
+# if (file.exists("renv.lock")) {
+#   message("Restoring renv environment from renv.lock...")
+#   renv::restore()
+# } else {
+#   message("No renv.lock file found in the current directory. Skipping restore.")
+# }
+
+```
+
+## S.2 Install and load essential libraries.
+
+Install and load R packages.
+
+```{r install_libraries, message=FALSE, warning=FALSE}
+
+# Set CRAN mirror
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+# List of packages to check, install if needed, and load
+packages <- c("dplyr", "terra", "sf", "googledrive", "ggplot2", "htmltools", "RColorBrewer", "unmarked")
+
+# Function to display a cat message
+cat_message <- function(pkg, message_type) {
+  if (message_type == "installed") {
+    cat(paste0(pkg, " has been installed successfully!\n"))
+  } else if (message_type == "loading") {
+    cat(paste0(pkg, " is already installed and has been loaded!\n"))
+  }
+}
+
+# Install missing packages and load them
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+    cat_message(pkg, "installed")
+  } else {
+    cat_message(pkg, "loading")
+  }
+  library(pkg, character.only = TRUE)
+}
+
+
+# If you are using renv, you can snapshot the renv after loading all the packages.
+
+#renv::snapshot()
+
+```
+
+## S.3 Download case study datasets
+
+We have prepared the following data and uploaded them to our Google Drive for your use:
+
+-   **Species occurrence data:** Shapefile format (.shp)
+
+-   **Environmental variables:** Stacked Raster format (.tif)
+
+-   **Study area boundary:** Shapefile format (.shp)
+
+```{r download_data}
+
+drive_deauth()
+
+file_id <- "1PpG3AX6y3CGX06uKju1fSXzytuC2nW-h"
+datafolder_path <- file.path(workspace)
+file_path <- file.path(datafolder_path, "wildobs_data_mat.rds")
+
+if (!dir.exists(datafolder_path)) dir.create(datafolder_path, recursive = TRUE)
+
+drive_download(as_id(file_id), path = file_path, overwrite = TRUE)
+```
+
+# 1 Occupancy model with camera traps
+
+## 1.1 Camera Trap
+
+Because of the logistical advantages of camera traps - such as low labour intensity, low cost, and long temperol coverage - they are widely used in wildlife research and monitoring, generating datasets that can be applied in occupancy models (Anderson et al., 2025; Bruce et al., 2025).
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/A_flowchart_digital_illustration_in_a_scientific_d.png)
+
+## 1.2 **Camera trap surveys in Queensland's Wet Tropics 2022-2023**
+
+This data was collected by Dr Zachary Amir and the Ecological Cascades Lab at the University of Queensland to study interactions between native and invasive vertebrates in North Queensland's Wet Tropics Rainforests. The camera trap surveys conducted here complement and extend prior surveys conducted by Dr. Tom Bruce as part of his PhD research studying feral cats in North Queensland forests. Important to note that these surveys implemented paired camera deployments, where each sampling location received a camera placed on the road and another camera placed 50 m into the bush. Sampling locations were typically spaced 1km apart from each other, though this varies between small and large landscapes.
+
+This dataset was provided to the ALA in the CamtrapDP data exchange format [https://camtrap-dp.tdwg.org](https://camtrap-dp.tdwg.org/)/) and transformed into a Darwin Core event-based dataset.
+
+### 1.2.1 Wildlife Observatory of Australia
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/WildObs%20Logo(cropped+transparent).png){width="303"}
+
+Wildlife Observatory of Australia - Australia’s national platform for processing and sharing wildlife camera data. WildObs will transform how Australia handles wildlife camera data by creating a national platform powered by AI. It will streamline biodiversity monitoring, break down data silos, and support effective conservation strategies by providing researchers and policymakers with easy access to consistent, high-quality data for informed decision-making. The WildObs researcher network is supported by Australia's National Research Infrastructure. TERN supports the field observatory and standard protocols, ALA hosts the tagged image repository and ARDC Planet Research Data Commons, through QCIF, is building a user-friendly data management and access platform.
+
+For more information about WildObs, please visit [https://wildobs.org.au](https://wildobs.org.au/#about)
+
+### 1.2.2 Atlas of Living Australia
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/main/images/ALA_Logo_Inline_RGB.png){alt="ALA Logo" width="325"}
+
+**ALA** specifically targets biodiversity data within Australia. It aggregates data from various Australian institutions, providing detailed information relevant to the country's ecosystems and species. A special thanks to [**Peggy Newman**](https://www.linkedin.com/in/peggydnewman/) from [**Atlas of Living Australia**](https://www.linkedin.com/company/atlas-of-living-australia/) for taking the lead on this important milestone. Publishing this data via the [**Atlas of Living Australia**](https://www.linkedin.com/company/atlas-of-living-australia/) platform makes it more accessible and reusable, placing each species and location record in a broader national context.
+
+## 1.3 How to prepare camera trap data for occupancy model
+
+We will prepare a separate notebook on the steps of prepare raw camera trap images to data ready for the occupancy model. Here we just give you the summary points of what we had done:
+
+**Step 1:** All raw camera trapped images had been processed with computer vision models including detection models like Megadetector and classifiers like SpeciesNet, to generate species identifications. The images generated in this data were classified by the [Wildlife Insights's SpeciesNet computer vision model](https://www.wildlifeinsights.org/about-wildlife-insights-ai) and identifications were manually verified and corrected if necessary by humans.
+
+**Step 2:** Just like in our data simulation, we must extract three resources:
+
+-   site-level covariates → found in the covariates & deployments data resources, which can easily be merged together by shared columns.
+
+-   observation-level covariates → found in the observations data resources (*i.e.*, must vary with time)
+
+-   detection-history matrix → found in the detection events of the observations data resource
+
+**Step 3:** Clean and explore covariates
+
+-   Read schema to understand covariates and chose which to include in your model. Each schema includes a description, data type (*e.g.*, numeric or factor), spatial resolution, and constraints such as minimum and maximum values. Finally, all spatially derived covariates include a link to access the online source where the spatial data was accessed to provide more informaiton.
+
+-   Inspect deployment covariates and standardise any inconsistentencies. A common field with potentially inconsistent values is the [deploymentTags](https://camtrap-dp.tdwg.org/data/#deployments.deploymentTags) field that captures additional deployment related information beyond the camtrapDP standard. This field is formatted using `key:value` pairs that can be extracted to new columns.
+
+-   Expand deploymentTags into separate columns in the deployments data resource (*e.g.*, bait, predatorManagement) as new site-level covariates. You can also exapand observationTags into separate columns in the observations data resource (*e.g.*, temperature) as new observation-level covariates.
+
+-   Merge covariates with deployments by all shared columns to avoid duplication. Both tables are indexed by deploymentID, but the tables share the following columns: `"deploymentID", "locationID", "locationName", "latitude", "longitude", "deploymentStart", "deploymentEnd", and "deploymentGroups"`.
+
+-   Convert all datetime strings into POSIXct data class to ensure data is recognized in a date-time format. This is particularly critical for `deploymentStart` and `deploymentEnd` in the deployments and `observationStart` and `observationEnd` in the observations data resources.
+
+**Step 4: Species selection**
+
+-   Count the number of independent detections per species. This is achieved by counting the number of unique `observationIDs` found in the observations data resource. The WildObs data curation process creates independent `observationIDs` using an independence threshold of 30 minutes between detections to be classified as independent. Similarly, the `eventID` column in the observations data resource has been classified using an independence threshold of 5 min to classify distinct events.
+
+-   Filter to species with ≥30 independent detections. This ensures sparse or unequal data (e.g., many detections in one landscape but not another) will not skew results.
+
+-   Select the species you are interested in. Can repeat the process of analyzing species occupancy for multiple species using for-loops. In this example we will select six species.
+
+-   Understand the ecology of the species you have selected. An important consideration is the average home-range size of each species relative to the assumption of *independence across sites*. For example, if a species’ home range is larger than the average spacing between sampling sites and the same individual is detected across multiple sites, this violates a key assumption of the model. WildObs provides a data package that includes verified species taxonomy (matched with URIs generated using the [`galah` R package](https://galah.ala.org.au/R/)) and species traits, including home-range sizes, which were extracted from the [`traitdata` R package](https://github.com/RS-eco/traitdata?tab=readme-ov-file).
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/wildobs_species.png)
+
+**Step 5: Spatial resampling** Spatial resampling is the process of aggregating camera deployments and observations into spatially discrete sampling units. This process is achieved by creating a grid of hexagons covering a specific area, and aggregating deployments and observations per date. This process ensures comparability among landscapes, reduces spatial pseudo-replication, and, by using a sampling unit size larger than the species’ home range, ensures that occupancy is being measured, as opposed to habitat use. The WildObsR R library provides two functions to facilitate resampling: `WildObsR::spatial_hexagon_generator()` to generate the grid of hexagons and `WildObsR::resample_covariates_and_observations()` to use the grid of hexagons to resample the data.
+
+-   First, using the home range sizes for each species, ensure sizes are converted to m² as the resampling scale.
+
+-   Use the `WildObsR::spatial_hexagon_generator()` function to generate hexagonal sampling units at multiple scales (1 km², 3 km², 6 km², 65 km²) based on species home range.
+
+-   Examine and summarise sampling efforts by inspecting important columns like number of deployments and hexagonal sampling units, duration of deployments, and calculating new columns like sampling effort, expressed as trap nights. Importantly, the field `deploymentGroups` has been calculated through the WildObs data curation process to describe spatially (*i.e.*, within one locationName) and temporally (*i.e.*, 100 days maximum in duration) distinct sampling efforts.
+
+-   Remove deploymentGroups that don’t meet inclusion criteria (too short, too few sites, \>120 days, multiple landscapes, repeated deployments). This ensures robust surveys are included in the analysis and results wont be skewed by small sample sizes.
+
+-   Keep only robust deployments and matching observations that fall within deploymentGroups of sufficent size.
+
+-   Use the `WildObsR::resample_covariates_and_observations()` function to spatially resample covariates and observations across multiple spatial scales. This function changes the structure of the data in several important ways. First, it removes any time-related information and summarizes observations per day. The function also calculates revised sampling effort per sampling unit (*i.e.*, rather than per deployment) to account for multiple deployments within a single sampling unit. A new observation-level covariate, `numberDeploymentsActiveAtDate`, describes how many deployments were active within a sampling unit on each day and serves as a high-resolution observation-level covariate for sampling effort. You can also include additional observation-level covariates from the covariates table in the observations table (*e.g.*, `featureType`). For example, if two deployments placed on different features are resampled into the same sampling unit, you can include `featureType` to denote which deployment and corresponding feature generated the observation. Finally, it is important to consider whether to aggregate the number of individuals detected per day by taking the **maximum** or the **sum** across all detections. For a full description of this function and its options, see the help page: `?WildObsR::resample_covariates_and_observations()`
+
+**Step 6: Prepare matrices**
+
+For each species (i.e., in a for-loop):
+
+-   Select the right spatial resampling scale based on home range data previously collected from the [`traitdata` R package](https://github.com/RS-eco/traitdata?tab=readme-ov-file).
+
+-   The spatial resampling function will add the spatial scale to the sampling unit name to reflect the resampled scale. Therefore, to work across multiple scales, one must standardise sampling unit names to something simple like `cellID`.
+
+-   Additional simple covariates can be derived from more complex covaraites that have many levels. For example, `featureType` contains several enumerated classes, but can be simply reduced to a two-level variable of on or off-trails based on the enumerated values types. Including fixed effect covaraites with fewer levels often improves modelling performance.
+
+-   WildObs calculates spatial covariates across multiple spatial scales, including point values for the individual deployment coordinates, and in circular buffers around camera deployments covering areas of 1, 3, 5, and 10 km2. Unless you are particularly interested in how the same variable may affect wildlife occupancy across different spatial scales, one should thin the site covariates to the spatial scale that most closely matches the spatial resampling and home range scale. This is also a useful time to think critically about the covariates included in the analysis, since the analysis will be simplified by only selecting site-level covariates that will be useful for testing hypotheses or determining a best fitting model.
+
+-   After site-level covariates are selected, select observation covariates from the spatialy resampled observations (*e.g.*, numberDeploymentsActiveAtDate, trailStatus, etc.). These covariates will vary through time and per detection. Therefore, these covariates must be found in the observations, not covariates tables.
+
+-   Determine the structure of the detection history matrices you will create. First, you must determine the maximum duration of the matrix (i.e., number of columns), and its recommended to not exceed 100 days to satisfy the closure assumption of the model. Next, you must determine the sampling window duration which is the number of days that fit into one column in the detection history matrix. Larger intervals (e.g., 7-10 days) are typically better for rare species with very low detections, while shorter values (e.g., 2-5 days) are better for frequently detected species. The goal here is to increase detection probability to enhance model performance. Finally, determine if you want to use *all* sampling units in the resampled data, or only locationNames (i.e., large landscapes such as a national park) where the species was detected. Limiting the data to locationNames where the species was detected will improve model performance since the model will estimate non-zero occupancy for all sampling units even if we know the species is absent from a particular landscape. However, the species may be present but have very low detection probability, so it may be worth including locationNames with zero detections if there is strong rationale for inclusion.
+
+-   Put together the information you had just collated into the WildObsR::matrix_generator() function. This function produces detection history matrices for multiple species and multiple resampling scales and ensures that the site-level and observation-level covaraites are properly aligned to facilitate an occupancy analysis.
+
+**Step 7: Build modelling objects**
+
+-   For **occupancy models**: extract the detection history matrix, site-level and observation-level covariates form the WildObsR::matrix_generator() function and save them as an unmarked::unmarkedFrameOccu (UMF). This is a particular data structure formatted to work with occupancy models in the unmarked R package, thus facilitating easy analysis.
+
+-   For multiple species, you can store each UMF in a list to save space in your global environment. Can format the list as one UMF per species with the name of the species saved in the name of the element in the list.
+
+```{r}
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(janitor)
+library(knitr)
+library(frictionless)    ## For reading frictionless DPs 
+# library(WildObsR)        ## For accessing data 
+
+## load the entire data package rather than an individual file 
+dp <- frictionless::read_package("~/Dropbox/WildObs master folder/WildObs GitHub Data Storage/data_clean/Step 6 DataPackages/ZAmir_QLD_Wet_Tropics_2022_20250731/datapackage.json") # will replace w/ WildObsR function once public (~2 weeks)
+
+## Extract the covariates from the package 
+covs <- frictionless::read_resource(dp, "covariates")|> clean_names()
+
+## While we are here, extract the schema so we know what each covariate means 
+cov_schema <- frictionless::get_schema(dp, "covariates")
+# and convert to a dataframe for easier manipulation
+## also convert into DF for easier manipulation/inspection
+cov_schema_df <- purrr::map_df(cov_schema$fields, ~{
+  # Extract known fields safely, reverting to NA if not present 
+  tibble::tibble(
+    name = .x$name %||% NA,
+    description = .x$description %||% NA,
+    type = .x$type %||% NA,
+    spatial_resolution = .x$resolution %||% NA, 
+    min = .x$constraints$minimum %||% NA,
+    max = .x$constraints$maximum %||% NA,
+    enum = paste(.x$constraints$enum %||% NA, collapse = "|"),
+    source = .x$`dcterms:source`
+  )
+})
+# covs <- read_csv("covariates.csv", show_col_types = FALSE) |> clean_names()
+
+```
+
+```{r}
+summary_by_site <- covs %>%
+  group_by(location_name) %>%
+  summarise(
+    n_records   = n(),
+    n_locations = n_distinct(location_id),
+    n_cameras   = n_distinct(deployment_id),
+    flii_mean = mean(flii_point, na.rm=TRUE),
+    flii_sd   = sd(flii_point, na.rm=TRUE),
+    altitude_mean = mean(altitude_point, na.rm=TRUE),
+    altitude_sd   = sd(altitude_point, na.rm=TRUE),
+    ndvi_mean = mean(ndvi_point, na.rm=TRUE),
+    ndvi_sd   = sd(ndvi_point, na.rm=TRUE),
+    hfp_mean = mean(human_footprint_point, na.rm=TRUE),
+    hfp_sd   = sd(human_footprint_point, na.rm=TRUE)
+  ) %>% arrange(location_name)
+
+kable(summary_by_site, digits = 3,
+      caption = "Summary statistics by landscape (locationName)") # be careful about site vs landscape labelling! site is often referred to as the row in the detection history matrix by the occupancy modelling community 
+```
+
+```{r}
+vars_box <- c("flii_point","altitude_point","ndvi_point","human_footprint_point")
+
+covs_long <- covs %>%
+  pivot_longer(all_of(vars_box), names_to="variable", values_to="value") %>%
+  mutate(variable = factor(variable,
+                           levels = vars_box,
+                           labels = c("FLII (point)",
+                                      "Altitude (m)",
+                                      "NDVI (point)",
+                                      "Human Footprint (point)")))
+
+ggplot(covs_long, aes(x = location_name, y = value)) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 2) +
+  labs(x = "Site (locationName)", y = NULL,
+       title = "Covariate distributions by landscape") +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+```{r}
+library(dplyr)
+library(leaflet)
+library(htmltools)
+
+# keep only rows with coords
+mpts <- covs |> filter(!is.na(latitude), !is.na(longitude))
+
+# color by site
+pal <- colorFactor("Set2", domain = mpts$location_name)
+
+# bounds to fit all points
+lat_rng <- range(mpts$latitude,  na.rm = TRUE)
+lon_rng <- range(mpts$longitude, na.rm = TRUE)
+
+# popup content (edit as you like)
+popup_html <- function(df) {
+  paste0(
+    "<b>Deployment:</b> ", htmlEscape(df$deployment_id), "<br/>",
+    "<b>LocationID:</b> ", htmlEscape(df$location_id), "<br/>",
+    "<b>Landscape:</b> ", htmlEscape(df$location_name), "<br/>",
+    "<b>Start:</b> ", htmlEscape(as.character(df$deployment_start)), "<br/>",
+    "<b>End:</b> ", htmlEscape(as.character(df$deployment_end)), "<br/>",
+    "<b>Altitude (m):</b> ", ifelse(!is.na(df$altitude_point), df$altitude_point, "NA"), "<br/>",
+    "<b>NDVI:</b> ", ifelse(!is.na(df$ndvi_point), round(df$ndvi_point, 3), "NA")
+  )
+}
+
+leaflet(mpts, options = leafletOptions(minZoom = 2)) |>
+  addProviderTiles("CartoDB.Positron", group = "Light") |>
+  addProviderTiles("Esri.WorldImagery", group = "Satellite") |>
+  addScaleBar(position = "bottomleft") |>
+  addCircleMarkers(
+    lng = ~longitude, lat = ~latitude,
+    radius = 6, stroke = TRUE, weight = 1, opacity = 1,
+    color = ~pal(location_name),
+    fillOpacity = 0.85,
+    label = ~location_name,
+    popup = ~popup_html(mpts),
+    clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = TRUE),
+    group = "Deployments"
+  ) |>
+  addLegend(
+    "topright", pal = pal, values = ~location_name,
+    title = "Landscape", opacity = 1
+  ) |>
+  addLayersControl(
+    baseGroups = c("Light", "Satellite"),
+    overlayGroups = c("Deployments"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) |>
+  fitBounds(lng1 = lon_rng[1], lat1 = lat_rng[1], lng2 = lon_rng[2], lat2 = lat_rng[2])
+```
+
+## 1.4 Occupancy model with WildObs data
+
+Let's start with looking into how does the WildObs data looks like:
+
+```{r, load_wildobs_data}
+
+# load pre-processed WildObs data
+wildobs_data_mat <- readRDS("wildobs_data_mat.rds") # ZDA cant provide input here without the file! 
+
+# this is a list object
+class(wildobs_data_mat )
+```
+
+```{r, inspect_wildobs_1}
+
+# see how many elements
+length(wildobs_data_mat )
+
+# you should see the scientific name of six species
+names(wildobs_data_mat )
+
+```
+
+```{r, inspect_wildobs_2}
+
+# for each species, you should see (1) detection matrix, (2) site level covariates, and (3) observation level covariates
+str(wildobs_data_mat[1], max.level = 3)
+```
+
+```{r}
+library(unmarked)
+library(dplyr)
+library(ggplot2)
+
+# ---- 1. Pick the species and extract its occupancy object ----
+sp <- "Felis catus"
+occ <- wildobs_data_mat[[sp]]$occupancy
+
+Y <- as.matrix(occ$detection_matrix)
+
+site_covs <- occ$site_level_covariates %>%
+  dplyr::select(
+    locationName,
+    Avg_FLII_5km2,
+    Avg_human_population_density_5km2,
+    Avg_NDVI_5km2
+  )
+
+trail_mat <- as.matrix(occ$observation_level_covariates$trailStatus)
+trail_mat[] <- factor(trail_mat)
+
+# ---- 2. Remove sites with any missing covariate values ----
+site_vars  <- c("Avg_FLII_5km2", "Avg_human_population_density_5km2", "Avg_NDVI_5km2")
+keep_sites <- complete.cases(site_covs[, site_vars]) &
+              apply(!is.na(trail_mat), 1, all)
+
+Y          <- Y[keep_sites, , drop = FALSE]
+site_covs  <- site_covs[keep_sites, , drop = FALSE]
+trail_mat  <- trail_mat[keep_sites, , drop = FALSE]
+
+# ---- 3. Build unmarked frame ----
+umf <- unmarkedFrameOccu(
+  y        = Y,
+  siteCovs = site_covs,
+  obsCovs  = list(trailStatus = trail_mat)
+)
+
+# ---- 4. Detection & state models ----
+mod_null  <- occu(~ 1 ~ 1, data = umf)
+mod_trail <- occu(~ trailStatus ~ 1, data = umf)
+
+m_human <- occu(~ trailStatus ~ Avg_human_population_density_5km2, data = umf)
+m_ndvi  <- occu(~ trailStatus ~ Avg_NDVI_5km2, data = umf)
+m_flii  <- occu(~ trailStatus ~ Avg_FLII_5km2, data = umf)
+m_multi <- occu(~ trailStatus ~ Avg_FLII_5km2 + Avg_human_population_density_5km2, data = umf)
+
+# ---- 5. Model selection ----
+mods <- fitList(
+  "null"  = mod_null,
+  "trail" = mod_trail,
+  "human" = m_human,
+  "ndvi"  = m_ndvi,
+  "flii"  = m_flii,
+  "flii+human" = m_multi
+)
+
+ms <- modSel(mods)
+aic_tbl <- ms@Full
+print(aic_tbl[, c("model", "nPars", "AIC", "delta", "cumltvWt")])
+
+# ---- 6. Visualize key single-variable effects ----
+newd_flii <- data.frame(
+  Avg_FLII_5km2 = seq(min(umf@siteCovs$Avg_FLII_5km2, na.rm = TRUE),
+                      max(umf@siteCovs$Avg_FLII_5km2, na.rm = TRUE),
+                      length.out = 100)
+)
+
+newd_human <- data.frame(
+  Avg_human_population_density_5km2 = seq(min(umf@siteCovs$Avg_human_population_density_5km2, na.rm = TRUE),
+                                          max(umf@siteCovs$Avg_human_population_density_5km2, na.rm = TRUE),
+                                          length.out = 100)
+)
+
+pred_flii <- predict(m_flii, type = "state", newdata = newd_flii, appendData = TRUE)
+pred_flii$key_var <- "FLII"
+names(pred_flii)[names(pred_flii) == "Avg_FLII_5km2"] <- "simulated_cov"
+
+pred_human <- predict(m_human, type = "state", newdata = newd_human, appendData = TRUE)
+pred_human$key_var <- "human_population"
+names(pred_human)[names(pred_human) == "Avg_human_population_density_5km2"] <- "simulated_cov"
+
+pred <- rbind(pred_flii, pred_human)
+
+# ---- 7. Plot results ----
+ggplot(subset(pred, key_var == "FLII"),
+       aes(x = simulated_cov, y = Predicted)) +
+  geom_line(size = 1.2) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = "Forest Landscape Integrity Index (std, 5 km²)",
+       y = "Predicted occupancy (ψ)",
+       title = paste(sp, "- effect of FLII")) +
+  theme_test() +
+  theme(legend.position = "none")
+
+ggplot(subset(pred, key_var == "human_population"),
+       aes(x = simulated_cov, y = Predicted)) +
+  geom_line(size = 1.2) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = "Human population density (std, 5 km²)",
+       y = "Predicted occupancy (ψ)",
+       title = paste(sp, "- effect of human population")) +
+  theme_test() +
+  theme(legend.position = "none")
+```
+
+# References
+
+Fiske, I., & Chandler, R. (2011). Unmarked: an R package for fitting hierarchical models of wildlife occurrence and abundance. *Journal of statistical software*, *43*, 1-23.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our partner**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
+
+# **How to Cite EcoCommons**
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
