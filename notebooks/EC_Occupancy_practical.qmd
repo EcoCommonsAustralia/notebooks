@@ -14,7 +14,7 @@ Date: October 2025
 
 # Script information
 
-There are two notebooks about Single-Species Single-Season Occupancy Model, one is conceptual, and another is pratical. This one is the **practical** one which gives a brief introduction to the concepts of Single-Species Single-Season Occupancy Model with some simulated data.
+There are two notebooks about Single-Species Single-Season Occupancy Model, one is conceptual, and another is practical. This one is the **practical** one which gives a brief introduction to the concepts of Single-Species Single-Season Occupancy Model with some simulated data.
 
 This notebook, developed by the EcoCommons team, showcases how to build Single-Species Single-Season Occupancy Model with camera trapping data with 'unmarked" R package.
 
@@ -135,14 +135,6 @@ for (pkg in packages) {
 ```
 
 ## S.3 Download case study datasets
-
-We have prepared the following data and uploaded them to our Google Drive for your use:
-
--   **Species occurrence data:** Shapefile format (.shp)
-
--   **Environmental variables:** Stacked Raster format (.tif)
-
--   **Study area boundary:** Shapefile format (.shp)
 
 ```{r download_data}
 

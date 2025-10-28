@@ -8,19 +8,29 @@ Editor details: Dr Zachary Amir
 
 Contact details: support\@ecocommons.org.au
 
-Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
+Copyright statement: This script is the product of the EcoCommons and WildObs team. Please refer to the EcoCommons website for more details: https://www.ecocommons.org.au/
+
+For more information about WildObs, please visit [https://wildobs.org.au](https://wildobs.org.au/#about) and <https://github.com/WildObs>
 
 Date: October 2025
 
 # Script information
 
-There are two notebooks about Single-Species Single-Season Occupancy Model, one is conceptual, and another is pratical. This one is the **conceptual** one which gives a brief introduction to the concepts of Single-Species Single-Season Occupancy Model with some simulated data.
+There are two notebooks about Single-Species Single-Season Occupancy Model, one is conceptual, and another is practical. This one is the **conceptual** one which gives a brief introduction to the concepts of Single-Species Single-Season Occupancy Model with some simulated data.
 
-This notebook, developed by the EcoCommons team, showcases how to build Single-Species Single-Season Occupancy Model with camera trapping data with 'unmarked" R package.
+This notebook, developed by the EcoCommons and WildObs team, showcases how to build Single-Species Single-Season Occupancy Model with camera trapping data with 'unmarked" R package.
 
 # Introduction
 
 It explains the fundamental theory behind occupancy modelling — estimating the probability that a species occupies a site while accounting for imperfect detection. Through clear explanations and simulated examples, it demonstrates how occupancy and detection processes are modelled using R and the unmarked package.
+
+# Wildlife Observatory of Australia
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/WildObs%20Logo(cropped+transparent).png){width="303"}
+
+Wildlife Observatory of Australia - Australia’s national platform for processing and sharing wildlife camera data. WildObs will transform how Australia handles wildlife camera data by creating a national platform powered by AI. It will streamline biodiversity monitoring, break down data silos, and support effective conservation strategies by providing researchers and policymakers with easy access to consistent, high-quality data for informed decision-making. The WildObs researcher network is supported by Australia's National Research Infrastructure. TERN supports the field observatory and standard protocols, ALA hosts the tagged image repository and ARDC Planet Research Data Commons, through QCIF, is building a user-friendly data management and access platform.
+
+For more information about WildObs, please visit [https://wildobs.org.au](https://wildobs.org.au/#about) and <https://github.com/WildObs>
 
 # Objectives
 
