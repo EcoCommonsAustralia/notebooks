@@ -351,7 +351,7 @@ Let's have a look on the three data frames we just created.
 **Deployments of ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001**
 
 ```{r head_deployments}
-glimpse(deployments)
+print(head(deployments))
 ```
 
 The *deployments* table contains contextual data for each camera deployment, including the deployment ID, site information (location ID, name, coordinates, uncertainty), deployment period, camera specifications (model, height, delay, tilt, heading), environmental context (feature type, habitat), and project-level annotations such as tags, groups, and comments. The first several rows shown above illustrate typical entries from the Wooroonooran NP project in 2022–2023.
@@ -359,7 +359,7 @@ The *deployments* table contains contextual data for each camera deployment, inc
 **Observations of ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001**
 
 ```{r head_observations}
-glimpse(observations)
+print(head(observations))
 ```
 
 The *observations* table contains observation-level records detected by each camera, including timestamps, media identifiers, and links back to their deployment. Each row represents either a blank trigger or an animal detection, with associated metadata such as species identification, life stage, sex, behaviour, bounding-box coordinates, classification method, and timing variables (*eventStart*, *eventEnd*). **Note** that observationID has been calculated to group 5-minute camera triggers together, while eventID groups larger 30-minute detection intervals. The first six rows show a mix of blank events and a detection of *Megapodius reinwardt* within the CFRAG_01 deployment.
@@ -370,7 +370,31 @@ The *observations* table contains observation-level records detected by each cam
 print(head(covariates))
 ```
 
-The *covariates* table provides environmental and landscape attributes associated with each camera deployment. It includes spatial location (latitude/longitude), deployment period, and group labels, along with a wide range of ecological covariates summarised at multiple spatial scales (point, 1 km², 3 km², 5 km², 10 km²). These covariates capture habitat condition (e.g., FLII), human pressure (human footprint), topography (altitude), climate variables (temperature, precipitation), vegetation indices (NDVI/EVI if included), nighttime lights, and other environmental descriptors. The first several rows show covariate profiles for the CFRAG deployments in the Lake Eacham–Curtain Fig deploymentGroup
+The *covariates* table provides spatio-temporal environmental and landscape attributes associated with each camera deployment. It includes spatial location (latitude/longitude), deployment period, and group labels, along with a wide range of ecological covariates summarised at multiple spatial scales (point, 1 km², 3 km², 5 km², 10 km²). These covariates capture habitat condition (e.g., [Forest Landscape Integrity Index (FLII)](https://www.forestintegrity.com/)), human pressure ([human footprint index](https://wcshumanfootprint.org/)), topography (altitude), climate variables (temperature, precipitation), vegetation indices ([NDVI](https://data.gov.au/data/dataset/national-forest-and-sparse-woody-vegetation-data-version-7-0-2022-release)), [nighttime lights](https://doi.org/10.3390/rs13050922), and other environmental descriptors. The first several rows show covariate profiles for the CFRAG deployments in the Lake Eacham–Curtain Fig deploymentGroup
+
+All frictionless data packages contain schemas that describes each column in each table, providing useful additional context for unknown data fields. These can be accessed through the function `frictionless::get_schema()`. This is particularly useful for the covariates table due to the large number of availible covariates, which provides information about how each covariate was calculated. We can easily convert the schema to a table for easier viewing and manipulation
+
+```{r get_covs_schema}
+# extract schema
+cov_schema = frictionless::get_schema(dp_list[[1]], "covariates")
+# convert to a df 
+fields_df <- do.call(
+  # bind each row
+  rbind,
+  # and extract value from schema fields for
+  lapply(cov_schema$fields, function(f) {
+    data.frame(
+      # col name, 
+      name        = f$name %||% NA_character_,
+      # and description 
+      description = f$description %||% NA_character_,
+      stringsAsFactors = FALSE
+    )
+  })
+)
+```
+
+For example, we can view the description of the NDVI variable calculated per camera trap: `r fields_df$description[fields_df$name == "NDVI_point"]`
 
 ### 1.3.4 Mapping camera sites
 
