@@ -1389,21 +1389,25 @@ rm(i, dat, umf)
 ```{r occupancy_result_inspect_1}
 ## inspect results
 names(umf_list) # all species present
+
+# select which species we will analyze 
+# sp_occu = "Canis dingo"
+# sp_occu = "Varanus varius"
+sp_occu = "Felis catus"
+# sp_occu = "Orthonyx spaldingii"
 ```
 
-We successfully made the occupancy umf for each species. Lets inspect the umf object for a single species, *Felis catus*. 
+We successfully made the occupancy umf for each species. Lets inspect the umf object for a single species, *`r sp_occu`*. 
 
-```{r occupancy_result_inspect_3}
-## inspect one UMF 
-# cats occupancy model
-# umf = umf_list$`Felis catus`
-umf = umf_list$`Orthonyx spaldingii`
+```{r occupancy_result_inspect_2}
+# select one umf
+umf = umf_list[[sp_occu]]
 
 # inspect data
 summary(umf)
 ```
 
-```{r occupancy_result_inspect_4}
+```{r occupancy_result_inspect_3}
 # visualize 
 plot(umf)
 ```
@@ -1430,7 +1434,7 @@ cat(out, sep = "\n")
 
 ```
 
-This null occupancy model estimates that chowchilla occupy about X% of sites, with a per-occasion detection probability of roughly Y%, indicating imperfect detection. The low detection probability explains why many occupied sites have few or no detections. This model provides a baseline against which more complex models with detection and environmental covariates can be compared.
+This null occupancy model estimates that `r sp_occu` occupy about X% of sites, with a per-occasion detection probability of roughly Y%, indicating imperfect detection. The low detection probability explains why many occupied sites have few or no detections. This model provides a baseline against which more complex models with detection and environmental covariates can be compared.
 
 ### 1.4.3 Detection models with alternative detection covariates
 
@@ -1457,22 +1461,22 @@ aic_det <- data.frame(
 aic_det
 ```
 
-These results show that **detection probability is strongly influenced by trail placement**, and **combining trail status with sampling effort provides a substantially better fit** than either variable alone.
+These results show that **detection probability is strongly influenced by trail placement & sampling effort**, and **combining trail status with sampling effort provides a substantially better fit** than either variable alone.
 
-The **trail + effort** model has the lowest AIC (ΔAIC \> 11 compared to the others), indicating strong support for using both covariates in the detection component of the occupancy model.
+The **trail + effort** model has the lowest AIC (ΔAIC \> 8 compared to the others), indicating strong support for using both covariates in the detection component of the occupancy model.
 
 ### 1.4.4 Select state variables
 
-The `WildObsR::matrix_generator()` function has already standardized numeric covariates to have a mean of zero and a standard deviation of 1 to ensure comparable model outputs. 
-
+The `WildObsR::matrix_generator()` function has already standardized numeric covariates to have a mean of zero and a standard deviation of 1 to ensure comparable model outputs. Before feeding the resampled covariates into the function, we also limited to our spatial scale of interest to match the home-range size of our species.
 
 ```{r occ_state_variable}
-
 # these are our options to include
-summary(umf@siteCovs) # 
+summary(umf@siteCovs) 
 ```
 
 ### 1.4.5 Compare alternative random‐effect structures for the state (occupancy) process
+
+We can include random-intercept effects in both the occupancy and deteciton formula of occupancy models to account for variation that we are not necessarily interested in. For example, we may care about how a species occupancy varies along an elevation gradient, but are less interested in how it varies per landscape. However, we are aware there could be unmeasured variation between landscapes that should be accounted for in our modelling process. 
 
 ```{r random-effect}
 
@@ -1503,7 +1507,7 @@ cat(
 
 Both random‐effects structures (**deploymentGroups** and **locationName**) produce **identical AIC values (443.18)**, indicating **no difference in model support** between the two grouping factors. In this case, either random effect is statistically equivalent, and the choice should be guided by **study design and interpretability** rather than model fit.
 
-We therefore used a random intercept for locationName, as cameras within the same location are likely to share common ecological context (e.g. habitat, management history, and accessibility).
+We therefore used a random intercept for locationName, as cameras within the same location are likely to share common ecological context (e.g. habitat, management history, and accessibility). This is because each landscape only contained one deploymentGroup, but when combining multiple datasets together, this could vary substantially! 
 
 ### 1.4.6 Hypothesis-driven occupancy models
 
@@ -1514,8 +1518,12 @@ We therefore used a random intercept for locationName, as cameras within the sam
 ## Random effect is fixed at locationName
 ## Each model tests ONE ecological hypothesis
 
+## gather all variables in a vector
+occ_vars = c("Avg_HCAS_static_5km2", "Avg_human_population_density_5km2", 
+             "Avg_NDVI_5km2", "Avg_FLII_5km2", "Avg_altitude_5km2")
+
 ## H1: HCAS
-## Hypothesis: Cat occupancy decreases with increasing HCAS
+## Hypothesis: species occupancy decreases with increasing HCAS
 h1 <- unmarked::occu(
   ~ trailStatus + numberDeploymentsActiveAtDate       # detection model
   ~ (1 | locationName) + Avg_HCAS_static_5km2,        # state (occupancy) model
@@ -1523,7 +1531,7 @@ h1 <- unmarked::occu(
 )
 
 ## H2: Human population density
-## Hypothesis: Cat occupancy increases with human population density
+## Hypothesis: species occupancy increases with human population density
 h2 <- unmarked::occu(
   ~ trailStatus + numberDeploymentsActiveAtDate   # detection model
   ~ (1 | locationName) + 
@@ -1532,7 +1540,7 @@ h2 <- unmarked::occu(
 )
 
 ## H3: NDVI
-## Hypothesis: Cat occupancy decreases with increasing vegetation greenness
+## Hypothesis: species occupancy decreases with increasing vegetation greenness
 h3 <- unmarked::occu(
   ~ trailStatus + numberDeploymentsActiveAtDate   # detection model
   ~ (1 | locationName) + Avg_NDVI_5km2,             # state model
@@ -1540,10 +1548,18 @@ h3 <- unmarked::occu(
 )
 
 ## H4: Forest Landscape Integrity Index (FLII)
-## Hypothesis: Cat occupancy increases with higher forest integrity
+## Hypothesis: species occupancy increases with higher forest integrity
 h4 <- unmarked::occu(
   ~ trailStatus + numberDeploymentsActiveAtDate   # detection model
   ~ (1 | locationName) + Avg_FLII_5km2,             # state model
+  data = umf
+)
+
+## H5: altiide
+## Hypothesis: species occupancy increases with higher altitude 
+h5 <- unmarked::occu(
+  ~ trailStatus + numberDeploymentsActiveAtDate         # detection model
+  ~ (1 | locationName) + Avg_altitude_5km2,             # state model
   data = umf
 )
 
@@ -1560,13 +1576,15 @@ hypotheses <- data.frame(
     "HCAS (expected negative)",
     "Human population density (expected positive)",
     "NDVI (expected negative)",
-    "Forest integrity – FLII (expected positive)"
+    "Forest integrity – FLII (expected positive)",
+    "Altitude (expected positive)"
   ),
   AIC = c(
     h1@AIC,   # AIC for HCAS model
     h2@AIC,   # AIC for human population model
     h3@AIC,   # AIC for NDVI model
-    h4@AIC    # AIC for FLII model
+    h4@AIC,   # AIC for FLII model
+    h5@AIC    # AIC for elev model
   )
 )
 
@@ -1575,39 +1593,74 @@ hypotheses[order(hypotheses$AIC), ]
 
 ```
 
-All four habitat hypotheses have **very similar AIC values (ΔAIC \< 2)**, indicating **no strong evidence that any single covariate clearly outperforms the others** in explaining cat occupancy at this scale. NDVI has the lowest AIC and is therefore *marginally* best supported, but the difference is too small to claim a meaningful advantage. Practically, this suggests that cat occupancy is **weakly influenced by multiple correlated landscape features rather than driven by one dominant variable**, and model choice should be guided by **ecological plausibility and parsimony**, not AIC alone.
+All five habitat hypotheses have **similar AIC values (ΔAIC \< 4)**, indicating **no strong evidence that any single covariate clearly outperforms the others** in explaining `r sp_occu` occupancy at this scale. NDVI has the lowest AIC and is therefore *marginally* best supported, but the difference is too small to claim a meaningful advantage. Practically, this suggests that `r sp_occu` occupancy is **weakly influenced by multiple correlated landscape features rather than driven by one dominant variable**, and model choice should be guided by **ecological plausibility and parsimony**, not AIC alone.
+
+```{r determine_correlated_vars}
+## before creating multi-variate models, ensure covariates are NOT correlated! 
+## grab the relevant variables
+var_dat = umf@siteCovs[, occ_vars]
+## compute a correlation matrix 
+cor_mat = cor(var_dat, use = "complete.obs")
+## determine a threshold 
+thresh <- 0.7
+# get upper triangle only (avoid duplicates + diagonal)
+high_cor <- which(abs(cor_mat) >= thresh & 
+                  upper.tri(cor_mat), 
+                  arr.ind = TRUE)
+# return variable names + correlation values
+data.frame(
+  var1 = rownames(cor_mat)[high_cor[,1]],
+  var2 = colnames(cor_mat)[high_cor[,2]],
+  correlation = cor_mat[high_cor]
+)
+```
+
+Before creating multi-variate models, its important to ensure that covariates are not strongly correlated with each other. In this case, we are using a cutoff of `r thresh` to ensure we include covariates that are clearly distinguishable from each other. In the print out above, we can see that HCAS is strongly correlated with NDVI and FLII, which are also strongly correlated with each other. Therefore, we would not include these variables together in the same multi-variate model. 
 
 ```{r Multi_variate_state_model}
-
 ## Multi-variate state model: forest integrity + human pressure
-## Tests whether combining FLII and human population density improves
+## Tests whether combining NDVI and human population density improves
 ## explanatory power beyond single-covariate models
-multi <- unmarked::occu(
+multi1 <- unmarked::occu(
   ~ trailStatus + numberDeploymentsActiveAtDate       # detection process
   ~ (1 | locationName)                                # spatial random effect
-    + Avg_FLII_5km2                                   # forest integrity
+    + Avg_NDVI_5km2                                   # forest integrity
     + Avg_human_population_density_5km2,              # human pressure
   data = umf
 )
 
-summary(multi)
-multi@AIC   # AIC is essentially equivalent to the FLII-only model,
-            # indicating limited additional support for the combined model
+summary(multi1)
+multi1@AIC   # AIC is worse than the NDVI-only model,
+             # indicating worse additional support for the combined model
 
+## try combining NDVI and altitude
+multi2 <- unmarked::occu(
+  ~ trailStatus + numberDeploymentsActiveAtDate       # detection process
+  ~ (1 | locationName)                                # spatial random effect
+    + Avg_NDVI_5km2                                   # forest integrity
+    + Avg_altitude_5km2,                              # elevatoion
+  data = umf
+)
 
+summary(multi2)
+multi2@AIC   # AIC is a tad better than the NDVI-only model,
 ```
+
+The unmarked R package has a number of useful tools for ranking competing models. We will use the `unmarked::fitList()` function to organize models for model selection, ensuring we specify which is the null model and point of comparison. Then we will use the `unmarked::modSel()` function create a table containing all model parameter effect sizes and AIC scores to enable an easy comparison across all models.  
 
 ```{r model_compare}
 ## Model comparison using AIC
 ## Combine all candidate models (detection, random effects, habitat hypotheses)
 mods <- fitList(
+  # null model first 
+  "null"               = mod1, 
+  
   # Detection structure
   "effort"             = det1,
   "trails"             = det2,
   "trails_and_effort"  = det3,
   
   # Random-effect structures
-  "deploymentGroup_RE" = state_re1,
   "location_RE"        = state_re2,
   
   # State (occupancy) hypotheses
@@ -1615,7 +1668,8 @@ mods <- fitList(
   "human"              = h2,
   "ndvi"               = h3,
   "flii"               = h4,
-  "flii_and_human"     = multi
+  "ndvi_and_human"     = multi1,
+  "ndvi_and_elev"      = multi2
 )
 
 ## Rank models by AIC
@@ -1626,17 +1680,17 @@ mod_select[, c("model", "nPars", "AIC", "delta", "cumltvWt")]
 
 ```
 
-NDVI is the top‐ranked model, with forest landscape integrity (FLII) performing almost as well (ΔAIC \< 1), indicating that both vegetation greenness and overall forest condition are strongly supported predictors of cat occupancy. Models including HCAS and those differing only by random‐effect structure receive some support (ΔAIC ≈ 1) but are clearly less informative than NDVI or FLII. Human population density adds little explanatory power (ΔAIC \> 2), and combining it with FLII does not improve model fit. In contrast, detection‐only models based on effort or trail use perform very poorly (ΔAIC ≫ 10), confirming that cat occupancy in this system is driven primarily by landscape vegetation condition rather than detectability alone.
+NDVI is the top‐ranked model, with the multivariate model combining NDVI and human population density performing almost as well (ΔAIC \< 1), indicating that both vegetation greenness and overall human population centers are strongly supported predictors of `r sp_occu` occupancy. Models including HCAS and those differing only by random‐effect structure receive some support (ΔAIC ≈ 1) but are clearly less informative than NDVI or human population density. HCAS adds little explanatory power (ΔAIC \> 2), but does not improve model fit. In contrast, detection‐only models based on effort or trail use perform very poorly (ΔAIC ≫ 8), confirming that `r sp_occu` occupancy in this system is driven primarily by landscape vegetation condition rather than detectability alone.
 
 ```{r prediction_data}
 
 ### Generate prediction data for key habitat covariates ----
 
-# Create a sequence of FLII values across the observed range
-newd_flii <- data.frame(
-  Avg_FLII_5km2 = seq(
-    from = min(umf@siteCovs$Avg_FLII_5km2),
-    to   = max(umf@siteCovs$Avg_FLII_5km2),
+# Create a sequence of human population values across the observed range
+newd_human <- data.frame(
+  Avg_human_population_density_5km2 = seq(
+    from = min(umf@siteCovs$Avg_human_population_density_5km2),
+    to   = max(umf@siteCovs$Avg_human_population_density_5km2),
     length.out = 100
   )
 )
@@ -1652,17 +1706,17 @@ newd_ndvi <- data.frame(
 
 ### Predict occupancy across gradients ----
 
-# Predict occupancy as a function of FLII
-predict_flii <- predict(
-  h4,                 # FLII state model
+# Predict occupancy as a function of human
+predict_human <- predict(
+  h2,                 # human state model
   type       = "state",
-  newdata    = newd_flii,
+  newdata    = newd_human,
   appendData = TRUE,
   re.form    = NA     # average across random-effect levels
 )
 
-predict_flii$key_var <- "FLII"
-names(predict_flii)[5] <- "simulated_cov"
+predict_human$key_var <- "human_pop"
+names(predict_human)[5] <- "simulated_cov"
 
 # Predict occupancy as a function of NDVI
 predict_ndvi <- predict(
@@ -1678,16 +1732,16 @@ names(predict_ndvi)[5] <- "simulated_cov"
 
 ### Combine predictions for plotting ----
 
-predict_df <- rbind(predict_flii, predict_ndvi)
+predict_df <- rbind(predict_human, predict_ndvi)
 ```
 
 ```{r visual_prediction_FLII}
 
 ### Visualise predicted occupancy responses=
 
-# FLII response
+# human_pop response
 ggplot(
-  predict_df[predict_df$key_var == "FLII", ],
+  predict_df[predict_df$key_var == "human_pop", ],
   aes(x = simulated_cov, y = Predicted)
 ) +
   geom_line(color = "steelblue", linewidth = 1.2) +
@@ -1699,13 +1753,13 @@ ggplot(
   coord_cartesian(ylim = c(0, 1)) +
   theme_test() +
   labs(
-    x = "Forest Landscape Integrity Index (FLII, standardised)",
+    x = "Human populaiton density (standardised)",
     y = "Predicted occupancy"
   )
 
 ```
 
-This plot shows a positive relationship between the Forest Landscape Integrity Index (FLII) and predicted occupancy. As forest integrity increases, the probability of occupancy rises steadily, suggesting the species is more likely to occur in higher-quality forest landscapes. The shaded band indicates uncertainty around the prediction, which is wider at lower integrity values and narrows slightly as integrity improves.
+This plot shows a mildly negative relationship between human population density and predicted occupancy. As human population density increases, the probability of occupancy lowers steadily, though the confidence interval widens due to limited sampling in areas with many people. The shaded band indicates uncertainty around the prediction, which is wider at higher popualtion density values and narrows slightly as human population density decreases improves.
 
 ```{r visual_prediction_NDVI}
 
