@@ -41,7 +41,7 @@ For more information about WildObs, please visit [https://wildobs.org.au](https:
 
 > Professional tools for camera trap data access, management, and analysis in R
 
-WildObsR provides a comprehensive suite of functions for processing, standardizing, and analyzing wildlife camera trap data. Built to support the [Camera Trap Data Package (Camtrap DP)](https://camtrap-dp.tdwg.org/) data standard and [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications, this package streamlines workflows from raw observations to publication-ready analyses. 
+WildObsR provides a comprehensive suite of functions for processing, standardizing, and analyzing wildlife camera trap data. Built to support the [Camera Trap Data Package (camtrap DP)](https://camtrap-dp.tdwg.org/) data standard and [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications, this package streamlines workflows from raw observations to publication-ready analyses. Camtrap DP is a is a community-developed data exchange format for camera trap data, which enhances interoperability with other R packages and functions, such as with the [camtrapdp R package](https://inbo.github.io/camtrapdp/), [camtraptor R package](https://inbo.github.io/camtraptor/), and [camtrapR R package](https://jniedballa.github.io/camtrapR/index.html). 
 
 For more information of this R package, please visit <https://github.com/WildObs/WildObsR>
 
@@ -198,17 +198,21 @@ This data was collected by Dr Zachary Amir and the Ecological Cascades Lab at th
 
 This dataset has been published with the Atlas of Living Australia ([ALA](https://www.ala.org.au/)) through the CamtrapDP data exchange format [https://camtrap-dp.tdwg.org](https://camtrap-dp.tdwg.org/)/) and transformed into a [Darwin Core](https://dwc.tdwg.org/) dataset. You can access the occurrence records from this dataset [here](https://collections.ala.org.au/public/show/dr31594) and you can access a curated selection of camera trap images from this survey hosted on the ALA [here](https://images.ala.org.au/?criteria=b0f703bb-8cb5-48ea-b5fd-b7bf0ee51d22&fq=dataResourceUid:dr31594). 
 
-## 1.3 How to prepare camera trap data for occupancy model
+## 1.3 How to prepare camera trap data for occupancy models
 
-We will prepare a separate notebook on the steps of prepare raw camera trap images to data ready for the occupancy model. Here we just give you the summary points of what we had done:
+WildObs is developing an online Wildlife Image Management Platform powered by [Agouti](https://www.agouti.eu/) to enable researchers to use computer vision AI models to rapidly convert camera trap media (*i.e.*, images and/or videos) into spreadsheets. These spreadsheets are standardized and harmonized by WildObs and incorporated into WildObs's database and accessible via the WildObsR package. The WildObs image managment platform is still in development, but if you are interested in being an early tester or receiving updates about WildObs's development, [please complete this form to be added to the WildObs contact list](https://forms.office.com/pages/responsepage.aspx?id=U2DyzCOQzkaeHR83GasKQBuMFNE6uh1On8rg5yzIQ5tUQzBIUzVKUjhVWjFSMjJVT1lTVllWQUk5WiQlQCN0PWcu&route=shorturl). 
 
-### 1.3.1 Query WildObs MongoDB for Relevant Project IDs
+ Here we just give a brief the summary points of what we had done:
 
-**Step 1:** All raw camera trapped images had been processed with computer vision models including detection models like MegaDetector and classifiers like SpeciesNet, to generate species identifications. The images generated in this data were classified by the [Wildlife Insights's SpeciesNet computer vision model](https://www.wildlifeinsights.org/about-wildlife-insights-ai) and identifications were manually verified and corrected if necessary by humans.
+### 1.3.1 Query WildObs MongoDB for Relevant Project IDs and Download Projects
+
+**Step 1:** All raw camera trapped images have had their wildlife classified by humans or with computer vision models including detection models like MegaDetector and classifiers like SpeciesNet, to generate species identifications. The images generated in this data were classified by the [Wildlife Insights's SpeciesNet computer vision model](https://www.wildlifeinsights.org/about-wildlife-insights-ai) and identifications were manually verified and corrected if necessary by humans.
+
+We will access the relevant camera trap project we want using the two functions `WildObsR::wildobs_mongo_query()` & `WildObsR::wildobs_dp_download()`. 
 
 **WildObsR::wildobs_mongo_query function**
 
-This function queries the WildObs MongoDB database for projects matching specified spatial, temporal, taxonomic, contributor, and data-sharing criteria. It extracts metadata from the database and filters projects based on bounding box overlaps, temporal overlaps, species detected, contributors associated, and data sharing preferences. The function also ensures that only projects that have past their embargo date are shared. Only admin credentials in the db_url parameter will allow users to access data with 'closed' sharing agreements or projects not past their embargo date.
+This function queries the WildObs MongoDB database for projects matching specified spatial, temporal, taxonomic, contributor, and data-sharing criteria. It extracts metadata from the database and filters projects based on bounding box overlaps, temporal overlaps, species detected, contributors associated, matched sampling designs, and data sharing preferences. The function also ensures that only projects that have past their embargo date are shared. 
 
 ```{r Query_WildObs_database}
 
@@ -238,6 +242,10 @@ project_ids
 
 Out of the 5 projects listed above, we are going to use "ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001" for this notebook.
 
+**WildObsR::wildobs_dp_download()**
+
+This function connects to the WildObs MongoDB server, retrieves project-specific metadata and data resources, and bundles them into Frictionless Data Packages formatted using the camtrap DP data standard. Note, while neither the db_url or api_key parameters are required, the function will return an error if at least one of these parameters are not provided.
+
 ```{r project_we_care}
 
 project_ids <- project_ids[project_ids == "ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001"]
@@ -246,12 +254,12 @@ project_ids <- project_ids[project_ids == "ZAmir_QLD_Wet_Tropics_2022_WildObsID_
 dp_list <- wildobs_dp_download(
   api_key = api_key,
   project_ids = project_ids,
-  media = FALSE,              # We don't need media files for this notebook
+  media = FALSE,              # We don't need media files for this notebook, and they are slow to download
   metadata_only = FALSE
 )
 ```
 
-**dp_list** is list object containing **Camera Trap Data Package (Camrap DP)** which is a community-developed data exchange format for camera trap data.
+**dp_list** is list object containing the single data package specified in `project_ids`, though it could contain multiple projects. The data packages are formated in **camtrap DP**. 
 
 ```{r dp_list_inspect}
 
@@ -280,15 +288,13 @@ As you can see, the dp_list is a list class, while dp_list\[\[1\]\] is a camtrap
 
 ### 1.3.2 Resources extract
 
-**Step 2:** Just like in our data simulation in [Single-Species Single-Season Occupancy Model - **Conceptual**](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_conceptual.qmd) ,
+**Step 2:** Just like in our data simulation in [Single-Species Single-Season Occupancy Model - **Conceptual**](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_conceptual.qmd), we must extract the three resources:
 
-we must extract the three resources:
+-   **site-level covariates** → found in the covariates & deployments data resources, which can easily be merged together by shared columns.
 
--   site-level covariates → found in the covariates & deployments data resources, which can easily be merged together by shared columns.
+-   **observation-level covariates** → found in the observations data resources (*i.e.*, must vary with time)
 
--   observation-level covariates → found in the observations data resources (*i.e.*, must vary with time)
-
--   detection-history matrix → found in the detection events of the observations data resource
+-   **detection-history matrix** → generated from the detection events of the observations data resource
 
 ```{r step_2}
 
@@ -301,19 +307,32 @@ for (i in seq_along(dp_list)) {
 
   dp <- dp_list[[i]]   # in case we have more than one project id in the dp_list, although we are only going to use one, "ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001"
   
+  # Extract the principal investigator's name (abbreviated) to ensure multiple sources can be bound together
+  pi_tag <- dp$contributors %>%
+    # select the pi
+    purrr::keep(~ .x$role == "principalInvestigator") %>%
+    # grab the title 
+    purrr::pluck(1, "title") %>%
+    {
+      # take the first letter of the first name 
+      parts <- strsplit(., " ")[[1]]
+      # and bind w/ the second
+      paste0(substr(parts[1], 1, 1), "_", parts[length(parts)])
+    }
+  
   ## ---- DEPLOYMENTS ----
   deployments_i <- frictionless::read_resource(dp, "deployments")
-  deployments_i$source <- dp$contributors[[1]]$tag
+  deployments_i$source <- pi_tag
   deployments_list[[i]] <- deployments_i
   
     ## ---- COVARIATES ----
   covariates_i <- frictionless::read_resource(dp, "covariates")
-  covariates_i$source <- dp$contributors[[1]]$tag
+  covariates_i$source <- pi_tag
   covariates_list[[i]] <- covariates_i
 
   ## ---- OBSERVATIONS ----
   observations_i <- frictionless::read_resource(dp, "observations")
-  observations_i$source <- dp$contributors[[1]]$tag
+  observations_i$source <- pi_tag
   observations_list[[i]] <- observations_i
 }
 
@@ -323,7 +342,7 @@ covariates     <- do.call(rbind, covariates_list)
 observations   <- do.call(rbind, observations_list)
 
 # Clean up
-rm(covariates_i, deployments_i, observations_i, dp, i)
+rm(covariates_i, deployments_i, observations_i, dp, i, pi_tag)
 
 ```
 
@@ -332,22 +351,18 @@ Let's have a look on the three data frames we just created.
 **Deployments of ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001**
 
 ```{r head_deployments}
-
-print(head(deployments))
-
+glimpse(deployments)
 ```
 
-The *deployments* table contains metadata for each camera deployment, including the deployment ID, site information (location ID, name, coordinates, uncertainty), deployment period, camera specifications (model, height, delay, tilt, heading), environmental context (feature type, habitat), and project-level annotations such as tags, groups, and comments. The first six rows shown above illustrate typical entries from the Wooroonooran NP project in 2022–2023.
+The *deployments* table contains contextual data for each camera deployment, including the deployment ID, site information (location ID, name, coordinates, uncertainty), deployment period, camera specifications (model, height, delay, tilt, heading), environmental context (feature type, habitat), and project-level annotations such as tags, groups, and comments. The first several rows shown above illustrate typical entries from the Wooroonooran NP project in 2022–2023.
 
 **Observations of ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001**
 
 ```{r head_observations}
-
-print(head(observations))
-
+glimpse(observations)
 ```
 
-The *observations* table contains event-level records detected by each camera, including timestamps, media identifiers, and links back to their deployment. Each row represents either a blank trigger or an animal detection, with associated metadata such as species identification, life stage, sex, behaviour, bounding-box coordinates, classification method, and timing variables (*deltaTime_event*, *deltaTime_obs*). The first six rows show a mix of blank events and a detection of *Megapodius reinwardt* within the CFRAG_01 deployment.
+The *observations* table contains observation-level records detected by each camera, including timestamps, media identifiers, and links back to their deployment. Each row represents either a blank trigger or an animal detection, with associated metadata such as species identification, life stage, sex, behaviour, bounding-box coordinates, classification method, and timing variables (*eventStart*, *eventEnd*). **Note** that observationID has been calculated to group 5-minute camera triggers together, while eventID groups larger 30-minute detection intervals. The first six rows show a mix of blank events and a detection of *Megapodius reinwardt* within the CFRAG_01 deployment.
 
 **Covariates of ZAmir_QLD_Wet_Tropics_2022_WildObsID_0001**
 
@@ -355,7 +370,7 @@ The *observations* table contains event-level records detected by each camera, i
 print(head(covariates))
 ```
 
-The *covariates* table provides environmental and landscape attributes associated with each camera deployment. It includes spatial location (latitude/longitude), deployment period, and group labels, along with a wide range of ecological covariates summarised at multiple spatial scales (point, 1 km², 3 km², 5 km², 10 km²). These covariates capture habitat condition (e.g., FLII), human pressure (human footprint), topography (altitude), climate variables (temperature, precipitation), vegetation indices (NDVI/EVI if included), nighttime lights, and other environmental descriptors. The first six rows show covariate profiles for the CFRAG deployments in the Eacham–Curtain Fig project.
+The *covariates* table provides environmental and landscape attributes associated with each camera deployment. It includes spatial location (latitude/longitude), deployment period, and group labels, along with a wide range of ecological covariates summarised at multiple spatial scales (point, 1 km², 3 km², 5 km², 10 km²). These covariates capture habitat condition (e.g., FLII), human pressure (human footprint), topography (altitude), climate variables (temperature, precipitation), vegetation indices (NDVI/EVI if included), nighttime lights, and other environmental descriptors. The first several rows show covariate profiles for the CFRAG deployments in the Lake Eacham–Curtain Fig deploymentGroup
 
 ### 1.3.4 Mapping camera sites
 
