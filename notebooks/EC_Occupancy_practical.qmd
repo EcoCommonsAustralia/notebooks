@@ -1148,37 +1148,48 @@ sp_scales$scale_name <- paste0(sp_scales$home_range_m2 / 1e6, "km2")
 sp_scales
 ```
 
+### 1.3.7 Detection matrix
+
 **Step 5: Prepare matrices**
 
-For each species (i.e., in a for-loop):
+For each species (*i.e.*, in a for-loop):
 
 -   Select the right spatial resampling scale based on home range data previously collected from the [`traitdata` R package](https://github.com/RS-eco/traitdata?tab=readme-ov-file).
 
 -   The spatial resampling function will add the spatial scale to the sampling unit name to reflect the resampled scale. Therefore, to work across multiple scales, one must standardise sampling unit names to something simple like `cellID`.
 
--   Additional simple covariates can be derived from more complex covaraites that have many levels. For example, `featureType` contains several enumerated classes, but can be simply reduced to a two-level variable of on or off-trails based on the enumerated values types. Including fixed effect covaraites with fewer levels often improves modelling performance.
+-   Additional simple covariates can be derived from more complex covaraites that have many levels. For example, `featureType` contains [several enumerated classes](https://camtrap-dp.tdwg.org/data/#deployments.featureType), but can be simply reduced to a two-level variable of on or off-trails based on the enumerated values types. Including fixed effect covaraites with fewer levels often improves modelling performance.
 
--   WildObs calculates spatial covariates across multiple spatial scales, including point values for the individual deployment coordinates, and in circular buffers around camera deployments covering areas of 1, 3, 5, and 10 km2. Unless you are particularly interested in how the same variable may affect wildlife occupancy across different spatial scales, one should thin the site covariates to the spatial scale that most closely matches the spatial resampling and home range scale. This is also a useful time to think critically about the covariates included in the analysis, since the analysis will be simplified by only selecting site-level covariates that will be useful for testing hypotheses or determining a best fitting model.
+-   WildObs calculates many **site-level covariates** across multiple spatial scales, including point values for the individual deployment coordinates, and in circular buffers around camera deployments covering areas of 1, 3, 5, and 10 km2. Unless you are particularly interested in how the same variable may affect wildlife occupancy across different spatial scales, one should thin the site covariates to the spatial scale that most closely matches the spatial resampling and home range scale. This is also a useful time to think critically about the covariates included in the analysis, since the analysis will be simplified by only selecting site-level covariates that will be useful for testing hypotheses or determining a best fitting model.
 
--   After site-level covariates are selected, select observation covariates from the spatialy resampled observations (*e.g.*, numberDeploymentsActiveAtDate, trailStatus, etc.). These covariates will vary through time and per detection. Therefore, these covariates must be found in the observations, not covariates tables.
+-   After site-level covariates are selected, select **observation covariates** from the spatialy resampled observations (*e.g.*, `numberDeploymentsActiveAtDate`, `trailStatus`, etc.). These covariates will vary through time and per detection. Therefore, these covariates must be found in the observations, not covariates, table.
 
--   Determine the structure of the detection history matrices you will create. First, you must determine the maximum duration of the matrix (i.e., number of columns), and its recommended to not exceed 100 days to satisfy the closure assumption of the model. Next, you must determine the sampling window duration which is the number of days that fit into one column in the detection history matrix. Larger intervals (e.g., 7-10 days) are typically better for rare species with very low detections, while shorter values (e.g., 2-5 days) are better for frequently detected species. The goal here is to increase detection probability to enhance model performance. Finally, determine if you want to use *all* sampling units in the resampled data, or only locationNames (i.e., large landscapes such as a national park) where the species was detected. Limiting the data to locationNames where the species was detected will improve model performance since the model will estimate non-zero occupancy for all sampling units even if we know the species is absent from a particular landscape. However, the species may be present but have very low detection probability, so it may be worth including locationNames with zero detections if there is strong rationale for inclusion.
+- Determine the structure of the **detection history matrices** you will create: 
 
--   Put together the information you had just collated into the WildObsR::matrix_generator() function. This function produces detection history matrices for multiple species and multiple resampling scales and ensures that the site-level and observation-level covaraites are properly aligned to facilitate an occupancy analysis.
+  - First, you must determine the _maximum duration_ of the matrix (i.e., number of columns), and its recommended to not exceed 100 days to satisfy the population closure assumption of the model. 
+  
+  - Next, you must determine the _sampling window duration_ which is the number of days that fit into one column in the detection history matrix. Larger intervals (*e.g.*, 7-10 days) are typically better for rare species with very low detections, while shorter values (*e.g.*, 2-5 days) are better for frequently detected species. 
+  
+    - The goal here is to increase detection probability to enhance model performance. 
+    
+  - Finally, determine if you want to use *all* sampling units in the resampled data, or only locationNames (*i.e.*, large landscapes such as a national park) where the species was detected.
+  
+    - Limiting the data to locationNames where the species was detected will improve model performance since the model will estimate non-zero occupancy for all sampling units even if we know the species is absent from a particular landscape. However, the species may be present but have very low detection probability, so it may be worth including locationNames with zero detections if there is strong rationale for inclusion.
+
+- Put together, the information you had just collated into the `WildObsR::matrix_generator()` function. This function produces detection history matrices for multiple species and multiple resampling scales and ensures that the site-level and observation-level covaraites are properly aligned to facilitate an occupancy analysis.
+  - The `WildObsR::matrix_generator()` function contains an additional paramater called `type`, where you can specify if you want to create a detection history matrix (using detection-non-detection data) for occupancy modelling or a count history matrix (using count data) for abundance modelling. Abundance modelling is beyond the scope of this tutorial, so we will set `type == "occupancy"`. 
 
 **Step 6: Build modelling objects**
 
--   For **occupancy models**: extract the detection history matrix, site-level and observation-level covariates form the WildObsR::matrix_generator() function and save them as an unmarked::unmarkedFrameOccu (UMF). This is a particular data structure formatted to work with occupancy models in the unmarked R package, thus facilitating easy analysis.
+-   For **occupancy models**: extract the detection history matrix, site-level and observation-level covariates form the `WildObsR::matrix_generator()` function and save them as an `unmarked::unmarkedFrameOccu` (UMF). This is a particular data structure formatted to work with occupancy models in the unmarked R package, thus facilitating easy analysis.
 
 -   For multiple species, you can store each UMF in a list to save space in your global environment. Can format the list as one UMF per species with the name of the species saved in the name of the element in the list.
 
 ```{r model_umf}
 # Required arguments (defined once)
-dur <- 50
-w <- 5
-all_locationNames <- FALSE
-individuals <- "max"
-cap_count <- FALSE
+dur <- 50                   # maximum sampling duration 
+w <- 5                      # sampling window duration
+all_locationNames <- FALSE  # only include locationNames where species were detected
 
 # Build species + scale table
 stopifnot(
@@ -1259,6 +1270,18 @@ for (i in seq_len(nrow(sp_scales))) {
       "trailStatus",
       mode_cols
     ))
+    
+    ## ensure landscapes are removed if NOT warning to be included in matrix
+    if(!all_locationNames){
+      # grab deployments w/ detections
+      sp_deps = resamp_obs$cellID[which(resamp_obs$scientificName == sp)]
+      # and grab the corresponding landscapes 
+      sp_land = unique(resamp_covs$locationName[resamp_covs$cellID %in% sp_deps])
+      # thin covs to only those landsacpes
+      resamp_covs = resamp_covs[resamp_covs$locationName %in% sp_land, ]
+      # and thin observatiosn to match 
+      resamp_obs = resamp_obs[resamp_obs$cellID %in% resamp_covs$cellID, ]
+    } # end locationName thinning conditon
 
     # Run matrix generator (extraction only)
     mat <- matrix_generator(
@@ -1269,8 +1292,7 @@ for (i in seq_len(nrow(sp_scales))) {
       all_locationNames = all_locationNames,
       scientificNames   = sp,
       type = "occupancy",
-      individuals = individuals,
-      cap_count   = cap_count
+      individuals = "max"        # doesn't matter for occupancy, only abundance 
     )
 
     # Save extracted pieces
@@ -1287,7 +1309,7 @@ for (i in seq_len(nrow(sp_scales))) {
 
   })
 
-}
+} # end loop 
 
 ```
 
@@ -1299,10 +1321,9 @@ You can see there are two repeating warnings for all the four species:
 
 For warning 1, since all the camera deployments had bait = "none", and had predatorManagement = "No management", so they are two constant variable have no modelling values, so WildObsR automatically drops it. This is good for us.
 
-For warning 2, similar to warning 1, all observations came from the same source (camera trap) and all observations were in the same IBRAsubRegionName after resampling, again, no variation, they can't be used as covariates, so WildObsR automatically drops them.
+For warning 2, similar to warning 1, all observations came from the same data provider (`source`) and all observations were in the same IBRAsubRegionName after resampling, again, no variation, they can't be used as covariates, so WildObsR automatically drops them.
 
 ```{r summary}
-
 # Summary of what succeeded / failed
 names(vars_only)
 errors
@@ -1345,182 +1366,57 @@ which means
 First, we need to generate an UMF for each of the species we select.
 
 ```{r umfs}
-
-####### Generate UMFs for each species ######
-
-# Extract UMFs per species
-
-# how long should sampling occur, in days?
-dur = 50 # let's do 50 days
-
-# how long should our observation window (i.e., column in the matrix), in days?
-w = 5 # length of each sampling occasion (days)
-
-# Do we want to include all locationNames in the data or only where the species was detected?
-all_locationNames = F # False is only for locationNames where detected
-
-# how do we aggregage multiple individual in one sampling window?
-individuals = "max" # sum is the other option
-
-# do we want to limit the maximum number of detections in count matricies? This can improve models ability to handle the data 
-cap_count = F # true limits the counts 
+# Extract UMFs per species, using the values gathered from the matrix_generator() function
 
 # Repeat per species
 umf_list = list()
-for(i in 1:length(sp_scales$scientificName)){
-  
-  ## grab sp and scale
-  sp = sp_scales$scientificName[i]
-  scale = sp_scales$scale_name[sp_scales$scientificName == sp]
-  
-  ## extract re-sampled data at the correct scale
-  resamp_obs = resampled_data$spatially_resampled_observations[[paste("cellID", scale, sep = "_")]]
-  resamp_covs = resampled_data$spatially_resampled_covariates[[paste("cellID", scale, sep = "_")]]
-  # and rename column to be standardized
-  names(resamp_obs)[grepl("cellID", names(resamp_obs))] = "cellID"
-  names(resamp_covs)[grepl("cellID", names(resamp_covs))] = "cellID"
-  
-  ## create a simple on/off trail variable based off featureType
-  resamp_obs$trailStatus[grepl("road|trail", resamp_obs$featureType)] = "onTrail"
-  resamp_obs$trailStatus[resamp_obs$featureType == ""] = "offTrail"
-  
-  # ## finally, grab all locations where the critter was detected
-  # lands = unique(resamp_covs$locationName[resamp_covs$cellID %in% resamp_obs$cellID[resamp_obs$scientificName == sp]])
-  # # and thin data to those locationNames
-  # resamp_covs = resamp_covs[resamp_covs$locationName %in% lands, ]
-  # resamp_obs = resamp_obs[resamp_obs$cellID %in% resamp_covs$cellID, ]
-  
-  ### Thin covariates to variables at relevant scale
-  # Set your target scale
-  target_scale <- as.numeric(gsub("km2", "", scale))
-  
-  # Get all km2-related columns
-  km2_cols <- names(resamp_covs)[stringr::str_detect(names(resamp_covs), "_\\d+km2$|_point$")]
-  
-  # Extract base variable name and numeric scale
-  scale_info <- tibble::tibble(
-    col = km2_cols
-  ) %>%
-    dplyr::mutate(
-      # Extract scale number, or assign 0 for "point"
-      scale_val = dplyr::if_else(stringr::str_detect(col, "_point$"), 0,
-                                 as.numeric(stringr::str_extract(col, "\\d+(?=km2$)"))),
-      # Extract base name by removing suffix
-      base = stringr::str_remove(col, "_(point|\\d+km2)$")
-    )
-  
-  # For each base variable, keep the column closest to the target scale
-  closest_cols <- scale_info %>%
-    dplyr::group_by(base) %>%
-    dplyr::slice_min(base::abs(scale_val - target_scale), n = 1, with_ties = FALSE) %>%
-    dplyr::ungroup()
-  
-  # Grab modal cols
-  mode_cols = names(resamp_covs[grepl("mode_", names(resamp_covs))])
-  ## and combine with extra important columns
-  site_covs = c(tag_cols,         # deploymentTags calculated earlier
-                closest_cols$col, # correct spatial scale
-                "deploymentGroups", "locationName") # context.
-  ## and grab the observation covariates
-  obs_covs = c("numberDeploymentsActiveAtDate", "trailStatus", mode_cols)
-  # TESTING
-  # obs_covs = c()
-  
-  
-  ## run models for both occupancy and abundance
-  states = c("occupancy", "abundance")
-  temp = list()# store matricies here
-  for(s in 1:length(states)){
-    ## run the custom function to create the matrix
-    mat = matrix_generator(obs = resamp_obs, covs = resamp_covs, dur = dur, w = w,
-                           site_covs = site_covs, obs_covs = obs_covs,
-                           all_locationNames = all_locationNames, scientificNames = sp,
-                           type = states[s], individuals = individuals, cap_count = cap_count)
-    ## save this info as a UMF object
-    # then construct the UMF
-    if(states[s] == "occupancy"){
-      if(length(obs_covs)>0){
-        umf = unmarked::unmarkedFrameOccu(y = mat[[1]]$detection_matrix,
-                                          siteCovs = mat[[1]]$site_level_covariates,
-                                          obsCovs = mat[[1]]$observation_level_covariates)
-      }else{
-        # dont include obs_covs if not present!
-        umf = unmarked::unmarkedFrameOccu(y = mat[[1]]$detection_matrix,
-                                          siteCovs = mat[[1]]$site_level_covariates)
-      } # end obs_cov condition
-    } # end occu condition
-    if(states[s] == "abundance"){
-      if(length(obs_covs)>0){
-        umf = unmarked::unmarkedFramePCount(y = mat[[1]]$detection_matrix,
-                                            siteCovs = mat[[1]]$site_level_covariates,
-                                            obsCovs = mat[[1]]$observation_level_covariates)
-      }else{
-        # dont include obs_covs if not present!
-        umf = unmarked::unmarkedFramePCount(y = mat[[1]]$detection_matrix,
-                                            siteCovs = mat[[1]]$site_level_covariates)
-      } # end obs_cov condition
-    } # end abund condition
-    
-    # save the matrix
-    temp[[s]] =umf
-    names(temp)[s] = states[s]
-  } # end per state
-  
-  ## Save temp per critter
-  umf_list[[i]] = temp
-  names(umf_list)[i] = sp
-  
-} # end per critter
-# clean up
-rm(i,s,mat,temp,states,obs_covs, resamp_obs, resamp_covs, site_covs, closest_cols,
-   covs_with_tags, scale_info, traits, km2_cols, mode_cols, mode_cols_covs,
-   scale, scales, sp, start, end, target_scale)
-
+for(i in 1:length(vars_only)){
+  ## select data from one species
+  dat = vars_only[[i]]
+  ## and store in UMF object 
+  umf = unmarked::unmarkedFrameOccu(y = dat$detection_matrix,
+                                    siteCovs = dat$site_covariates,
+                                    obsCovs = dat$obs_covariates)
+  # save in the list 
+  umf_list[[i]] = umf
+  names(umf_list)[i] = names(vars_only)[i]
+} # end per species 
+rm(i, dat, umf)
 ```
 
-> The warnings you see are a normal part of the modelling process. They occur when a variable is the same everywhere for a species, or when a categorical variable needs to be converted into a model-ready format. The system handles this automatically to keep the models reliable.
+> The warnings you see are a normal part of the modelling process. They occur when a categorical variable needs to be converted into a model-ready format. The system handles this automatically to keep the models reliable.
 
 ```{r occupancy_result_inspect_1}
-
 ## inspect results
 names(umf_list) # all species present
-
 ```
 
-We successfully made the umf for each species.
-
-```{r occupancy_result_inspect_2}
-names(umf_list$`Felis catus`) # both abundance and occupancy!
-
-```
-
-For each species, we made umf dataframe for both occupancy model and abundance model.
+We successfully made the occupancy umf for each species. Lets inspect the umf object for a single species, *Felis catus*. 
 
 ```{r occupancy_result_inspect_3}
-
 ## inspect one UMF 
 # cats occupancy model
-umf = umf_list$`Felis catus`$occupancy
+umf = umf_list$`Felis catus`
 
 # inspect data
 summary(umf)
 ```
 
 ```{r occupancy_result_inspect_4}
-
+# visualize 
 plot(umf)
-
 ```
 
-This heatmap shows detections across sites (rows) and repeated observation periods (columns). Most sites have many non-detections (light cells), with detections occurring sporadically, which is typical for wildlife monitoring data. A small number of sites show repeated detections across multiple observations, indicating higher or more consistent activity at those locations.
+This heatmap shows detections across sites (rows) and repeated observation periods (columns). Most sites have many non-detections (light cells), with detections occurring sporadically, which is typical for wildlife monitoring data, especially for rare species. A small number of sites show repeated detections across multiple observations, indicating higher or more consistent activity at those locations.
 
 ### 1.4.2 Null model for Occupancy model
 
+Creating occupancy models using the unmarked R package follows a similar syntax to writing linear models in R. We will use the `unmarked::occu()` function to create occupancy models. The formula is specifid as a double sided formula describing detection probability first (left side) and then occupancy (right side), where tildas (~) denote each formula. Before we begin adding covariates to our occupancy models, its wise to generate a *null model* that uses no covariates in either formula as the basis of comparison. 
+
 ```{r occ_model_null}
-####### Basic hand-written cat occupancy models & visualization ##### 
+####### Basic hand-written cat occupancy models & visualization 
 
-## working w/ the cat occupancy model from above 
-
+# create a null model w/ no variables on the detection (left) or occupancy (right) formula
 mod1 <- unmarked::occu(~1 ~1, data = umf)
 
 out <- capture.output({
@@ -1541,7 +1437,7 @@ This null occupancy model estimates that cats occupy about 27% of sites, with a 
 
 ## Detection models with alternative detection covariates
 ## Goal: identify the best-supported detection structure before modelling occupancy
-
+ 
 # Detection varies with sampling effort only
 det1 <- unmarked::occu(~ numberDeploymentsActiveAtDate ~ 1, data = umf)
 
