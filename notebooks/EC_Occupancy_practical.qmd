@@ -288,7 +288,7 @@ As you can see, the dp_list is a list class, while dp_list\[\[1\]\] is a camtrap
 
 ### 1.3.2 Resources extract
 
-**Step 2:** Just like in our data simulation in [Single-Species Single-Season Occupancy Model - **Conceptual**](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_conceptual.qmd), we must extract the three resources:
+**Step 2:** Just like in our data simulation in [Single-Species Single-Season Occupancy Model - **Conceptual**](https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_conceptual.qmd), we must extract and inspect the three resources:
 
 -   **site-level covariates** → found in the covariates & deployments data resources, which can easily be merged together by shared columns.
 
@@ -372,17 +372,17 @@ print(head(covariates))
 
 The *covariates* table provides spatio-temporal environmental and landscape attributes associated with each camera deployment. It includes spatial location (latitude/longitude), deployment period, and group labels, along with a wide range of ecological covariates summarised at multiple spatial scales (point, 1 km², 3 km², 5 km², 10 km²). These covariates capture habitat condition (e.g., [Forest Landscape Integrity Index (FLII)](https://www.forestintegrity.com/)), human pressure ([human footprint index](https://wcshumanfootprint.org/)), topography (altitude), climate variables (temperature, precipitation), vegetation indices ([NDVI](https://data.gov.au/data/dataset/national-forest-and-sparse-woody-vegetation-data-version-7-0-2022-release)), [nighttime lights](https://doi.org/10.3390/rs13050922), and other environmental descriptors. The first several rows show covariate profiles for the CFRAG deployments in the Lake Eacham–Curtain Fig deploymentGroup
 
-All frictionless data packages contain schemas that describes each column in each table, providing useful additional context for unknown data fields. These can be accessed through the function `frictionless::get_schema()`. This is particularly useful for the covariates table due to the large number of availible covariates, which provides information about how each covariate was calculated. We can easily convert the schema to a table for easier viewing and manipulation
+All frictionless data packages contain schemas that describes each column in each table, providing useful additional context for unknown data fields. These can be accessed through the function `frictionless::get_schema()`. This is particularly useful for the covariates table due to the large number of available covariates, which provides information about how each covariate was calculated. We can easily convert the schema to a table for easier viewing and manipulation, but will inspect schemas for other data resources later. 
 
 ```{r get_covs_schema}
 # extract schema
-cov_schema = frictionless::get_schema(dp_list[[1]], "covariates")
+covs_schema = frictionless::get_schema(dp_list[[1]], "covariates")
 # convert to a df 
 fields_df <- do.call(
   # bind each row
   rbind,
   # and extract value from schema fields for
-  lapply(cov_schema$fields, function(f) {
+  lapply(covs_schema$fields, function(f) {
     data.frame(
       # col name, 
       name        = f$name %||% NA_character_,
@@ -396,7 +396,7 @@ fields_df <- do.call(
 
 For example, we can view the description of the NDVI variable calculated per camera trap: `r fields_df$description[fields_df$name == "NDVI_point"]`
 
-### 1.3.4 Mapping camera sites
+### 1.3.3 Mapping camera sites
 
 Before we dive into the data, let’s take a moment to map out all the sites where teams worked tirelessly to deploy cameras and collect these images. Their efforts deserve recognition
 
@@ -622,7 +622,7 @@ ggplot(covs_long, aes(x = locationName, y = value, fill = locationName)) +
 
 **Eacham_Curtain_Fig_NPs** stands out as the only **disturbed** site — very low FLII, low NDVI, and the highest human footprint.
 
-### 1.3.5 **WildObs Data Integrity Check & Pre-processing**
+### 1.3.4 WildObs Data Integrity Check & Pre-processing
 
 This block performs **data inspection, schema extraction, validation, and pre-processing** for the three WildObs resources: **deployments, observations, and covariates.**
 
@@ -766,7 +766,7 @@ unique(covs_schema_df$name[covs_schema_df$type == "number"])
 unique(covs_schema_df$name[covs_schema_df$required == TRUE]) # anything that wont generate an NA
 ```
 
-Finally, all spatially derived covariates include a link to access the online source where the spatial data was accessed to provide more information.
+Finally, all spatially derived covariates include a link to access the online source where the spatial data was accessed to provide more information. This is currently missing but will be fixed soon ([see this issue on WildObs database for updates](https://github.com/WildObs/cam-DB/issues/239))
 
 ```{r more_info_data}
 
@@ -801,7 +801,7 @@ observations$observationEnd = as.POSIXct(observations$observationEnd, format = "
 
 Inspect deployment covariates and standardise any inconsistencies. A common field with potentially inconsistent values is the [deploymentTags](https://camtrap-dp.tdwg.org/data/#deployments.deploymentTags) field that captures additional deployment related information beyond the camtrapDP standard. This field is formatted using `key:value` pairs that can be extracted to new columns.
 
-This section standardises and parses the deploymentTags field, which often stores additional user-defined metadata such as bait type or predator-management activity. Tags are cleaned, split into key–value pairs, reshaped into separate covariate columns, and merged back into the main covariates table. This transforms previously unstructured text metadata into proper categorical covariates that can be included in the analysis as fixed effects or grouping variables.
+This section standardises and parses the deploymentTags field, which often stores additional user-defined metadata such as bait type or predator-management activity. Tags are cleaned, split into key–value pairs, reshaped into separate covariate columns, and merged back into the main covariates table. This transforms previously unstructured text metadata into proper categorical covariates that can be included in the analysis as fixed effects or grouping variables. This likely will become a function to be used in the WildObsR package ([see here for updates](https://github.com/WildObs/WildObsR/issues/93)). 
 
 ```{r deploy_tags}
 
@@ -857,7 +857,7 @@ table(covs_with_tags$predatorManagement)
 
 This tells us that **all 275 deployments share the same tag values**:
 
--   Every deployment was recorded with **bait:none**, meaning **no bait was used** anywhere in the study.
+-   Every deployment was recorded with **bait:none**, meaning **no bait was used** anywhere in the study. This can also be inspected by checking the logical true/false column `baitUse`. 
 
 -   Every deployment also has **predatorManagement: No management**, meaning **no predator-control actions (e.g., trapping, poison, fencing) were active** during any deployment.
 
@@ -866,13 +866,13 @@ This tells us that **all 275 deployments share the same tag values**:
 tag_cols = setdiff(names(covs_with_tags), names(covariates))
 ```
 
-### 1.3.6 Species selection
+### 1.3.5 Species selection
 
-**Step 4: Species selection**
+**Step 3: Species selection**
 
--   Select the species you are interested in. Can repeat the process of analyzing species occupancy for multiple species using for-loops. In this example we will select six species.
+-   Select the species you are interested in. Can repeat the process of analyzing species occupancy for multiple species using for-loops. In this example we will select four species.
 
--   Understand the ecology of the species you have selected. An important consideration is the average home-range size of each species relative to the assumption of *independence across sites*. For example, if a species’ home range is larger than the average spacing between sampling sites and the same individual is detected across multiple sites, this violates a key assumption of the model. WildObs provides a data package that includes verified species taxonomy (matched with URIs generated using the [`galah` R package](https://galah.ala.org.au/R/)) and species traits, including home-range sizes, which were extracted from the [`traitdata` R package](https://github.com/RS-eco/traitdata?tab=readme-ov-file).
+-   Understand the ecology of the species you have selected. An important consideration is the average home-range size of each species relative to the assumption of *independence across sites*. For example, if a species’ home range is larger than the average spacing between sampling sites and the same individual is detected across multiple sites, this violates a key assumption of the model ([see here for more information]( https://doi.org/10.1111/ecog.07402)). WildObs provides a data set that includes species traits, including home-range sizes, which were extracted from the [`traitdata` R package](https://github.com/RS-eco/traitdata?tab=readme-ov-file) and matched with the WildObs species database. 
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/occupancy_practical_animals.png)
 
@@ -886,22 +886,20 @@ Source of the picture of each species:
 :::
 
 ```{r step_4_species}
-
-sp = c("Canis dingo",             # Dingo, very common and present in all projects 
-       "Felis catus",             # Feral cat, somewhat enough and present in all projects
-       "Orthonyx spaldingii",     # Chowchilla, Rare and only present in 1 project
-       "Varanus varius"           # Lace Monitor, Rare but present in all projects 
+sp = c("Canis dingo",             # Dingo
+       "Felis catus",             # Feral cat
+       "Orthonyx spaldingii",     # Chowchilla
+       "Varanus varius"           # Lace Monitor
        )
-
 ```
 
-### 1.3.7 Spatial resampling
+### 1.3.6 Spatial resampling
 
-**Step 5: Spatial resampling**
+**Step 4: Spatial resampling**
 
 Spatial resampling is the process of aggregating camera deployments and observations into spatially discrete sampling units. This process is achieved by creating a grid of hexagons covering a specific area, and aggregating deployments and observations per date. This process ensures comparability among landscapes, reduces spatial pseudo-replication, and, by using a sampling unit size larger than the species’ home range, ensures that occupancy is being measured, as opposed to habitat use.
 
-For more information on spatial resampling for occupancy model, please see the method sessions of Amir et al. (2022), Anderson et al. (2025), and Linkie (2020).
+For more information on spatial resampling for occupancy model, please see the method sections of Amir et al. (2022), Anderson et al. (2025), and Linkie (2020).
 
 The WildObsR R library provides two functions to facilitate resampling: `WildObsR::spatial_hexagon_generator()` to generate the grid of hexagons and `WildObsR::resample_covariates_and_observations()` to use the grid of hexagons to resample the data.
 
@@ -909,13 +907,18 @@ The WildObsR R library provides two functions to facilitate resampling: `WildObs
 
 -   Use the `WildObsR::spatial_hexagon_generator()` function to generate hexagonal sampling units at multiple scales (1 km², 3 km², 6 km², 65 km²) based on species home range.
 
--   Examine and summarise sampling efforts by inspecting important columns like number of deployments and hexagonal sampling units, duration of deployments, and calculating new columns like sampling effort, expressed as trap nights. Importantly, the field `deploymentGroups` has been calculated through the WildObs data curation process to describe spatially (*i.e.*, within one locationName) and temporally (*i.e.*, 100 days maximum in duration) distinct sampling efforts.
+-   Examine and summarise sampling efforts by inspecting important columns like number of deployments and hexagonal sampling units, duration of deployments, and calculating new columns like sampling effort, expressed as trap nights.
+  - Importantly, the field [`deploymentGroups`](https://camtrap-dp.tdwg.org/data/#deployments.deploymentGroups) has been calculated through the WildObs data curation process to describe spatially (*i.e.*, within one landscape, denoted as [locationName](https://camtrap-dp.tdwg.org/data/#deployments.locationName)) and temporally (*i.e.*, 100 days maximum in duration) distinct sampling efforts (*i.e.*, surveys). 
 
 -   Remove deploymentGroups that don’t meet inclusion criteria (too short, too few sites, \>120 days, multiple landscapes, repeated deployments). This ensures robust surveys are included in the analysis and results wont be skewed by small sample sizes.
 
 -   Keep only robust deployments and matching observations that fall within deploymentGroups of sufficent size.
 
--   Use the `WildObsR::resample_covariates_and_observations()` function to spatially resample covariates and observations across multiple spatial scales. This function changes the structure of the data in several important ways. First, it removes any time-related information and summarizes observations per day. The function also calculates revised sampling effort per sampling unit (*i.e.*, rather than per deployment) to account for multiple deployments within a single sampling unit. A new observation-level covariate, `numberDeploymentsActiveAtDate`, describes how many deployments were active within a sampling unit on each day and serves as a high-resolution observation-level covariate for sampling effort. You can also include additional observation-level covariates from the covariates table in the observations table (*e.g.*, `featureType`). For example, if two deployments placed on different features are resampled into the same sampling unit, you can include `featureType` to denote which deployment and corresponding feature generated the observation. Finally, it is important to consider whether to aggregate the number of individuals detected per day by taking the **maximum** or the **sum** across all detections. For a full description of this function and its options, see the help page: `?WildObsR::resample_covariates_and_observations()`
+-   Use the `WildObsR::resample_covariates_and_observations()` function to spatially resample covariates and observations across multiple spatial scales. This function changes the structure of the data in several important ways. 
+  - First, it removes any time-related information and summarizes observations per day. The function also calculates revised sampling effort per sampling unit (*i.e.*, rather than per deployment) to account for multiple deployments within a single sampling unit. 
+  - A new observation-level covariate, `numberDeploymentsActiveAtDate`, describes how many deployments were active within a sampling unit on each day and serves as a high-resolution observation-level covariate for sampling effort. You can also include additional observation-level covariates from the covariates table in the observations table (*e.g.*, `featureType`). 
+    - For example, if two deployments placed on different features are resampled into the same sampling unit, you can include `featureType` to denote which deployment and corresponding feature generated the observation. 
+  - Finally, it is important to consider whether to aggregate the number of individuals detected per day by taking the **maximum** or the **sum** across all detections. For a full description of this function and its options, see the help page: `?WildObsR::resample_covariates_and_observations()`
 
 **Species traits**
 
@@ -946,11 +949,11 @@ traits[, c("binomial_verified", "home_range_km2")]
 
 ```
 
-From the table above, home-range information is incomplete for several species. We only have reliable data for *Feral cat*, which typically remains within approximately 6 km of its home range. For dingo, lace monitor, and chowchilla, home-range values are currently unknown. We will need to identify suitable surrogate estimates to fill these gaps.
+From the table above, home-range information is incomplete for several species. We only have reliable data for **Feral cat**, which typically remains within approximately 6 km of its home range. For dingo, lace monitor, and chowchilla, home-range values are currently unknown. We will need to identify suitable surrogate estimates to fill these gaps.
 
-To proceed, we will apply surrogate values: 6 km for dingo, and 1 km for both lace monitor and chowchilla as our current best estimates. Dingoes have unusually large or variable home-range estimates. To avoid under-estimating their spatial scale, they are assigned the **maximum** available home-range value (6,000,000 m² in our dataset).
+To proceed, we will apply surrogate values: 6 km for dingo, and 1 km for both lace monitor and chowchilla as our current best estimates. Dingoes have unusually large or variable home-range estimates. To avoid under-estimating their spatial scale, they are assigned the **maximum** available home-range value (6,000,000 m² in our subset of four species).
 
-Species without home-range estimates (e.g., Orthonyx spaldingii, Varanus varius) are given a default of:
+Species without home-range estimates (e.g., *Orthonyx spaldingii*, *Varanus varius*) are given a default of:
 
 -   **1 km²** = **1,000,000 m²**
 
@@ -1044,7 +1047,6 @@ rm
 
 
 # Quantify loss of observations if removed
-
 lost_pct <- round(
   nrow(observations[
     observations$deploymentID %in%
@@ -1083,7 +1085,7 @@ length(unique(observations$deploymentID))
 
 # 1. Select columns to aggregate using MODE (categorical fields)
 mode_cols_covs <- names(covs_cellIDs)[
-  grepl("source|IBRAsubRegionName", names(covs_cellIDs))
+  grepl("source|IBRAsubRegionName|GEEBAM", names(covs_cellIDs))
 ]
 # These variables represent attributes where the most common value
 # should be retained after resampling.
@@ -1146,7 +1148,7 @@ sp_scales$scale_name <- paste0(sp_scales$home_range_m2 / 1e6, "km2")
 sp_scales
 ```
 
-**Step 6: Prepare matrices**
+**Step 5: Prepare matrices**
 
 For each species (i.e., in a for-loop):
 
@@ -1164,7 +1166,7 @@ For each species (i.e., in a for-loop):
 
 -   Put together the information you had just collated into the WildObsR::matrix_generator() function. This function produces detection history matrices for multiple species and multiple resampling scales and ensures that the site-level and observation-level covaraites are properly aligned to facilitate an occupancy analysis.
 
-**Step 7: Build modelling objects**
+**Step 6: Build modelling objects**
 
 -   For **occupancy models**: extract the detection history matrix, site-level and observation-level covariates form the WildObsR::matrix_generator() function and save them as an unmarked::unmarkedFrameOccu (UMF). This is a particular data structure formatted to work with occupancy models in the unmarked R package, thus facilitating easy analysis.
 
