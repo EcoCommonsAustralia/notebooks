@@ -16,15 +16,16 @@ Date: Feb 2026
 
 # Script information
 
-There are two notebooks about Single-Species Single-Season Occupancy Model, one is conceptual, and another is practical. This one is the **practical** one which gives a brief introduction to the concepts of Single-Species Single-Season Occupancy Model with some simulated data.
+There are two notebooks about Single-Species Single-Season Occupancy Model, one is conceptual ([click here to learn more](https://ecocommonsaustralia.github.io/notebook-blog/notebooks/Occupancy/EC_Occupancy_conceptual.html)), and another is practical. This one is the **practical** notebook which gives a brief introduction to the concepts of Single-Species Single-Season Occupancy Model with some simulated data.
 
-This notebook, developed by the EcoCommons and WildObs team, showcases how to build Single-Species Single-Season Occupancy Model with camera trapping data with 'unmarked" R package.
+This notebook, developed by the EcoCommons and WildObs team, showcases how to build Single-Species Single-Season Occupancy Model with camera trapping data with "unmarked" R package ([click here to learn more](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.14123)).
 
 # Introduction
 
-Occupancy models provide a powerful framework for estimating where species occur while accounting for imperfect detection — a common challenge in wildlife research. Camera traps are particularly well suited to this task because they generate repeated detection–non-detection data that can be structured into the hierarchical models implemented in the **unmarked** R package.
+Occupancy models provide a powerful framework for estimating where species occur while accounting for imperfect detection — a common challenge in wildlife research. Camera traps are particularly well suited to this task because they generate repeated detection–non-detection data that can be structured into the hierarchical models implemented in the **unmarked** R package. 
 
-This practical notebook demonstrates how to build a **single-species, single-season occupancy model** using camera-trap data curated and standardised through the **Wildlife Observatory of Australia (WildObs)** platform. WildObs processes raw camera-trap images using artificial intelligence (e.g., MegaDetector, SpeciesNet), applies the CamtrapDP data standard, and provides harmonised deployments, observations, and covariates that are ready for ecological analysis.
+Single-species, single-season *abundance* models that account for imperfect detection can also be calculated in the **unmarked** R package using much of the same approach described here, and these models are known as [N-Mixture models](https://www.rdocumentation.org/packages/unmarked/versions/1.5.1/topics/pcount). The key distinction is that abundance models use count data to estimate a species' abundance rather than detection–non-detection data. However, the assumptions of N-Mixture models are easily violated and requires careful interpretation (See [Link et al., 2018](https://doi.org/10.1002/ecy.2362) & [Nakashima, 2020](https://doi.org/10.1002/1438-390x.12028) to learn more). 
+This practical notebook demonstrates how to build a **single-species, single-season occupancy model** using camera-trap data curated and standardised through the **Wildlife Observatory of Australia (WildObs)** platform. WildObs processes raw camera-trap images using artificial intelligence (e.g., [MegaDetector](https://github.com/agentmorris/MegaDetector), [SpeciesNet](https://github.com/google/cameratrapai), and bespoke regional computer vision models, such as our first [model from the Wet Tropics of QLD](https://huggingface.co/WildObs/WildObs_QLD_WetTropics)), employs the [CamtrapDP data standard](https://camtrap-dp.tdwg.org/), and provides harmonised tables describing [deployments](https://camtrap-dp.tdwg.org/data/#deployments), [observations](https://camtrap-dp.tdwg.org/data/#observations), [media](https://camtrap-dp.tdwg.org/data/#media), and range of spatial and temporal covariates that are ready for ecological analysis.
 
 # Wildlife Observatory of Australia
 
@@ -38,25 +39,27 @@ For more information about WildObs, please visit [https://wildobs.org.au](https:
 
 [![R Package](https://img.shields.io/badge/R-package-blue.svg){alt="R Package"}](#0) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg){alt="License: MIT"}](#0) [![Codecov test coverage](https://codecov.io/gh/WildObs/WildObsR/graph/badge.svg){alt="Codecov test coverage"}](#0)
 
-> Professional tools for camera trap data management and analysis in R
+> Professional tools for camera trap data access, management, and analysis in R
 
-WildObsR provides a comprehensive suite of functions for processing, standardizing, and analyzing wildlife camera trap data. Built to support the [Camera Trap Data Package (Camtrap DP)](https://camtrap-dp.tdwg.org/) data standard and [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications, this package streamlines workflows from raw observations to publication-ready analyses.
+WildObsR provides a comprehensive suite of functions for processing, standardizing, and analyzing wildlife camera trap data. Built to support the [Camera Trap Data Package (Camtrap DP)](https://camtrap-dp.tdwg.org/) data standard and [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications, this package streamlines workflows from raw observations to publication-ready analyses. 
+
+For more information of this R package, please visit <https://github.com/WildObs/WildObsR>
 
 # Objectives
 
--   install WildObsR R package
+-   Install WildObsR R package
 
--   download and inspect WildObs camera-trap projects
+-   Download and inspect WildObs camera-trap projects using `WildObsR::wildobs_mongo_query()` & `WildObsR::wildobs_dp_download()`
 
--   prepare site-level and observation-level covariates
+-   Inspect and prepare site-level and observation-level covariates
 
--   spatially resample deployments into biologically meaningful sampling units
+-   Spatially resample deployments & covariates into biologically meaningful sampling units using `WildObsR::spatial_hexagon_generator()` & `WildObsR::resample_covariates_and_observations()`
 
--   construct detection history matrices using matrix_generator()
+-   Construct detection history matrices using `WildObsR::matrix_generator()`
 
--   build the unmarkedFrameOccu (UMF) object
+-   Build the unmarkedFrameOccu (UMF) object using `unmarked::unmarkedFrameOccu`
 
--   fit occupancy models, compare candidate models, and interpret the results
+-   Fit occupancy models using `unmarked::occu()`, compare competing models to determine the top model, and then visualize & interpret the results
 
 # **Workflow Overview**
 
@@ -77,7 +80,6 @@ WildObsR provides a comprehensive suite of functions for processing, standardizi
 |                                                                                                                       |                                   |                                                                   |
 |                                                                                                                       |                                   | 1.4 Occupancy model with WildObs data                             |
 |                                                                                                                       |                                   |                                                                   |
-|                                                                                                                       |                                   | 1.5 Abundance model and mapping                                   |
 +-----------------------------------------------------------------------------------------------------------------------+-----------------------------------+-------------------------------------------------------------------+
 
 In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
@@ -115,9 +117,9 @@ Install and load R packages.
 options(repos = c(CRAN = "https://cran.rstudio.com/"))
 
 ## load libs
-# WildObsR    for bespoke data wrangling function
-# frictionless    for importing data packages and extracting resources 
-# unmarked      for running frequentist occupancy/abundance models 
+# WildObsR        for accessing WildObs data and bespoke data wrangling function
+# frictionless    for working with frictionless data packages and extracting data resources 
+# unmarked        for running frequentist occupancy and/or abundance models 
 
 # Required packages
 packages <- c("unmarked", "ggplot2", "dplyr", "frictionless", "tidyverse", "plyr", "janitor", "knitr", "leaflet", "htmltools", "MuMIn")
@@ -136,13 +138,12 @@ for (pkg in packages) {
 
 [![R Package](https://img.shields.io/badge/R-package-blue.svg)](https://www.r-project.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Codecov test coverage](https://codecov.io/gh/WildObs/WildObsR/graph/badge.svg)](https://app.codecov.io/gh/WildObs/WildObsR)
 
-> Professional tools for camera trap data management and analysis in R
+WildObs stores all spreadsheets of camera trap data in a remote [MongoDB database](https://www.mongodb.com/), which enables remote downloads of both new and legacy camera trap data ready for analysis. This is achieved through two key functions: `WildObsR::wildobs_mongo_query()` & `WildObsR::wildobs_dp_download()`. 
 
-WildObsR provides a comprehensive suite of functions for processing, standardizing, and analyzing wildlife camera trap data. Built to support the [Camera Trap Data Package (Camtrap DP)](https://camtrap-dp.tdwg.org/) data standard and [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications, this package streamlines workflows from raw observations to publication-ready analyses.
+* The first function (`WildObsR::wildobs_mongo_query()`) allows you to query the WildObs database for camera trap projects matching specific spatial, temporal, taxonomic, contributor, sampling design, and/or data-sharing criteria. This function produces a vector of camera trap projectIDs that are available for download using the second function. 
+* The second function (`WildObsR::wildobs_dp_download()`) is a data package download function that connects to the WildObs MongoDB server, retrieves project-specific metadata and data resources, and bundles them into Frictionless Data Packages formatted using the camtrap DP data standard.
 
-For more information of this R package, please visit <https://github.com/WildObs/WildObsR>
-
-Since WildObsR is frequently updated, please use the below function to keep your WildObsR r package the most updated version.
+As WildObs continues to update their MongoDB database with new data, re-running the same query may provide additional camera trap data projects through time. However, WildObsR's other functionality (e.g., `WildObsR::matrix_generator()`) is frequently updated. Thereofre, please use the below function to keep your WildObsR R package the most updated version.
 
 ```{r, WildObsR}
 
@@ -183,9 +184,9 @@ install_or_update_WildObsR()
 
 # 1 Occupancy model with camera traps
 
-## 1.1 Camera Trap
+## 1.1 Camera Traps
 
-Because of the logistical advantages of camera traps - such as low labour intensity, low cost, and long temporol coverage - they are widely used in wildlife research and monitoring, generating datasets that can be applied in occupancy models (Anderson et al., 2025; Bruce et al., 2025).
+Camera traps are widley used in wildlife research and monitoring due to their logistical advantages such as low labour intensity, low cost, and long temporol coverage. As a result, camera trap survey are increasingly generating high resolution data sets spanning individual regions ([Anderson et al., 2025]( https://doi.org/10.1002/ece3.71464)) to entire continents ([Bruce et al., 2025](https://doi.org/10.1111/brv.13152)).
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/A_flowchart_digital_illustration_in_a_scientific_d.png){width="765"}
 
@@ -195,13 +196,7 @@ Because of the logistical advantages of camera traps - such as low labour intens
 
 This data was collected by Dr Zachary Amir and the Ecological Cascades Lab at the University of Queensland to study interactions between native and invasive vertebrates in North Queensland's Wet Tropics Rainforests. The camera trap surveys conducted here complement and extend prior surveys conducted by Dr. Tom Bruce as part of his PhD research studying feral cats in North Queensland forests. Important to note that these surveys implemented paired camera deployments, where each sampling location received a camera placed on the road and another camera placed 50 m into the bush. Sampling locations were typically spaced 1km apart from each other, though this varies between small and large landscapes.
 
-This dataset was provided to the ALA in the CamtrapDP data exchange format [https://camtrap-dp.tdwg.org](https://camtrap-dp.tdwg.org/)/) and transformed into a Darwin Core event-based dataset.
-
-### 1.2.1 Atlas of Living Australia
-
-![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site_materials/main/images/ALA_Logo_Inline_RGB.png){alt="ALA Logo" width="325"}
-
-**ALA** specifically targets biodiversity data within Australia. It aggregates data from various Australian institutions, providing detailed information relevant to the country's ecosystems and species. A special thanks to [**Peggy Newman**](https://www.linkedin.com/in/peggydnewman/) from [**Atlas of Living Australia**](https://www.linkedin.com/company/atlas-of-living-australia/) for taking the lead on this important milestone. Publishing this data via the [**Atlas of Living Australia**](https://www.linkedin.com/company/atlas-of-living-australia/) platform makes it more accessible and reusable, placing each species and location record in a broader national context.
+This dataset has been published with the Atlas of Living Australia ([ALA](https://www.ala.org.au/)) through the CamtrapDP data exchange format [https://camtrap-dp.tdwg.org](https://camtrap-dp.tdwg.org/)/) and transformed into a [Darwin Core](https://dwc.tdwg.org/) dataset. You can access the occurrence records from this dataset [here](https://collections.ala.org.au/public/show/dr31594) and you can access a curated selection of camera trap images from this survey hosted on the ALA [here](https://images.ala.org.au/?criteria=b0f703bb-8cb5-48ea-b5fd-b7bf0ee51d22&fq=dataResourceUid:dr31594). 
 
 ## 1.3 How to prepare camera trap data for occupancy model
 
