@@ -1396,7 +1396,8 @@ We successfully made the occupancy umf for each species. Lets inspect the umf ob
 ```{r occupancy_result_inspect_3}
 ## inspect one UMF 
 # cats occupancy model
-umf = umf_list$`Felis catus`
+# umf = umf_list$`Felis catus`
+umf = umf_list$`Orthonyx spaldingii`
 
 # inspect data
 summary(umf)
@@ -1429,7 +1430,7 @@ cat(out, sep = "\n")
 
 ```
 
-This null occupancy model estimates that cats occupy about 27% of sites, with a per-occasion detection probability of roughly 29%, indicating imperfect detection. The low detection probability explains why many occupied sites have few or no detections. This model provides a baseline against which more complex models with detection and environmental covariates can be compared.
+This null occupancy model estimates that chowchilla occupy about X% of sites, with a per-occasion detection probability of roughly Y%, indicating imperfect detection. The low detection probability explains why many occupied sites have few or no detections. This model provides a baseline against which more complex models with detection and environmental covariates can be compared.
 
 ### 1.4.3 Detection models with alternative detection covariates
 
@@ -1462,12 +1463,13 @@ The **trail + effort** model has the lowest AIC (ΔAIC \> 11 compared to the oth
 
 ### 1.4.4 Select state variables
 
+The `WildObsR::matrix_generator()` function has already standardized numeric covariates to have a mean of zero and a standard deviation of 1 to ensure comparable model outputs. 
+
+
 ```{r occ_state_variable}
 
 # these are our options to include
-summary(umf@siteCovs) # already limited to our scale of interest and have been standardized 
-
-
+summary(umf@siteCovs) # 
 ```
 
 ### 1.4.5 Compare alternative random‐effect structures for the state (occupancy) process
