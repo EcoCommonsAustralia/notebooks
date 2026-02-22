@@ -1,25 +1,16 @@
----
-editor_options:
-  markdown:
-    wrap: 72
----
+<div align="center">
+  <p>
+    <a align="center" href="" target="_blank">
+      <img
+        width="850"
+        src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner"
+      >
+    </a>
+  </p>
+  <br>
+<br>
 
-::: {align="center"}
-<p><a align="center" href="" target="_blank">
-<img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner" width="850"/>
-</a></p>
-
-<br> <br>
-
-[📔Notebooks](https://github.com/EcoCommonsAustralia/notebooks) \|
-[🗒️Blog](https://ecocommonsaustralia.github.io/notebook-blog/) \|
-[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/ecocommons.png" width="20"/>
-EcoCommons Platform](https://www.ecocommons.org.au) \|
-[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/x-logo.png" width="20"/>](https://x.com/EcoCommonsAus)
-\|
-[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/LinkedIn_icon.svg.png" width="15"/>](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all)
-\|
-[<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/youtubelogo.png" width="30"/>](https://youtube.com/@ecocommons2208)
+[📔Notebooks](https://github.com/EcoCommonsAustralia/notebooks) \| [🗒️Blog](https://ecocommonsaustralia.github.io/notebook-blog/) \| [<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/ecocommons.png" width="20"/> EcoCommons Platform](https://www.ecocommons.org.au) \| [<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/x-logo.png" width="20"/>](https://x.com/EcoCommonsAus) \| [<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/LinkedIn_icon.svg.png" width="15"/>](https://www.linkedin.com/company/ecocommons-australia/posts/?feedView=all) \| [<img src="https://raw.githubusercontent.com/EcoCommonsAustralia/ec-notebook_site_materials/main/images/youtubelogo.png" width="30"/>](https://youtube.com/@ecocommons2208)
 
 <br>
 
@@ -61,24 +52,11 @@ platform](https://www.ecocommons.org.au/).
 
 ## 🐛 Bugs and 🫡 Contribution
 
-Welcome to the EcoCommons Notebooks! As ecological and environmental
-research advances, we strive to keep our resources up-to-date with the
-latest developments. If you encounter any issues with the notebooks,
-please submit a [bug
-report](https://github.com/EcoCommons-Australia-2024-2026/notebooks/issues/new?assignees=&labels=bug%2Ctriage&template=bug-report.yml)
-so we can address them. We're also open to new ideas—if there's a
-tutorial or feature you'd like to see, create a [feature
-request](https://github.com/EcoCommons-Australia-2024-2026/notebooks/issues/new?assignees=&labels=enhancement&template=feature-request.yml),
-or check out our contribution guide if you’d like to contribute
-directly. We're here to support your research journey, so don't hesitate
-to [reach
-out](https://github.com/EcoCommons-Australia-2024-2026/notebooks/discussions).
+Welcome to the EcoCommons Notebooks! As ecological and environmental research advances, we strive to keep our resources up-to-date with the latest developments. If you encounter any issues with the notebooks, please submit a [bug report](https://github.com/EcoCommons-Australia-2024-2026/notebooks/issues/new?assignees=&labels=bug%2Ctriage&template=bug-report.yml) so we can address them. We're also open to new ideas—if there's a tutorial or feature you'd like to see, create a [feature request](https://github.com/EcoCommons-Australia-2024-2026/notebooks/issues/new?assignees=&labels=enhancement&template=feature-request.yml), or check out our contribution guide if you’d like to contribute directly. We're here to support your research journey, so don't hesitate to [reach out](https://github.com/EcoCommons-Australia-2024-2026/notebooks/discussions).
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_section_break.png)
 
-EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>)
-from the Australian Research Data Commons (ARDC). The ARDC is enabled by
-the National Collaborative Research Infrastructure Strategy (NCRIS).
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
 # **Our partners**
 
@@ -86,15 +64,8 @@ the National Collaborative Research Infrastructure Strategy (NCRIS).
 
 # **How to Cite EcoCommons**
 
-If you use EcoCommons in your research, please cite the platform as
-follows:
+If you use EcoCommons in your research, please cite the platform as follows:
 
-> EcoCommons Australia 2026. *EcoCommons Australia – a collaborative
-> commons for ecological and environmental modelling*, Queensland Cyber
-> Infrastructure Foundation, Brisbane, Queensland. Available at:
-> <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD,
-> YYYY). <https://doi.org/10.3565/chbq-mr75>
+> EcoCommons Australia 2025. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
 
-You can download the citation file for EcoCommons Australia here:
-[Download the BibTeX file](reference.bib)
-:::
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
