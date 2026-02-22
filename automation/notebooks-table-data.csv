@@ -9,4 +9,4 @@ Random Forest,EC_RF.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/no
 Richness and Diversity,richness_shannon_notebook.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/Rich_Div/richness_shannon_notebook.html,,,, False, skills
 Get Species data from multiple sources,Get_Species_data_from_multiple_sources.ipynb,https://EcoCommonsAustralia.github.io/notebook-blog/notebooks/data_prep/Get_Species_data_from_multiple_sources.html,,,, False,skills
 Single-Species Single-Season Occupancy Model - Conceptual,EC_Occupancy_conceptual.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/Occupancy_conceptual/EC_Occupancy_conceptual.html,,,, False,models
-Single-Species Single-Season Occupancy Model - Practical,EC_Occupancy_Practical.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/Occupancy_practical/EC_Occupancy_practical.html,,,, False,models
+Single-Species Single-Season Occupancy Model - Practical,EC_Occupancy_practical.ipynb,https://ecocommonsaustralia.github.io/notebook-blog/notebooks/Occupancy_practical/EC_Occupancy_practical.html,,,, False,models
