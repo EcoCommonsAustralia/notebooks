@@ -25,3 +25,5 @@ notebooks/imbalanced_data.zip
 notebooks/imbalanced_data.html
 notebooks/imbalanced_data_part1.html
 .Rproj.user
+
+notebooks/.virtual_documents

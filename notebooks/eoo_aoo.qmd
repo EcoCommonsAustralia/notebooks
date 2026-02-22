@@ -14,22 +14,25 @@ Date: March 2025
 
 # Script and data info:
 
-This notebook, developed by the EcoCommons team, showcases how to determine the extent of occurrence (EOO) and area of occupancy (AOO) for a species. 
+This notebook, developed by the EcoCommons team, showcases how to determine the extent of occurrence (EOO) and area of occupancy (AOO) for a species.
 
 # Introduction
 
 ## A short explanation of the notebook
+
 This notebook calculates two important ecological metrics, the Extent of Occurrence (EOO) and the Area of Occupancy (AOO), for the common wombat: *Vombatus ursinus*. These metrics are commonly used to assess species conservation status by providing information on the geographic range and area occupied by the species.
 
 ## Extent of occurrence (EOO)
- The EOO represents the geographic spread of a species. It’s defined as the area within the smallest convex polygon that encompasses the known occurrences of the species. Ecologically, EOO is a  metric for assessing the geographic range of a species and is used in conservation to estimate risk. Species with a small EOO are potentially more likely to be susceptible to extinction because their populations are more likely to be impacted by habitat changes, climate fluctuations, and human activities across their limited range.
+
+The EOO represents the geographic spread of a species. It’s defined as the area within the smallest convex polygon that encompasses the known occurrences of the species. Ecologically, EOO is a metric for assessing the geographic range of a species and is used in conservation to estimate risk. Species with a small EOO are potentially more likely to be susceptible to extinction because their populations are more likely to be impacted by habitat changes, climate fluctuations, and human activities across their limited range.
 
 ## Area of Occupancy (AOO)
+
 The AOO is a more fine-scale measurement of where a species is actually found within its range. This metric accounts for the specific locations where the species occupies habitat within the broader EOO and is calculated using a grid-based approach, typically with cells sized to 2x2 km as per IUCN standards. Lower AOO values imply that the species is confined to smaller, often isolated patches, which could increase its vulnerability.
 
 # Set-up: R Environment and Packages
-For this notebook we are going to use `ConR`, which includes a *EOO.computing* and *AOO.computing* functions to calculate the EOO and AOO for a species. We will also be using the Atlas of Living Australia `galah` package to access species occurence records.
 
+For this notebook we are going to use `ConR`, which includes a *EOO.computing* and *AOO.computing* functions to calculate the EOO and AOO for a species. We will also be using the Atlas of Living Australia `galah` package to access species occurence records.
 
 ```{r install_libraries}
 
@@ -80,9 +83,11 @@ if (!requireNamespace("ConR", quietly = TRUE)) {
 library(ConR)
 ```
 
-# Access the data 
+# Access the data
+
 ## Species of interest: *Vombatus ursinus*
-The common wombat (*Vombatus ursinus*) is native to southeastern Australia and Tasmania. It is currently listed as ‘Least Concern’ on the IUCN Red List. The occurrence data for *Vombatus ursinus* is sourced from the Atlas of Living Australia (ALA) via the Galah Package. This dataset provides the coordinates for the species, which are used to calculate the Extent of Occurrence (EOO) and Area of Occupancy (AOO) metrics. For this example we are filtering records to include those recorded since 2015 and are located in Victoria.  
+
+The common wombat (*Vombatus ursinus*) is native to southeastern Australia and Tasmania. It is currently listed as ‘Least Concern’ on the IUCN Red List. The occurrence data for *Vombatus ursinus* is sourced from the Atlas of Living Australia (ALA) via the Galah Package. This dataset provides the coordinates for the species, which are used to calculate the Extent of Occurrence (EOO) and Area of Occupancy (AOO) metrics. For this example we are filtering records to include those recorded since 2015 and are located in Victoria.
 
 ```{r download_data}
 
@@ -107,7 +112,9 @@ citation(package = "galah")
 ```
 
 # Data Preparation
+
 ## Load the data and convert it to an sf object
+
 The occurrence data for *Vombatus ursinus* is loaded from Galah package and converted to an sf object using the `st_as_sf` function from the `sf` package. The latitude and longitude columns are specified as the coordinates for the sf object. The coordinate reference system (CRS) is set to EPSG:4326 (WGS 84) to ensure the correct spatial representation of the data.
 
 Here we also process the data by removing records with missing coordinates, modify the data to keep only the necessary columns (latitude, longitude and species) and ensure all the species names match.
@@ -131,9 +138,10 @@ print(species_points)
 
 ```
 
-
 # Calculate Extent of Occurrence (EOO)
+
 ## Calculate the EOO using the EOO.computing function
+
 The EOO for *Vombatus ursinus* is calculated using the `EOO.computing` function from the `ConR` package. The function takes the species occurrence points as input and returns the EOO polygon and EOO value. If the EOO polygon is NULL, a convex hull is generated from the species points as an alternative representation of the EOO.
 
 ```{r calculate_eoo}
@@ -154,9 +162,10 @@ if (is.null(EOO_polygon$spatial.polygon_1)) {
 ```
 
 # Calculate Area of Occupancy (AOO)
+
 ## Calculate the AOO using the AOO.computing function
-The AOO for *Vombatus ursinus* is calculated using the `AOO.computing` function from the `ConR` package. The function takes the species occurrence points as input and returns the AOO value based on a 2x2 km grid. 
-The AOO value represents the area actually occupied by the species within the grid cells.
+
+The AOO for *Vombatus ursinus* is calculated using the `AOO.computing` function from the `ConR` package. The function takes the species occurrence points as input and returns the AOO value based on a 2x2 km grid. The AOO value represents the area actually occupied by the species within the grid cells.
 
 ```{r calculate_aoo}
 # Calculate AOO (Area of Occupancy)
@@ -173,7 +182,9 @@ AOO_result <- AOO.computing(
 ```
 
 # Visualise and analyse the results
+
 ## Visualise the EOO, AOO, and species occurrence points
+
 Now, to conclude this short notebook, we will visualise the calculated EOO, AOO, and the species occurrence points on a map using `ggplot2`. The map will display the land area, species points, EOO polygon (or convex hull), and include annotations for the EOO and AOO values. The map will provide a visual representation of the species distribution and the extent of its occurrence.
 
 ```{r print aoo and eoo values}
@@ -227,14 +238,6 @@ ggplot() +
 
 In this notebook, we have demonstrated how to calculate the Extent of Occurrence (EOO) and Area of Occupancy (AOO) for the common wombat (*Vombatus ursinus*). This serves as a starting point for understanding a species' distribution and provides a first glance at its potential extinction risk. While EOO and AOO are valuable, they are just the beginning of a more comprehensive assessment of a species' conservation status. These metrics can guide further research and inform more detailed analyses, ultimately contributing to better-informed conservation strategies.
 
-# **How to Cite EcoCommons**
-
-If you use EcoCommons in your research, please cite the platform as follows:
-
-> EcoCommons Australia 2024. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
-
-You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
-
 # References
 
 Dauby, G., Stévart, T., Droissart, V., Cosiaux, A., Deblauwe, V., Simo‐Droissart, M., Sosef, M.S., Lowry, P.P., Schatz, G.E., Gereau, R.E. and Couvreur, T.L., 2017. ConR: An R package to assist large‐scale multispecies preliminary conservation assessments using distribution data. Ecology and evolution, 7(24), pp.11292-11303.
@@ -255,7 +258,12 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 **Our partners**
 :::
 
-![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/partners_logos.png)
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
 
+# **How to Cite EcoCommons**
 
-  
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2026. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
