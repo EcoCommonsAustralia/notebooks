@@ -22,10 +22,9 @@ This notebook, developed by the EcoCommons and WildObs team, showcases how to bu
 
 # Introduction
 
-Occupancy models provide a powerful framework for estimating where species occur while accounting for imperfect detection — a common challenge in wildlife research. Camera traps are particularly well suited to this task because they generate repeated detection–non-detection data that can be structured into the hierarchical models implemented in the **unmarked** R package. 
+Occupancy models provide a powerful framework for estimating where species occur while accounting for imperfect detection — a common challenge in wildlife research. Camera traps are particularly well suited to this task because they generate repeated detection–non-detection data that can be structured into the hierarchical models implemented in the **unmarked** R package.
 
-Single-species, single-season *abundance* models that account for imperfect detection can also be calculated in the **unmarked** R package using much of the same approach described here, and these models are known as [N-Mixture models](https://www.rdocumentation.org/packages/unmarked/versions/1.5.1/topics/pcount). The key distinction is that abundance models use count data to estimate a species' abundance rather than detection–non-detection data. However, the assumptions of N-Mixture models are easily violated and requires careful interpretation (See [Link et al., 2018](https://doi.org/10.1002/ecy.2362) & [Nakashima, 2020](https://doi.org/10.1002/1438-390x.12028) to learn more). 
-This practical notebook demonstrates how to build a **single-species, single-season occupancy model** using camera-trap data curated and standardised through the **Wildlife Observatory of Australia (WildObs)** platform. WildObs processes raw camera-trap images using artificial intelligence (e.g., [MegaDetector](https://github.com/agentmorris/MegaDetector), [SpeciesNet](https://github.com/google/cameratrapai), and bespoke regional computer vision models, such as our first [model from the Wet Tropics of QLD](https://huggingface.co/WildObs/WildObs_QLD_WetTropics)), employs the [CamtrapDP data standard](https://camtrap-dp.tdwg.org/), and provides harmonised tables describing [deployments](https://camtrap-dp.tdwg.org/data/#deployments), [observations](https://camtrap-dp.tdwg.org/data/#observations), [media](https://camtrap-dp.tdwg.org/data/#media), and range of spatial and temporal covariates that are ready for ecological analysis.
+Single-species, single-season *abundance* models that account for imperfect detection can also be calculated in the **unmarked** R package using much of the same approach described here, and these models are known as [N-Mixture models](https://www.rdocumentation.org/packages/unmarked/versions/1.5.1/topics/pcount). The key distinction is that abundance models use count data to estimate a species' abundance rather than detection–non-detection data. However, the assumptions of N-Mixture models are easily violated and requires careful interpretation (See [Link et al., 2018](https://doi.org/10.1002/ecy.2362) & [Nakashima, 2020](https://doi.org/10.1002/1438-390x.12028) to learn more). This practical notebook demonstrates how to build a **single-species, single-season occupancy model** using camera-trap data curated and standardised through the **Wildlife Observatory of Australia (WildObs)** platform. WildObs processes raw camera-trap images using artificial intelligence (e.g., [MegaDetector](https://github.com/agentmorris/MegaDetector), [SpeciesNet](https://github.com/google/cameratrapai), and bespoke regional computer vision models, such as our first [model from the Wet Tropics of QLD](https://huggingface.co/WildObs/WildObs_QLD_WetTropics)), employs the [CamtrapDP data standard](https://camtrap-dp.tdwg.org/), and provides harmonised tables describing [deployments](https://camtrap-dp.tdwg.org/data/#deployments), [observations](https://camtrap-dp.tdwg.org/data/#observations), [media](https://camtrap-dp.tdwg.org/data/#media), and range of spatial and temporal covariates that are ready for ecological analysis.
 
 # Wildlife Observatory of Australia
 
@@ -41,7 +40,7 @@ For more information about WildObs, please visit [https://wildobs.org.au](https:
 
 > Professional tools for camera trap data access, management, and analysis in R
 
-WildObsR provides a comprehensive suite of functions for processing, standardizing, and analyzing wildlife camera trap data. Built to support the [Camera Trap Data Package (camtrap DP)](https://camtrap-dp.tdwg.org/) data standard and [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications, this package streamlines workflows from raw observations to publication-ready analyses. Camtrap DP is a is a community-developed data exchange format for camera trap data, which enhances interoperability with other R packages and functions, such as with the [camtrapdp R package](https://inbo.github.io/camtrapdp/), [camtraptor R package](https://inbo.github.io/camtraptor/), and [camtrapR R package](https://jniedballa.github.io/camtrapR/index.html). 
+WildObsR provides a comprehensive suite of functions for processing, standardizing, and analyzing wildlife camera trap data. Built to support the [Camera Trap Data Package (camtrap DP)](https://camtrap-dp.tdwg.org/) data standard and [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications, this package streamlines workflows from raw observations to publication-ready analyses. Camtrap DP is a is a community-developed data exchange format for camera trap data, which enhances interoperability with other R packages and functions, such as with the [camtrapdp R package](https://inbo.github.io/camtrapdp/), [camtraptor R package](https://inbo.github.io/camtraptor/), and [camtrapR R package](https://jniedballa.github.io/camtrapR/index.html).
 
 For more information of this R package, please visit <https://github.com/WildObs/WildObsR>
 
@@ -79,7 +78,6 @@ For more information of this R package, please visit <https://github.com/WildObs
 |                                                                                                                       |                                   | 1.3 How to prepare camera trap data for occupancy model           |
 |                                                                                                                       |                                   |                                                                   |
 |                                                                                                                       |                                   | 1.4 Occupancy model with WildObs data                             |
-|                                                                                                                       |                                   |                                                                   |
 +-----------------------------------------------------------------------------------------------------------------------+-----------------------------------+-------------------------------------------------------------------+
 
 In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
@@ -122,7 +120,7 @@ options(repos = c(CRAN = "https://cran.rstudio.com/"))
 # unmarked        for running frequentist occupancy and/or abundance models 
 
 # Required packages
-packages <- c("unmarked", "ggplot2", "dplyr", "frictionless", "tidyverse", "plyr", "janitor", "knitr", "leaflet", "htmltools", "MuMIn")
+packages <- c("unmarked", "ggplot2", "plyr", "dplyr", "frictionless", "tidyverse",  "janitor", "knitr", "leaflet", "htmltools", "MuMIn")
 
 
 # Install any missing packages
@@ -138,10 +136,10 @@ for (pkg in packages) {
 
 [![R Package](https://img.shields.io/badge/R-package-blue.svg)](https://www.r-project.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Codecov test coverage](https://codecov.io/gh/WildObs/WildObsR/graph/badge.svg)](https://app.codecov.io/gh/WildObs/WildObsR)
 
-WildObs stores all spreadsheets of camera trap data in a remote [MongoDB database](https://www.mongodb.com/), which enables remote downloads of both new and legacy camera trap data ready for analysis. This is achieved through two key functions: `WildObsR::wildobs_mongo_query()` & `WildObsR::wildobs_dp_download()`. 
+WildObs stores all spreadsheets of camera trap data in a remote [MongoDB database](https://www.mongodb.com/), which enables remote downloads of both new and legacy camera trap data ready for analysis. This is achieved through two key functions: `WildObsR::wildobs_mongo_query()` & `WildObsR::wildobs_dp_download()`.
 
-* The first function (`WildObsR::wildobs_mongo_query()`) allows you to query the WildObs database for camera trap projects matching specific spatial, temporal, taxonomic, contributor, sampling design, and/or data-sharing criteria. This function produces a vector of camera trap projectIDs that are available for download using the second function. 
-* The second function (`WildObsR::wildobs_dp_download()`) is a data package download function that connects to the WildObs MongoDB server, retrieves project-specific metadata and data resources, and bundles them into Frictionless Data Packages formatted using the camtrap DP data standard.
+-   The first function (`WildObsR::wildobs_mongo_query()`) allows you to query the WildObs database for camera trap projects matching specific spatial, temporal, taxonomic, contributor, sampling design, and/or data-sharing criteria. This function produces a vector of camera trap projectIDs that are available for download using the second function.
+-   The second function (`WildObsR::wildobs_dp_download()`) is a data package download function that connects to the WildObs MongoDB server, retrieves project-specific metadata and data resources, and bundles them into Frictionless Data Packages formatted using the camtrap DP data standard.
 
 As WildObs continues to update their MongoDB database with new data, re-running the same query may provide additional camera trap data projects through time. However, WildObsR's other functionality (e.g., `WildObsR::matrix_generator()`) is frequently updated. Thereofre, please use the below function to keep your WildObsR R package the most updated version.
 
@@ -186,7 +184,7 @@ install_or_update_WildObsR()
 
 ## 1.1 Camera Traps
 
-Camera traps are widley used in wildlife research and monitoring due to their logistical advantages such as low labour intensity, low cost, and long temporol coverage. As a result, camera trap survey are increasingly generating high resolution data sets spanning individual regions ([Anderson et al., 2025]( https://doi.org/10.1002/ece3.71464)) to entire continents ([Bruce et al., 2025](https://doi.org/10.1111/brv.13152)).
+Camera traps are widley used in wildlife research and monitoring due to their logistical advantages such as low labour intensity, low cost, and long temporol coverage. As a result, camera trap survey are increasingly generating high resolution data sets spanning individual regions ([Anderson et al., 2025](https://doi.org/10.1002/ece3.71464)) to entire continents ([Bruce et al., 2025](https://doi.org/10.1111/brv.13152)).
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/A_flowchart_digital_illustration_in_a_scientific_d.png){width="765"}
 
@@ -196,23 +194,23 @@ Camera traps are widley used in wildlife research and monitoring due to their lo
 
 This data was collected by Dr Zachary Amir and the Ecological Cascades Lab at the University of Queensland to study interactions between native and invasive vertebrates in North Queensland's Wet Tropics Rainforests. The camera trap surveys conducted here complement and extend prior surveys conducted by Dr. Tom Bruce as part of his PhD research studying feral cats in North Queensland forests. Important to note that these surveys implemented paired camera deployments, where each sampling location received a camera placed on the road and another camera placed 50 m into the bush. Sampling locations were typically spaced 1km apart from each other, though this varies between small and large landscapes.
 
-This dataset has been published with the Atlas of Living Australia ([ALA](https://www.ala.org.au/)) through the CamtrapDP data exchange format [https://camtrap-dp.tdwg.org](https://camtrap-dp.tdwg.org/)/) and transformed into a [Darwin Core](https://dwc.tdwg.org/) dataset. You can access the occurrence records from this dataset [here](https://collections.ala.org.au/public/show/dr31594) and you can access a curated selection of camera trap images from this survey hosted on the ALA [here](https://images.ala.org.au/?criteria=b0f703bb-8cb5-48ea-b5fd-b7bf0ee51d22&fq=dataResourceUid:dr31594). 
+This dataset has been published with the Atlas of Living Australia ([ALA](https://www.ala.org.au/)) through the CamtrapDP data exchange format [https://camtrap-dp.tdwg.org](https://camtrap-dp.tdwg.org/)/) and transformed into a [Darwin Core](https://dwc.tdwg.org/) dataset. You can access the occurrence records from this dataset [here](https://collections.ala.org.au/public/show/dr31594) and you can access a curated selection of camera trap images from this survey hosted on the ALA [here](https://images.ala.org.au/?criteria=b0f703bb-8cb5-48ea-b5fd-b7bf0ee51d22&fq=dataResourceUid:dr31594).
 
 ## 1.3 How to prepare camera trap data for occupancy models
 
-WildObs is developing an online Wildlife Image Management Platform powered by [Agouti](https://www.agouti.eu/) to enable researchers to use computer vision AI models to rapidly convert camera trap media (*i.e.*, images and/or videos) into spreadsheets. These spreadsheets are standardized and harmonized by WildObs and incorporated into WildObs's database and accessible via the WildObsR package. The WildObs image managment platform is still in development, but if you are interested in being an early tester or receiving updates about WildObs's development, [please complete this form to be added to the WildObs contact list](https://forms.office.com/pages/responsepage.aspx?id=U2DyzCOQzkaeHR83GasKQBuMFNE6uh1On8rg5yzIQ5tUQzBIUzVKUjhVWjFSMjJVT1lTVllWQUk5WiQlQCN0PWcu&route=shorturl). 
+WildObs is developing an online Wildlife Image Management Platform powered by [Agouti](https://www.agouti.eu/) to enable researchers to use computer vision AI models to rapidly convert camera trap media (*i.e.*, images and/or videos) into spreadsheets. These spreadsheets are standardized and harmonized by WildObs and incorporated into WildObs's database and accessible via the WildObsR package. The WildObs image managment platform is still in development, but if you are interested in being an early tester or receiving updates about WildObs's development, [please complete this form to be added to the WildObs contact list](https://forms.office.com/pages/responsepage.aspx?id=U2DyzCOQzkaeHR83GasKQBuMFNE6uh1On8rg5yzIQ5tUQzBIUzVKUjhVWjFSMjJVT1lTVllWQUk5WiQlQCN0PWcu&route=shorturl).
 
- Here we just give a brief the summary points of what we had done:
+Here we just give a brief the summary points of what we had done:
 
 ### 1.3.1 Query WildObs MongoDB for Relevant Project IDs and Download Projects
 
 **Step 1:** All raw camera trapped images have had their wildlife classified by humans or with computer vision models including detection models like MegaDetector and classifiers like SpeciesNet, to generate species identifications. The images generated in this data were classified by the [Wildlife Insights's SpeciesNet computer vision model](https://www.wildlifeinsights.org/about-wildlife-insights-ai) and identifications were manually verified and corrected if necessary by humans.
 
-We will access the relevant camera trap project we want using the two functions `WildObsR::wildobs_mongo_query()` & `WildObsR::wildobs_dp_download()`. 
+We will access the relevant camera trap project we want using the two functions `WildObsR::wildobs_mongo_query()` & `WildObsR::wildobs_dp_download()`.
 
 **WildObsR::wildobs_mongo_query function**
 
-This function queries the WildObs MongoDB database for projects matching specified spatial, temporal, taxonomic, contributor, and data-sharing criteria. It extracts metadata from the database and filters projects based on bounding box overlaps, temporal overlaps, species detected, contributors associated, matched sampling designs, and data sharing preferences. The function also ensures that only projects that have past their embargo date are shared. 
+This function queries the WildObs MongoDB database for projects matching specified spatial, temporal, taxonomic, contributor, and data-sharing criteria. It extracts metadata from the database and filters projects based on bounding box overlaps, temporal overlaps, species detected, contributors associated, matched sampling designs, and data sharing preferences. The function also ensures that only projects that have past their embargo date are shared.
 
 ```{r Query_WildObs_database}
 
@@ -259,7 +257,7 @@ dp_list <- wildobs_dp_download(
 )
 ```
 
-**dp_list** is list object containing the single data package specified in `project_ids`, though it could contain multiple projects. The data packages are formated in **camtrap DP**. 
+**dp_list** is list object containing the single data package specified in `project_ids`, though it could contain multiple projects. The data packages are formated in **camtrap DP**.
 
 ```{r dp_list_inspect}
 
@@ -372,7 +370,7 @@ print(head(covariates))
 
 The *covariates* table provides spatio-temporal environmental and landscape attributes associated with each camera deployment. It includes spatial location (latitude/longitude), deployment period, and group labels, along with a wide range of ecological covariates summarised at multiple spatial scales (point, 1 km², 3 km², 5 km², 10 km²). These covariates capture habitat condition (e.g., [Forest Landscape Integrity Index (FLII)](https://www.forestintegrity.com/)), human pressure ([human footprint index](https://wcshumanfootprint.org/)), topography (altitude), climate variables (temperature, precipitation), vegetation indices ([NDVI](https://data.gov.au/data/dataset/national-forest-and-sparse-woody-vegetation-data-version-7-0-2022-release)), [nighttime lights](https://doi.org/10.3390/rs13050922), and other environmental descriptors. The first several rows show covariate profiles for the CFRAG deployments in the Lake Eacham–Curtain Fig deploymentGroup
 
-All frictionless data packages contain schemas that describes each column in each table, providing useful additional context for unknown data fields. These can be accessed through the function `frictionless::get_schema()`. This is particularly useful for the covariates table due to the large number of available covariates, which provides information about how each covariate was calculated. We can easily convert the schema to a table for easier viewing and manipulation, but will inspect schemas for other data resources later. 
+All frictionless data packages contain schemas that describes each column in each table, providing useful additional context for unknown data fields. These can be accessed through the function `frictionless::get_schema()`. This is particularly useful for the covariates table due to the large number of available covariates, which provides information about how each covariate was calculated. We can easily convert the schema to a table for easier viewing and manipulation, but will inspect schemas for other data resources later.
 
 ```{r get_covs_schema}
 # extract schema
@@ -801,7 +799,7 @@ observations$observationEnd = as.POSIXct(observations$observationEnd, format = "
 
 Inspect deployment covariates and standardise any inconsistencies. A common field with potentially inconsistent values is the [deploymentTags](https://camtrap-dp.tdwg.org/data/#deployments.deploymentTags) field that captures additional deployment related information beyond the camtrapDP standard. This field is formatted using `key:value` pairs that can be extracted to new columns.
 
-This section standardises and parses the deploymentTags field, which often stores additional user-defined metadata such as bait type or predator-management activity. Tags are cleaned, split into key–value pairs, reshaped into separate covariate columns, and merged back into the main covariates table. This transforms previously unstructured text metadata into proper categorical covariates that can be included in the analysis as fixed effects or grouping variables. This likely will become a function to be used in the WildObsR package ([see here for updates](https://github.com/WildObs/WildObsR/issues/93)). 
+This section standardises and parses the deploymentTags field, which often stores additional user-defined metadata such as bait type or predator-management activity. Tags are cleaned, split into key–value pairs, reshaped into separate covariate columns, and merged back into the main covariates table. This transforms previously unstructured text metadata into proper categorical covariates that can be included in the analysis as fixed effects or grouping variables. This likely will become a function to be used in the WildObsR package ([see here for updates](https://github.com/WildObs/WildObsR/issues/93)).
 
 ```{r deploy_tags}
 
@@ -857,7 +855,7 @@ table(covs_with_tags$predatorManagement)
 
 This tells us that **all 275 deployments share the same tag values**:
 
--   Every deployment was recorded with **bait:none**, meaning **no bait was used** anywhere in the study. This can also be inspected by checking the logical true/false column `baitUse`. 
+-   Every deployment was recorded with **bait:none**, meaning **no bait was used** anywhere in the study. This can also be inspected by checking the logical true/false column `baitUse`.
 
 -   Every deployment also has **predatorManagement: No management**, meaning **no predator-control actions (e.g., trapping, poison, fencing) were active** during any deployment.
 
@@ -872,7 +870,7 @@ tag_cols = setdiff(names(covs_with_tags), names(covariates))
 
 -   Select the species you are interested in. Can repeat the process of analyzing species occupancy for multiple species using for-loops. In this example we will select four species.
 
--   Understand the ecology of the species you have selected. An important consideration is the average home-range size of each species relative to the assumption of *independence across sites*. For example, if a species’ home range is larger than the average spacing between sampling sites and the same individual is detected across multiple sites, this violates a key assumption of the model ([see here for more information]( https://doi.org/10.1111/ecog.07402)). WildObs provides a data set that includes species traits, including home-range sizes, which were extracted from the [`traitdata` R package](https://github.com/RS-eco/traitdata?tab=readme-ov-file) and matched with the WildObs species database. 
+-   Understand the ecology of the species you have selected. An important consideration is the average home-range size of each species relative to the assumption of *independence across sites*. For example, if a species’ home range is larger than the average spacing between sampling sites and the same individual is detected across multiple sites, this violates a key assumption of the model ([see here for more information](https://doi.org/10.1111/ecog.07402)). WildObs provides a data set that includes species traits, including home-range sizes, which were extracted from the [`traitdata` R package](https://github.com/RS-eco/traitdata?tab=readme-ov-file) and matched with the WildObs species database.
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/occupancy_practical_animals.png)
 
@@ -908,17 +906,22 @@ The WildObsR R library provides two functions to facilitate resampling: `WildObs
 -   Use the `WildObsR::spatial_hexagon_generator()` function to generate hexagonal sampling units at multiple scales (1 km², 3 km², 6 km², 65 km²) based on species home range.
 
 -   Examine and summarise sampling efforts by inspecting important columns like number of deployments and hexagonal sampling units, duration of deployments, and calculating new columns like sampling effort, expressed as trap nights.
-  - Importantly, the field [`deploymentGroups`](https://camtrap-dp.tdwg.org/data/#deployments.deploymentGroups) has been calculated through the WildObs data curation process to describe spatially (*i.e.*, within one landscape, denoted as [locationName](https://camtrap-dp.tdwg.org/data/#deployments.locationName)) and temporally (*i.e.*, 100 days maximum in duration) distinct sampling efforts (*i.e.*, surveys). 
+
+-   Importantly, the field [`deploymentGroups`](https://camtrap-dp.tdwg.org/data/#deployments.deploymentGroups) has been calculated through the WildObs data curation process to describe spatially (*i.e.*, within one landscape, denoted as [locationName](https://camtrap-dp.tdwg.org/data/#deployments.locationName)) and temporally (*i.e.*, 100 days maximum in duration) distinct sampling efforts (*i.e.*, surveys).
 
 -   Remove deploymentGroups that don’t meet inclusion criteria (too short, too few sites, \>120 days, multiple landscapes, repeated deployments). This ensures robust surveys are included in the analysis and results wont be skewed by small sample sizes.
 
 -   Keep only robust deployments and matching observations that fall within deploymentGroups of sufficent size.
 
--   Use the `WildObsR::resample_covariates_and_observations()` function to spatially resample covariates and observations across multiple spatial scales. This function changes the structure of the data in several important ways. 
-  - First, it removes any time-related information and summarizes observations per day. The function also calculates revised sampling effort per sampling unit (*i.e.*, rather than per deployment) to account for multiple deployments within a single sampling unit. 
-  - A new observation-level covariate, `numberDeploymentsActiveAtDate`, describes how many deployments were active within a sampling unit on each day and serves as a high-resolution observation-level covariate for sampling effort. You can also include additional observation-level covariates from the covariates table in the observations table (*e.g.*, `featureType`). 
-    - For example, if two deployments placed on different features are resampled into the same sampling unit, you can include `featureType` to denote which deployment and corresponding feature generated the observation. 
-  - Finally, it is important to consider whether to aggregate the number of individuals detected per day by taking the **maximum** or the **sum** across all detections. For a full description of this function and its options, see the help page: `?WildObsR::resample_covariates_and_observations()`
+-   Use the `WildObsR::resample_covariates_and_observations()` function to spatially resample covariates and observations across multiple spatial scales. This function changes the structure of the data in several important ways.
+
+-   First, it removes any time-related information and summarizes observations per day. The function also calculates revised sampling effort per sampling unit (*i.e.*, rather than per deployment) to account for multiple deployments within a single sampling unit.
+
+-   A new observation-level covariate, `numberDeploymentsActiveAtDate`, describes how many deployments were active within a sampling unit on each day and serves as a high-resolution observation-level covariate for sampling effort. You can also include additional observation-level covariates from the covariates table in the observations table (*e.g.*, `featureType`).
+
+    -   For example, if two deployments placed on different features are resampled into the same sampling unit, you can include `featureType` to denote which deployment and corresponding feature generated the observation.
+
+-   Finally, it is important to consider whether to aggregate the number of individuals detected per day by taking the **maximum** or the **sum** across all detections. For a full description of this function and its options, see the help page: `?WildObsR::resample_covariates_and_observations()`
 
 **Species traits**
 
@@ -1164,20 +1167,21 @@ For each species (*i.e.*, in a for-loop):
 
 -   After site-level covariates are selected, select **observation covariates** from the spatialy resampled observations (*e.g.*, `numberDeploymentsActiveAtDate`, `trailStatus`, etc.). These covariates will vary through time and per detection. Therefore, these covariates must be found in the observations, not covariates, table.
 
-- Determine the structure of the **detection history matrices** you will create: 
+-   Determine the structure of the **detection history matrices** you will create:
 
-  - First, you must determine the _maximum duration_ of the matrix (i.e., number of columns), and its recommended to not exceed 100 days to satisfy the population closure assumption of the model. 
-  
-  - Next, you must determine the _sampling window duration_ which is the number of days that fit into one column in the detection history matrix. Larger intervals (*e.g.*, 7-10 days) are typically better for rare species with very low detections, while shorter values (*e.g.*, 2-5 days) are better for frequently detected species. 
-  
-    - The goal here is to increase detection probability to enhance model performance. 
-    
-  - Finally, determine if you want to use *all* sampling units in the resampled data, or only locationNames (*i.e.*, large landscapes such as a national park) where the species was detected.
-  
-    - Limiting the data to locationNames where the species was detected will improve model performance since the model will estimate non-zero occupancy for all sampling units even if we know the species is absent from a particular landscape. However, the species may be present but have very low detection probability, so it may be worth including locationNames with zero detections if there is strong rationale for inclusion.
+    -   First, you must determine the *maximum duration* of the matrix (i.e., number of columns), and its recommended to not exceed 100 days to satisfy the population closure assumption of the model.
 
-- Put together, the information you had just collated into the `WildObsR::matrix_generator()` function. This function produces detection history matrices for multiple species and multiple resampling scales and ensures that the site-level and observation-level covaraites are properly aligned to facilitate an occupancy analysis.
-  - The `WildObsR::matrix_generator()` function contains an additional paramater called `type`, where you can specify if you want to create a detection history matrix (using detection-non-detection data) for occupancy modelling or a count history matrix (using count data) for abundance modelling. Abundance modelling is beyond the scope of this tutorial, so we will set `type == "occupancy"`. 
+    -   Next, you must determine the *sampling window duration* which is the number of days that fit into one column in the detection history matrix. Larger intervals (*e.g.*, 7-10 days) are typically better for rare species with very low detections, while shorter values (*e.g.*, 2-5 days) are better for frequently detected species.
+
+        -   The goal here is to increase detection probability to enhance model performance.
+
+    -   Finally, determine if you want to use *all* sampling units in the resampled data, or only locationNames (*i.e.*, large landscapes such as a national park) where the species was detected.
+
+        -   Limiting the data to locationNames where the species was detected will improve model performance since the model will estimate non-zero occupancy for all sampling units even if we know the species is absent from a particular landscape. However, the species may be present but have very low detection probability, so it may be worth including locationNames with zero detections if there is strong rationale for inclusion.
+
+-   Put together, the information you had just collated into the `WildObsR::matrix_generator()` function. This function produces detection history matrices for multiple species and multiple resampling scales and ensures that the site-level and observation-level covaraites are properly aligned to facilitate an occupancy analysis.
+
+    -   The `WildObsR::matrix_generator()` function contains an additional paramater called `type`, where you can specify if you want to create a detection history matrix (using detection-non-detection data) for occupancy modelling or a count history matrix (using count data) for abundance modelling. Abundance modelling is beyond the scope of this tutorial, so we will set `type == "occupancy"`.
 
 **Step 6: Build modelling objects**
 
@@ -1397,7 +1401,7 @@ sp_occu = "Felis catus"
 # sp_occu = "Orthonyx spaldingii"
 ```
 
-We successfully made the occupancy umf for each species. Lets inspect the umf object for a single species, *`r sp_occu`*. 
+We successfully made the occupancy umf for each species. Lets inspect the umf object for a single species, *`r sp_occu`*.
 
 ```{r occupancy_result_inspect_2}
 # select one umf
@@ -1416,7 +1420,7 @@ This heatmap shows detections across sites (rows) and repeated observation perio
 
 ### 1.4.2 Null model for Occupancy model
 
-Creating occupancy models using the unmarked R package follows a similar syntax to writing linear models in R. We will use the `unmarked::occu()` function to create occupancy models. The formula is specifid as a double sided formula describing detection probability first (left side) and then occupancy (right side), where tildas (~) denote each formula. Before we begin adding covariates to our occupancy models, its wise to generate a *null model* that uses no covariates in either formula as the basis of comparison. 
+Creating occupancy models using the unmarked R package follows a similar syntax to writing linear models in R. We will use the `unmarked::occu()` function to create occupancy models. The formula is specifid as a double sided formula describing detection probability first (left side) and then occupancy (right side), where tildas (\~) denote each formula. Before we begin adding covariates to our occupancy models, its wise to generate a *null model* that uses no covariates in either formula as the basis of comparison.
 
 ```{r occ_model_null}
 ####### Basic hand-written cat occupancy models & visualization 
@@ -1476,7 +1480,7 @@ summary(umf@siteCovs)
 
 ### 1.4.5 Compare alternative random‐effect structures for the state (occupancy) process
 
-We can include random-intercept effects in both the occupancy and deteciton formula of occupancy models to account for variation that we are not necessarily interested in. For example, we may care about how a species occupancy varies along an elevation gradient, but are less interested in how it varies per landscape. However, we are aware there could be unmeasured variation between landscapes that should be accounted for in our modelling process. 
+We can include random-intercept effects in both the occupancy and deteciton formula of occupancy models to account for variation that we are not necessarily interested in. For example, we may care about how a species occupancy varies along an elevation gradient, but are less interested in how it varies per landscape. However, we are aware there could be unmeasured variation between landscapes that should be accounted for in our modelling process.
 
 ```{r random-effect}
 
@@ -1507,7 +1511,7 @@ cat(
 
 Both random‐effects structures (**deploymentGroups** and **locationName**) produce **identical AIC values (443.18)**, indicating **no difference in model support** between the two grouping factors. In this case, either random effect is statistically equivalent, and the choice should be guided by **study design and interpretability** rather than model fit.
 
-We therefore used a random intercept for locationName, as cameras within the same location are likely to share common ecological context (e.g. habitat, management history, and accessibility). This is because each landscape only contained one deploymentGroup, but when combining multiple datasets together, this could vary substantially! 
+We therefore used a random intercept for locationName, as cameras within the same location are likely to share common ecological context (e.g. habitat, management history, and accessibility). This is because each landscape only contained one deploymentGroup, but when combining multiple datasets together, this could vary substantially!
 
 ### 1.4.6 Hypothesis-driven occupancy models
 
@@ -1615,7 +1619,7 @@ data.frame(
 )
 ```
 
-Before creating multi-variate models, its important to ensure that covariates are not strongly correlated with each other. In this case, we are using a cutoff of `r thresh` to ensure we include covariates that are clearly distinguishable from each other. In the print out above, we can see that HCAS is strongly correlated with NDVI and FLII, which are also strongly correlated with each other. Therefore, we would not include these variables together in the same multi-variate model. 
+Before creating multi-variate models, its important to ensure that covariates are not strongly correlated with each other. In this case, we are using a cutoff of `r thresh` to ensure we include covariates that are clearly distinguishable from each other. In the print out above, we can see that HCAS is strongly correlated with NDVI and FLII, which are also strongly correlated with each other. Therefore, we would not include these variables together in the same multi-variate model.
 
 ```{r Multi_variate_state_model}
 ## Multi-variate state model: forest integrity + human pressure
@@ -1646,7 +1650,7 @@ summary(multi2)
 multi2@AIC   # AIC is a tad better than the NDVI-only model,
 ```
 
-The unmarked R package has a number of useful tools for ranking competing models. We will use the `unmarked::fitList()` function to organize models for model selection, ensuring we specify which is the null model and point of comparison. Then we will use the `unmarked::modSel()` function create a table containing all model parameter effect sizes and AIC scores to enable an easy comparison across all models.  
+The unmarked R package has a number of useful tools for ranking competing models. We will use the `unmarked::fitList()` function to organize models for model selection, ensuring we specify which is the null model and point of comparison. Then we will use the `unmarked::modSel()` function create a table containing all model parameter effect sizes and AIC scores to enable an easy comparison across all models.
 
 ```{r model_compare}
 ## Model comparison using AIC
@@ -1793,19 +1797,17 @@ we iterate this process for many species... but stay tuned for more!
 
 # References
 
+Nakashima, Y. (2020). Potentiality and limitations of N‐mixture and Royle‐Nichols models to estimate animal abundance based on noninstantaneous point surveys. *Population Ecology*, *62*(1), 151-157.
+
 Amir, Z., Bruce, T., & Contributors. (2024). WildObsR: Professional tools for camera trap data access, management, and analysis in R. R package version 0.1.0. <https://github.com/WildObs/WildObsR>
 
 Fiske, I., & Chandler, R. (2011). Unmarked: an R package for fitting hierarchical models of wildlife occurrence and abundance. *Journal of statistical software*, *43*, 1-23.
-
-Montly rainfall: This is WorldClim 2.1 (January 2020) downloaded from http://worldclim.org They represent average monthly climate data for 1970-2000.
 
 Amir, Z., Moore, J. H., Negret, P. J., & Luskin, M. S. (2022). Megafauna extinctions produce idiosyncratic Anthropocene assemblages. *Science Advances*, *8*(42), eabq2307.
 
 Linkie, M. (2020). Managing threatened ungulates in logged-primary forest mosaics in Malaysia. *PLoS One*, *15*(12), e0243932.
 
 Anderson, S. E., Amir, Z., Bruce, T., & Luskin, M. S. (2025). Range‐Wide Camera Trapping for the Australian Cassowary Reveals Habitat Associations With Rainfall and Forest Quality. *Ecology and Evolution*, *15*(6), e71464.
-
-[DOI: 10.1126/sciadv.abq2307](https://doi.org/10.1126/sciadv.abq2307 "https://doi.org/10.1126/sciadv.abq2307")
 
 M. Rayan D., M. Linkie, Managing threatened ungulates in logged-primary forest mosaics in Malaysia. *PLOS ONE* **15**, e0243932 (2020).
 
@@ -1823,6 +1825,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 
 If you use EcoCommons in your research, please cite the platform as follows:
 
-> EcoCommons Australia 2025. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+> EcoCommons Australia 2026. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
 
 You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)

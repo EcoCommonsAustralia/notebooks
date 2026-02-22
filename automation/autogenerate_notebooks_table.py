@@ -21,7 +21,7 @@ TABLE_HEADER = [
     "|:------------:|:---------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|"
 ]
 
-MODELS_SECTION_HEADER = "## 🐨 Species Distribution Modelling ({} notebooks)"
+MODELS_SECTION_HEADER = "## 🐨 Ecological Modelling ({} notebooks)"
 SKILLS_SECTION_HEADER = "## 🌍 Geo/ecological skills ({} notebooks)"
 
 NOTEBOOK_LINK_PATTERN = "[{}]({}/{})"
