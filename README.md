@@ -66,6 +66,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 
 If you use EcoCommons in your research, please cite the platform as follows:
 
-> EcoCommons Australia 2025. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+> EcoCommons Australia 2026. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
 
 You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
