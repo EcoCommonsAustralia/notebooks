@@ -1,0 +1,299 @@
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
+
+# Converting Rasters from GeoTIFF (.tif) to ASCII (.asc) Format
+
+Author details: Dr Ryan Newis
+
+Editor details: Xiang Zhao
+
+Contact details: support\@ecocommons.org.au
+
+Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
+
+Date: Feb 2026
+
+# Script and Data Information
+
+This notebook provides a simple, reproducible example of converting a raster dataset stored as a GeoTIFF (.tif) into an ASCII grid (.asc) format using the `terra` package in R. It is intended as a lightweight template that can be adapted to other raster-based spatial datasets and workflows.
+
+# Introduction
+
+GeoTIFF is a widely used raster format in modern spatial analysis workflows due to its efficiency, flexibility, and broad software support. However, ASCII grid files remain important for interoperability with legacy systems, environmental models, and software tools that require text-based raster inputs.
+
+Although format conversion is often treated as a straightforward technical step, preserving spatial metadata during this process is essential. Changes to the coordinate reference system (CRS), spatial extent, or grid resolution can introduce subtle spatial misalignment that may not be immediately visible but can affect downstream analyses and modelling results.
+
+This notebook demonstrates a structured and transparent approach to converting a GeoTIFF raster to an ASCII grid while explicitly verifying that key spatial properties including CRS, extent, and resolution are maintained. By incorporating validation steps into the workflow, the notebook promotes reproducibility and safeguards spatial data integrity.
+
+# Key Concepts
+
+## K.1 Raster data formats
+
+Raster datasets represent spatial information as a grid of cells, where each cell contains a value representing a measured or modelled variable. Different raster formats vary in efficiency, storage, and compatibility with analysis tools.
+
+## K.2 Raster data handling in R with `terra`
+
+The `terra` package provides a modern framework for reading, manipulating, and writing raster data in R. It supports a wide range of raster formats, including GeoTIFF and ASCII grids, and is designed for performance, clarity, and reproducibility.
+
+## K.3 Converting between raster formats
+
+Converting raster data between formats (e.g. GeoTIFF -\> ASCII) is a common preprocessing step that supports compatibility with modelling tools, data sharing requirements, and legacy workflows while preserving spatial structure and metadata. A robust conversion workflow must ensure that key spatial metadata including coordinate reference system (CRS), spatial extent, and resolution are preserved during the process to avoid unintended spatial misalignment or projection errors.
+
+# Notebook Objectives
+
+1.  Demonstrate how to read a GeoTIFF (.tif) raster file into R as a SpatRaster using the `terra` package.
+2.  Perform a basic visual check (plot) to confirm that the raster has been loaded correctly.
+3.  Save the raster to an ASCII grid (.asc) format while preserving the original file naming.
+4.  Verify that key spatial metadata (CRS, extent, and resolution) are preserved during the conversion process.
+
+# Workflow Overview
+
+This notebook follows a simple, linear workflow to convert a GeoTIFF raster to an ASCII grid format:
+
+-   Step 1: Set up the R environment and load the required package (`terra`).
+-   Step 2: Define and validate the file path to the input GeoTIFF (.tif) raster.
+-   Step 3: Read the GeoTIFF into R as a SpatRaster object and confirm that a valid CRS is defined.
+-   Step 4: Perform a quick visual check by plotting the raster to confirm it was read correctly.
+-   Step 5: Write the raster to disk as an ASCII grid (.asc) file, preserving the original file name and providing a transparent output location.
+-   Step 6: Validate that CRS, spatial extent, and resolution are preserved after conversion.
+
+In the near future, this material may form part of comprehensive support materials available to EcoCommons users. If you have any corrections or suggestions to improve the efficiency, please [contact the EcoCommons](mailto:support@ecocommons.org.au) team.
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
+
+# Step 1. Install and load required packages
+
+Install and load R packages and libraries that are not present in the work environment. For this notebook, only the `terra` package is required for the GeoTIFF (.tif) to ASCII (.asc) conversion and `googledrive` to download the example GeoTIFF file. .
+
+```{r install&load_libraries, message=FALSE, warning=FALSE}
+
+# Install and load required packages (if not already installed)
+required_packages <- c(
+  "terra",
+  "googledrive"
+)
+
+for (pkg in required_packages) {
+  
+  # Install if missing
+  if (!pkg %in% installed.packages()[, "Package"]) {
+    install.packages(pkg)
+    cat("Package installed successfully:", pkg, "\n")
+  }
+  
+  # Load quietly
+  suppressPackageStartupMessages(
+    library(pkg, character.only = TRUE)
+  )
+  
+  cat("Package loaded successfully:", pkg, "\n")
+}
+
+```
+
+# Step 2. Define the path to the input GeoTIFF file
+
+We have provided an example GeoTIFF (`.tif`) for this notebook via OPTION 2 – Google Drive. If you would like to use your own GeoTIFF, choose OPTION 1, commenting out this line:
+
+`tif_file <- NULL`
+
+and uncomment this line with your updated path:
+
+`tif_file <- "/path_to_your_file"`
+
+The example GeoTIFF is an continuous annual mean temperature layer, using Australia as the boundary. The original data was obtained from https://www.worldclim.org/data/worldclim21.html
+
+Note: The input GeoTIFF raster must have a valid Coordinate Reference System (CRS) defined. If the GeoTIFF file does not contain CRS information, the conversion will stop.
+
+```{r define_file_path}
+
+# OPTION 1: User-defined local GeoTIFF
+tif_file <- NULL
+#tif_file <- "/path_to_your_file"
+
+
+# OPTION 2: Download example GeoTIFF if no local file
+if (is.null(tif_file)) {
+
+  drive_deauth()
+
+  workspace <- getwd()
+  datafolder_path <- file.path(workspace, "data")
+
+  if (!dir.exists(datafolder_path)) {
+    dir.create(datafolder_path, recursive = TRUE)
+  }
+
+  tif_file_id <- "11k1icyISQOGVNJmLR4Cy-Zhwn-X-a_RJ"
+
+  # Get file metadata (to retrieve original name)
+  file_info <- drive_get(as_id(tif_file_id))
+
+  # Build full local path using original filename
+  tif_file <- file.path(datafolder_path, file_info$name)
+
+  # Download to that exact file path
+  drive_download(
+    as_id(tif_file_id),
+    path = tif_file,
+    overwrite = TRUE
+  )
+}
+
+# Final safety check
+if (!file.exists(tif_file)) {
+  stop("Input GeoTIFF file not found.")
+}
+
+# Extract base file name (used downstream)
+base_name <- tools::file_path_sans_ext(basename(tif_file))
+
+```
+
+# Step 3. Read GeoTIFF raster into R
+
+The rast() function reads the GeoTIFF file into R as a SpatRaster object.
+
+```{r read_geotiff}
+
+#Read GeoTIFF raster into R
+input_raster <- rast(tif_file)
+
+cat("CRS of input raster:\n")
+print(crs(input_raster))
+
+# Stop if CRS is missing
+if (is.na(crs(input_raster)) || crs(input_raster) == "") {
+  stop(
+    "❌ Input GeoTIFF raster has NO CRS defined.\n",
+    "Please ensure the file has a valid CRS before proceeding."
+  )
+}
+
+```
+
+# Step 4. Plot raster
+
+Plot the raster to confirm that the GeoTIFF was read correctly into R. At this stage, the raster exists only as an in-memory object and has not yet been written to disk.
+
+```{r plot_raster}
+
+plot(input_raster, main = base_name)
+
+```
+
+# Step 5. Save ASCII output
+
+By default, the output is written to the same directory as the input GeoTIFF file.
+
+Note: Writing an ASCII grid may create additional companion files alongside the .asc file, such as:
+
+-   .prj — stores the coordinate reference system (CRS) definition
+-   .aux.xml — stores auxiliary metadata
+
+These files are automatically generated by GDAL/terra and should be kept together with the .asc file (i.e. same folder). Unlike GeoTIFF, the ASCII grid format does not always retain EPSG identifiers explicitly, even when the CRS definition remains spatially equivalent.
+
+```{r write_output_ascii}
+
+# Save .asc output file to the same folder as the original GeoTIFF input raster 
+out_dir <- dirname(tif_file)
+
+# Build the output file name (using previously defined base_name)
+out_file  <- file.path(out_dir, paste0(base_name, "_converted.asc"))
+
+# Write the raster to disk as an ASCII grid file
+writeRaster(
+  input_raster,
+  out_file,
+  filetype = "AAIGrid",
+  NAflag = -9999,
+  overwrite = TRUE
+)
+
+cat("ASCII grid written to:\n", out_file, "\n")
+
+```
+
+# Step 6. Verify spatial metadata after writing ASCII
+
+Reload the written ASCII grid and verify that key spatial metadata including CRS, spatial extent, and resolution have been preserved during conversion.
+
+```{r verify_spatial_metadata}
+
+# Reload written ASCII file
+written_raster <- rast(out_file)
+
+# CRS check
+
+# Extract CRS info for input
+input_crs_info <- terra::crs(input_raster, describe = TRUE)
+input_crs_name <- input_crs_info$name
+input_epsg <- input_crs_info$code
+
+# Extract CRS info for output
+output_crs_info <- terra::crs(written_raster, describe = TRUE)
+output_crs_name <- output_crs_info$name
+output_epsg <- output_crs_info$code
+
+cat("\nInput CRS name:", input_crs_name, "\n")
+cat("Input EPSG code:", input_epsg, "\n")
+
+cat("\nOutput CRS name:", output_crs_name, "\n")
+cat("Output EPSG code:", output_epsg, "\n")
+
+# Validate CRS
+if (!same.crs(input_raster, written_raster)) {
+  stop("❌ CRS mismatch detected after writing ASCII.")
+}
+
+# Extent check
+cat("\nInput extent:\n")
+print(ext(input_raster))
+
+cat("\nOutput extent:\n")
+print(ext(written_raster))
+
+if (!isTRUE(all.equal(ext(input_raster), ext(written_raster)))) {
+  stop("❌ Extent mismatch detected after writing ASCII.")
+}
+
+# Resolution check
+cat("\nInput resolution:\n")
+print(res(input_raster))
+
+cat("\nOutput resolution:\n")
+print(res(written_raster))
+
+if (!isTRUE(all.equal(res(input_raster), res(written_raster)))) {
+  stop("❌ Resolution mismatch detected after writing ASCII.")
+}
+
+cat("\n✅ All spatial metadata successfully preserved during conversion.\n")
+
+
+```
+
+# Summary
+
+This notebook demonstrated a simple, reproducible workflow for converting a GeoTIFF (.tif) raster into an ASCII grid (.asc) format using the `terra` package in R, while explicitly verifying that key spatial metadata were preserved during conversion.
+
+A companion notebook (link below) demonstrates the reverse workflow, converting an ASCII grid (.asc) to GeoTIFF (.tif) format.
+
+[Converting Rasters from ASCII (.asc) to GeoTIFF (.tif) Format](https://ecocommonsaustralia.github.io/notebook-blog/notebooks/raster_format/converting_ascii_to_geotiff_notebook.html)
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
+
+EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Australian Research Data Commons (ARDC). The ARDC is enabled by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+::: {align="center"}
+**Our Partners**
+:::
+
+![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
+
+# How to Cite EcoCommons
+
+If you use EcoCommons in your research, please cite the platform as follows:
+
+> EcoCommons Australia 2026. *EcoCommons Australia – a collaborative commons for ecological and environmental modelling*, Queensland Cyber Infrastructure Foundation, Brisbane, Queensland. Available at: <https://data–explorer.app.ecocommons.org.au/> (Accessed: MM DD, YYYY). <https://doi.org/10.3565/chbq-mr75>
+
+You can download the citation file for EcoCommons Australia here: [Download the BibTeX file](reference.bib)
