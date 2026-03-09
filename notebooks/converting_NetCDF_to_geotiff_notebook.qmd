@@ -1,34 +1,34 @@
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/notebooks_banner_withframe.png)
 
-# Converting Rasters from ASCII (.asc) to GeoTIFF (.tif) Format
+# Converting Rasters from NetCDF file (.nc) to GeoTIFF (.tif) Format
 
-Author details: Dr Ryan Newis
+Author details: Xiang Zhao
 
-Editor details: Xiang Zhao
+Editor details: Dr Ryan Newis
 
 Contact details: support\@ecocommons.org.au
 
 Copyright statement: This script is the product of the EcoCommons platform. Please refer to the EcoCommons website for more details: <https://www.ecocommons.org.au/>
 
-Date: Feb 2026
+Date: March 2026
 
 # Script and Data Information
 
-This notebook provides a simple, reproducible example of converting an ASCII grid (.asc) to a GeoTIFF raster format using the `terra` package in R. It is intended as a lightweight template that can be adapted to other ASCII-based spatial datasets and workflows.
+This notebook provides a simple, reproducible example of converting a NetCDF file (.nc) to a GeoTIFF raster format using the `terra` package in R. It is intended as a lightweight template that can be adapted to other NetCDF-based spatial datasets and workflows.
 
 # Introduction
 
-ASCII grid files remain a common format for distributing spatial data, particularly in legacy systems and environmental modelling contexts. However, many modern spatial analysis workflows in R are more efficient when working with native raster formats such as GeoTIFF.
+NetCDF (Network Common Data Form) is a file format designed for storing multidimensional scientific data. It is widely used for environmental datasets containing variables such as temperature, humidity, pressure, wind speed, and wind direction. These variables are typically organised across multiple dimensions—most commonly time, latitude, and longitude—allowing the data to represent changes across both space and time.
 
-Although format conversion is often treated as a straightforward technical step, preserving spatial metadata during this process is essential. Changes to the coordinate reference system (CRS), spatial extent, or grid resolution can introduce subtle spatial misalignment that may not be immediately visible but can affect downstream analyses and modelling results.
+Although format conversion is often considered a routine technical step, preserving spatial metadata during this process is critical. Changes to key properties such as the coordinate reference system (CRS), spatial extent, or grid resolution can introduce subtle spatial misalignment. These issues may not be immediately visible but can propagate through analyses and potentially affect modelling results.
 
-This notebook demonstrates a structured and transparent approach to converting an ASCII grid to a GeoTIFF format while explicitly verifying that key spatial properties including CRS, extent, and resolution are maintained. By incorporating validation steps into the workflow, the notebook promotes reproducibility and safeguards spatial data integrity.
+This notebook demonstrates a structured and transparent workflow for converting raster data between formats while explicitly verifying that essential spatial properties—including CRS, extent, and resolution—are preserved. By incorporating validation steps into the workflow, the notebook promotes reproducibility and helps safeguard the integrity of spatial datasets used in downstream analyses.
 
 # Key Concepts
 
-## K.1 ASCII grid data formats
+## K.1 NetCDF data formats
 
-ASCII grids (.asc) are text-based raster formats that store spatial data alongside header information describing extent, resolution, and coordinate reference systems. While widely supported, they are often less efficient than binary raster formats.
+NetCDF (Network Common Data Form) is a widely used format for storing multidimensional scientific data. Environmental datasets such as temperature, humidity, pressure, wind speed, and population density are often distributed in NetCDF format because it supports multiple variables and dimensions (e.g. time, latitude, longitude) within a single file.
 
 ## K.2 Raster data handling in R with `terra`
 
@@ -36,22 +36,22 @@ The `terra` package provides a modern framework for reading, manipulating, and w
 
 ## K.3 Converting between raster formats
 
-Converting raster data between formats (e.g. ASCII → GeoTIFF) is a common preprocessing step that enables compatibility with modern analysis tools. A robust conversion workflow should ensure that key spatial properties including CRS, extent, and resolution are preserved.
+Converting raster data between formats (e.g. NetCDF→ GeoTIFF) is a common preprocessing step that enables compatibility with modern analysis tools. A robust conversion workflow should ensure that key spatial properties including CRS, extent, and resolution are preserved.
 
 # Notebook Objectives
 
-1.  Demonstrate how to read an ASCII grid file (.asc) into R as a SpatRaster using the `terra` package.
-2.  Perform a basic visual check (plot) to confirm that the raster has been converted and loaded correctly.
-3.  Save the raster to a modern file format (.tif) while preserving the original file naming.
-4.  Verify that key spatial metadata (CRS, extent, and resolution) are preserved during the conversion process.
+1.  Demonstrate how to read a **NetCDF file (.nc)** into R as a **SpatRaster** using the **terra** package.
+2.  Perform a basic visual inspection (plot) to confirm that the raster has been loaded correctly.
+3.  Export the raster to a widely used geospatial format (.tif) while preserving the original file naming.
+4.  Verify that key spatial metadata—including **CRS, extent, and resolution**—are preserved during the conversion process.
 
 # Workflow Overview
 
-This notebook follows a simple, linear workflow to convert an ASCII grid to a GeoTIFF format via the steps below:
+This notebook follows a simple, linear workflow to convert a NetCDF grid to a GeoTIFF format via the steps below:
 
 -   Step 1: Set up the R environment and load the required package (`terra`).
--   Step 2: Define and validate the file path to the input ASCII (.asc) grid.
--   Step 3: Read the ASCII grid into R as a SpatRaster object and confirm that a valid CRS is defined.
+-   Step 2: Define and validate the file path to the input **NetCDF file (.nc)**.
+-   Step 3: Read the **NetCDF file** into R as a SpatRaster object and confirm that a valid CRS is defined.
 -   Step 4: Perform a quick visual check by plotting the raster to confirm it was read correctly.
 -   Step 5: Write the raster to disk as a GeoTIFF (.tif) file, preserving the original file name and providing a transparent output location.
 -   Step 6: Validate that CRS, spatial extent, and resolution are preserved after conversion.
@@ -62,7 +62,22 @@ In the near future, this material may form part of comprehensive support materia
 
 # Step 1. Install and load required packages
 
-Install and load R packages and libraries that are not present in the work environment. For this notebook, we only require the `terra` package for the ASCII (.asc) to GeoTIFF (.tif) conversion and `googledrive` to download the example ASCII file.
+Save the Quarto Markdown file (.QMD) to a folder of your choice, and then set the path to your folder as your working directory.
+
+```{r setup_workspace}
+
+# Set the workspace to the current working directory
+# Uncomment and replace the path below with your own working directory if needed:
+
+#setwd("your_path")
+
+workspace <- getwd()  # Get the current working directory and store it in 'workspace'
+
+# Increase the plot size by adjusting the options for plot dimensions in the notebook output
+options(repr.plot.width = 16, repr.plot.height = 8)  # Sets width to 16 and height to 8 for larger plots
+```
+
+Install and load R packages and libraries that are not present in the work environment. For this notebook, we only require the `terra` package for the NetCDF file (.nc) to GeoTIFF (.tif) conversion and `googledrive` to download the example NetCDF file.
 
 ```{r install&load_libraries, message=FALSE, warning=FALSE}
 
@@ -90,113 +105,174 @@ for (pkg in required_packages) {
 
 ```
 
-# Step 2. Define the path to the input ASCII file
+# Step 2. Define the path to the input NetCDF file
 
-We have provided an example ASCII grid (`.asc`) for this notebook via OPTION 2 – Google Drive. If you would like to use your own ASCII, choose OPTION 1, commenting out this line:
+We have provided an example NetCDF grid (`.nc`) for this notebook via OPTION 2 – Google Drive. If you would like to use your own NetCDF, choose OPTION 1, commenting out this line:
 
-`asc_file <- NULL`
+`netcdf_file <- NULL`
 
 and uncomment this line with your updated path:
 
-`asc_file <- "/path_to_your_file"`
+``` netcdf``_file <- "/path_to_your_file" ```
 
-The example ASCII grid is an continuous annual mean temperature layer, using Australia as the boundary. The original data was obtained from https://www.worldclim.org/data/worldclim21.html
+The example NetCDF is an continuous annual mean temperature layer, using Australia as the boundary. The original data was obtained from https://www.worldclim.org/data/worldclim21.html
 
-Note: The input ASCII raster must have a valid Coordinate Reference System (CRS) defined. If the ASCII file does not contain CRS information (or does not have an accompanying .prj and/or .xml file), the conversion will stop.
+Note: The input NetCDF raster must have a valid Coordinate Reference System (CRS) defined. If the NetCDF file does not contain CRS information (or does not have an accompanying .prj and/or .xml file), the conversion will stop.
 
 ```{r define_file_path}
 
-# OPTION 1: User-defined local ASCII
-asc_file <- NULL
-#asc_file <- "/path_to_your_file"
+# OPTION 1: Use a user-defined local NetCDF file
+netcdf_file <- NULL
+# Example:
+# netcdf_file <- "/path/to/your/netcdf_file.nc"
 
 
-# OPTION 2: Download example ASCII if no local file
-if (is.null(asc_file)) {
+# OPTION 2: Download an example NetCDF dataset if no local file is provided
+if (is.null(netcdf_file)) {
 
-  drive_deauth()
+  # Google Drive file ID
+  zip_file_id <- "1Ek4Ag011oJQKnIZif2RLobCQXqet4pLH"
 
-  workspace <- getwd()
-  datafolder_path <- file.path(workspace, "data")
+  # Convert file ID to a direct download URL
+  download_url <- paste0(
+    "https://drive.google.com/uc?export=download&id=",
+    zip_file_id
+  )
 
-  if (!dir.exists(datafolder_path)) {
-    dir.create(datafolder_path, recursive = TRUE)
+  # Define main data directory
+  datafolder_path <- workspace
+
+  # Create a subfolder for the example dataset
+  netcdf_folder <- file.path(datafolder_path, "netcdf_example_data")
+
+  if (!dir.exists(netcdf_folder)) {
+    dir.create(netcdf_folder, recursive = TRUE)
   }
-  
-  asc_file_id <- "1nWZEqOuDaKnmFrQzKsl7PbK8ZnwKsuJl"
 
-  # Get file metadata (to retrieve original name)
-  file_info <- drive_get(as_id(asc_file_id))
+  # Path to downloaded zip file
+  zip_file_path <- file.path(netcdf_folder, "netcdf_example_data.zip")
 
-  # Build full local path using original filename
-  asc_file <- file.path(datafolder_path, file_info$name)
+  # Download dataset (only if not already downloaded)
+  if (!file.exists(zip_file_path)) {
+    cat("Downloading example NetCDF dataset...\n")
+    download.file(download_url, destfile = zip_file_path, mode = "wb")
+    cat("Download complete:", zip_file_path, "\n")
+  } else {
+    cat("Zip file already exists. Skipping download.\n")
+  }
 
-  # Download to that exact file path
-  drive_download(
-    as_id(asc_file_id),
-    path = asc_file,
-    overwrite = TRUE
+  # Extract dataset
+  cat("Extracting files...\n")
+  unzip(zip_file_path, exdir = netcdf_folder)
+
+  cat("Files extracted to:", netcdf_folder, "\n")
+
+  # Locate NetCDF file
+  nc_files <- list.files(
+    netcdf_folder,
+    pattern = "\\.nc$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+  if (length(nc_files) == 0) {
+    stop("No NetCDF file found after extraction.")
+  }
+
+  netcdf_file <- nc_files[1]
+}
+```
+
+# Step 3. Read NetCDF raster into R
+
+The rast() function reads the NetCDF grid file into R as a SpatRaster object.
+
+```{r read_NetCDF}
+
+# Load the NetCDF raster
+input_raster <- terra::rast(netcdf_file)
+
+cat("Loaded NetCDF file:\n", netcdf_file, "\n\n")
+print(input_raster)
+
+# Check CRS of the input raster
+cat("\nCoordinate Reference System (CRS):\n")
+raster_crs <- terra::crs(input_raster)
+print(raster_crs)
+
+# Stop execution if CRS is missing
+if (is.na(raster_crs) || raster_crs == "") {
+  stop(
+    "❌ The input NetCDF raster does not have a defined CRS.\n",
+    "Please ensure the dataset includes a valid coordinate reference system ",
+    "or assign the correct CRS before proceeding."
   )
 }
-
-# Final safety check
-if (!file.exists(asc_file)) {
-  stop("Input ASCII file not found.")
-}
-
-# Extract base file name (used downstream)
-base_name <- tools::file_path_sans_ext(basename(asc_file))
 
 ```
 
-# Step 3. Read ASCII raster into R
+Usually, a NetCDF file contains multiple layers representing different variables, time steps, or other dimensions such as depth or demographic categories. Let’s examine this dataset to determine how many layers it includes.
 
-The rast() function reads the ASCII grid file into R as a SpatRaster object.
+```{r inspect_layers}
 
-```{r read_ascii}
+# Determine the number of layers in the NetCDF raster
+num_layers <- terra::nlyr(input_raster)
 
-input_raster <- rast(asc_file)
+cat("Number of layers in the NetCDF file:", num_layers, "\n")
+```
 
-# Check CRS of input ASCII
-cat("CRS of input raster:\n")
-print(crs(input_raster))
+This NetCDF file contains 20 raster layers. In many modelling workflows, only one or a subset of these layers may be required.
 
-# Stop if CRS is missing
-if (is.na(crs(input_raster)) || crs(input_raster) == "") {
-  stop(
-    "❌ Input ASCII raster has NO CRS defined.\n",
-    "Please ensure the file has a valid CRS (e.g., via an accompanying .prj file\n",
-    "or by assigning the correct CRS before running this notebook)."
-  )
-}
+```{r metadata}
 
+# Path to metadata file
+metadata_file <- file.path(
+  workspace,
+  "netcdf_example_data",
+  "gpw_v4_netcdf_contents_rev11.csv"
+)
+
+# Load metadata
+layer_metadata <- read.csv(metadata_file)
+
+# View full table (optional)
+print(layer_metadata[21:40, ])
 ```
 
 # Step 4. Plot raster
 
-Now plot the raster to verify that the ASCII grid has been successfully loaded as a SpatRaster object. This confirms the input data structure is valid before exporting to GeoTIFF.
+In this example we extract layer 5, which corresponds to Population Density (Persons per square kilometer), v4.11 (2020), and plot the raster to verify that the NetCDF grid has been successfully loaded as a SpatRaster object. This confirms the input data structure is valid before exporting to GeoTIFF.
 
-```{r plot_raster}
+```{r popden_2020}
 
-plot(input_raster, main = base_name)
+
+layer5 <- input_raster[[5]]
+
+plot(
+  layer5,
+  main = "Population Density (Persons per square kilometer) v4.11 (2020) - Layer 5",
+  col = hcl.colors(50, "YlOrRd")
+)
+
 
 ```
 
 # Step 5. Save GeoTIFF output
 
-By default, the output is written to the same directory as the input ASCII file.
+By default, the output is written to the same directory as the input NetCDF file.
 
 ```{r write_output_raster}
 
-# Save .tif output file to the same folder as the original ASCII grid file 
-out_dir <- dirname(asc_file)
+# Save .tif output file to the same folder as the original NetCDF file
+out_dir <- dirname(netcdf_file)
 
-# Build the output file name - Keep the original file name and change only the extension
-out_file  <- file.path(out_dir, paste0(base_name, "_converted.tif"))
+# Build the output file name
+base_name <- tools::file_path_sans_ext(basename(netcdf_file))
+out_file <- file.path(out_dir, paste0(base_name, "_layer5.tif"))
 
-# Write the raster to disk as a GeoTIFF file
-writeRaster(
-  input_raster,
+# Write the raster to disk as a GeoTIFF
+terra::writeRaster(
+  layer5,
   out_file,
   overwrite = TRUE,
   filetype = "GTiff"
@@ -211,17 +287,22 @@ cat("Raster written to:\n", out_file, "\n")
 Reload the written GeoTIFF and verify that key spatial metadata including CRS, spatial extent, and resolution have been preserved during conversion.
 
 ```{r verify_spatial_metadata}
+
 # Reload written file
-written_raster <- rast(out_file)
+written_raster <- terra::rast(out_file)
 
-# CRS check
+# Reference raster (the layer we exported)
+reference_raster <- layer5
 
-# Extract CRS info for input
-input_crs_info <- terra::crs(input_raster, describe = TRUE)
+
+# ---- CRS check ----
+
+# Extract CRS info for input layer
+input_crs_info <- terra::crs(reference_raster, describe = TRUE)
 input_crs_name <- input_crs_info$name
 input_epsg <- input_crs_info$code
 
-# Extract CRS info for output
+# Extract CRS info for output raster
 output_crs_info <- terra::crs(written_raster, describe = TRUE)
 output_crs_name <- output_crs_info$name
 output_epsg <- output_crs_info$code
@@ -233,31 +314,42 @@ cat("\nOutput CRS name:", output_crs_name, "\n")
 cat("Output EPSG code:", output_epsg, "\n")
 
 # Validate CRS
-if (!same.crs(input_raster, written_raster)) {
+if (!terra::same.crs(reference_raster, written_raster)) {
   stop("❌ CRS mismatch detected after writing GeoTIFF.")
 }
 
-# Extent check
+
+# ---- Extent check ----
+
 cat("\nInput extent:\n")
-print(ext(input_raster))
+print(terra::ext(reference_raster))
 
 cat("\nOutput extent:\n")
-print(ext(written_raster))
+print(terra::ext(written_raster))
 
-if (!isTRUE(all.equal(ext(input_raster), ext(written_raster)))) {
+if (!isTRUE(all.equal(
+  terra::ext(reference_raster),
+  terra::ext(written_raster)
+))) {
   stop("❌ Extent mismatch detected after writing GeoTIFF.")
 }
 
-# Resolution check
+
+# ---- Resolution check ----
+
 cat("\nInput resolution:\n")
-print(res(input_raster))
+print(terra::res(reference_raster))
 
 cat("\nOutput resolution:\n")
-print(res(written_raster))
+print(terra::res(written_raster))
 
-if (!isTRUE(all.equal(res(input_raster), res(written_raster)))) {
+if (!isTRUE(all.equal(
+  terra::res(reference_raster),
+  terra::res(written_raster)
+))) {
   stop("❌ Resolution mismatch detected after writing GeoTIFF.")
 }
+
 
 cat("\n✅ All spatial metadata successfully preserved during conversion.\n")
 
@@ -266,11 +358,15 @@ cat("\n✅ All spatial metadata successfully preserved during conversion.\n")
 
 # Summary
 
-This notebook demonstrated a simple, reproducible workflow for converting an ASCII grid (.asc) into a GeoTIFF (.tif) raster using the `terra` package in R, while explicitly verifying that key spatial metadata were preserved during conversion.
+This notebook demonstrated a simple, reproducible workflow for converting a NetCDF file (.nc) into a GeoTIFF (.tif) raster using the `terra` package in R, while explicitly verifying that key spatial metadata were preserved during conversion.
 
-A companion notebook (link below) demonstrates the reverse workflow, converting a GeoTIFF (.tif) raster to ASCII grid (.asc) format.
+A companion notebook (link below) demonstrates the reverse workflow, converting a GeoTIFF (.tif) raster to NetCDF file (.nc) format.
 
-[**Converting Rasters from NetCDF (.nc) to GeoTIFF (.tif) Format**](https://ecocommonsaustralia.github.io/notebook-blog/notebooks/raster_format/converting_NetCDF_to_geotiff_notebook.html)
+[Converting Rasters from GeoTIFF (.tif) to NetCDF (.nc) Format](https://ecocommonsaustralia.github.io/notebook-blog/notebooks/raster_format/converting_geotiff_to_netcd_notebook.html)
+
+# Reference
+
+Center For International Earth Science Information Network-CIESIN-Columbia University. (2017). *Gridded Population of the World, Version 4 (GPWv4): Population Density, Revision 11* (Version 4.11) \[Data set\]. Palisades, NY: NASA Socioeconomic Data and Applications Center (SEDAC). https://doi.org/10.7927/H49C6VHW Date Accessed: 2026-03-08
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/EC_breaker_nobackgoundcolor.png)
 
