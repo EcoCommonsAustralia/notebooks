@@ -2,8 +2,8 @@
 library(jsonlite)
 
 # Specify the input QMD file and desired output ipynb file
-qmd_file <- "/Users/xiangzhaoqcif/Documents/QCIF_MacBook_Pro/github/occupancy_practical_notebook/notebooks/notebooks/EC_Occupancy_practical.qmd"        # Replace with your QMD file path
-ipynb_file <- "/Users/xiangzhaoqcif/Documents/QCIF_MacBook_Pro/github/occupancy_practical_notebook/notebooks/notebooks/EC_Occupancy_practical.ipynb"    # Replace with your desired output file path
+qmd_file <- "/Users/xiangzhaoqcif/dev/notebooks_zhaoxiangmax/notebooks/reclass_geotiff_notebook.qmd"        # Replace with your QMD file path
+ipynb_file <- "/Users/xiangzhaoqcif/dev/notebooks_zhaoxiangmax/notebooks/reclass_geotiff_notebook.ipynb"    # Replace with your desired output file path
 
 # Read the entire QMD file as lines
 lines <- readLines(qmd_file, warn = FALSE)
