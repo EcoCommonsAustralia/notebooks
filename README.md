@@ -1,15 +1,14 @@
----
-editor_options:
-  markdown:
-    wrap: 72
----
-
-::: {align="center"}
-<p><a align="center" href="" target="_blank">
-<img src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner" width="850"/>
-</a></p>
-
-<br> <br>
+<div align="center">
+  <p>
+    <a align="center" href="" target="_blank">
+      <img
+        width="850"
+        src="https://github.com/EcoCommons-Australia-2024-2026/notebooks/raw/main/assets/notebooks_banner_withframe.png" alt="Banner"
+      >
+    </a>
+  </p>
+  <br>
+<br>
 
 [📔Notebooks](https://github.com/EcoCommonsAustralia/notebooks) \|
 [🗒️Blog](https://ecocommonsaustralia.github.io/notebook-blog/) \|
@@ -112,4 +111,3 @@ follows:
 
 You can download the citation file for EcoCommons Australia here:
 [Download the BibTeX file](reference.bib)
-:::
