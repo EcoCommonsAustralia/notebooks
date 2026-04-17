@@ -9,13 +9,6 @@ from enum import Enum
 NOTEBOOKS_ROOT_PATH = "https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks"
 NOTEBOOKS_COLAB_ROOT_PATH = "github/ecocommonsaustralia/notebooks/blob/main/notebooks"
 
-WARNING_HEADER = [
-    "<!---",
-    "   WARNING: DO NOT EDIT THIS TABLE MANUALLY. IT IS AUTOMATICALLY GENERATED.",
-    "   HEAD OVER TO CONTRIBUTING.MD FOR MORE DETAILS ON HOW TO MAKE CHANGES PROPERLY.",
-    "-->"
-]
-
 TABLE_HEADER = [
     "| **notebook** | **notebook file** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |",
     "|:------------:|:---------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|"
@@ -159,8 +152,7 @@ if __name__ == "__main__":
         in table_entries
         if entry.readme_section == READMESection.SKILLS
     ]
-    table_lines = WARNING_HEADER + \
-                  [MODELS_SECTION_HEADER.format(len(models_lines))] + TABLE_HEADER + models_lines + \
+    table_lines = [MODELS_SECTION_HEADER.format(len(models_lines))] + TABLE_HEADER + models_lines + \
                   [SKILLS_SECTION_HEADER.format(len(skills_lines))] + TABLE_HEADER + skills_lines
     readme_lines = inject_markdown_table_into_readme(readme_lines=readme_lines, table_lines=table_lines)
     save_lines_to_file(path=args.readme_path, lines=readme_lines)
