@@ -10,7 +10,7 @@ NOTEBOOKS_ROOT_PATH = "https://github.com/ecocommonsaustralia/notebooks/blob/mai
 NOTEBOOKS_COLAB_ROOT_PATH = "github/ecocommonsaustralia/notebooks/blob/main/notebooks"
 
 TABLE_HEADER = [
-    "| **notebook** | **notebook file** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper** |",
+    "| **notebook** | **notebook file** | **open in Google colab / ARDC Jupyter Notebook Service** | **complementary materials** | **repository / paper / doi** |",
     "|:------------:|:---------------:|:-------------------------------------------------:|:---------------------------:|:----------------------:|"
 ]
 
