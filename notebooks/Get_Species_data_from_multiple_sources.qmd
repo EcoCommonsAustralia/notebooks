@@ -214,6 +214,16 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Get Species Data from Multiple Sources | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19563699-blue)](https://doi.org/10.5281/zenodo.19563699) |
+
+## How to cite this Notebook
+
+Singh, A. R. (2026). *EcoCommons Notebook:  Data Preparation - Getting Shorebird Data in Australia Using Global Biodiversity Data Portals via  spocc R Package* (Version 0.1) [Computational notebook]. Zenodo. <https://doi.org/10.5281/zenodo.19563699>
+
 # **How to Cite EcoCommons**
 
 If you use EcoCommons in your research, please cite the platform as follows:

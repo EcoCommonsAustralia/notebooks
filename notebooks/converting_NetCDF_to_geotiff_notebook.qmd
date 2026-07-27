@@ -378,6 +378,16 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Converting GeoTIFF (.tif) to NetCDF (.nc) Format | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_NetCDF_to_geotiff_notebook.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_NetCDF_to_geotiff_notebook.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_NetCDF_to_geotiff_notebook.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19548851-blue)](https://doi.org/10.5281/zenodo.19548851) |
+
+## How to cite this Notebook
+
+Zhao, X. Y., & Newis, R. (2026). *Converting GeoTIFF (.tif) to NetCDF (.nc) Format* (Version 1.0) [Computational notebook]. Zenodo. <https://doi.org/10.5281/zenodo.19548851>
+
 # How to Cite EcoCommons
 
 If you use EcoCommons in your research, please cite the platform as follows:
