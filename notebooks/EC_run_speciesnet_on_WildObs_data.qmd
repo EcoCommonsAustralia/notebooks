@@ -588,6 +588,16 @@ To take this further, try:
 - [Atlas of Living Australia](https://www.ala.org.au/)
 - [EcoCommons notebooks](https://www.ecocommons.org.au/notebooks/)
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Automated Wildlife Identification with SpeciesNet | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21522834-blue)](https://doi.org/10.5281/zenodo.21522834) |
+
+## How to cite this Notebook
+
+Sharma, R., & Zhao, X. (2026). *SpeciesNet demo notebook by EcoCommons and Atlas of Living Australia (ALA)* [Computational notebook]. Zenodo. <https://doi.org/10.5281/zenodo.21522834>
+
 ## References
 
 Atlas of Living Australia (2026). *Occurrence and multimedia records.* Atlas of Living Australia. Available at: <https://www.ala.org.au/> (Accessed: 16 July 2026).
