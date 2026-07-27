@@ -20,6 +20,12 @@ The notebook demonstrates how to convert continuous suitability values into both
 
 The example GeoTIFF raster used in this notebook is output derived from an SDM using Maxent algorithm. The continuous habitat suitability prediction is for the the Sooty Oystercatcher (*Haematopus fuliginosus*) and the modelling workflow was conducted on the EcoCommons platform. Original occurrence data was obtained from the Atlas of Living Australia (<https://www.ala.org.au>) via the EcoCommons platform.
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Reclassify a Continuous Raster | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/reclass_geotiff_notebook.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/reclass_geotiff_notebook.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/reclass_geotiff_notebook.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19379995-blue)](https://doi.org/10.5281/zenodo.19379995) |
+
 # Introduction
 
 Many spatial modelling workflows commonly produce continuous prediction rasters, where each grid cell contains a value representing the relative suitability or probability of species occurrence. These continuous surfaces are highly informative but can sometimes be difficult to interpret directly, particularly when communicating model outputs to non-technical audiences or integrating predictions into decision-making frameworks. Reclassification provides a simple and widely used approach for summarising continuous predictions into a smaller number of discrete categories. For example, suitability values can be divided into binary classes that distinguish unsuitable from potentially suitable habitat, or into multiple classes representing low, moderate, and high suitability.
@@ -507,12 +513,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Reclassify a Continuous Raster | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/reclass_geotiff_notebook.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/reclass_geotiff_notebook.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/reclass_geotiff_notebook.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19379995-blue)](https://doi.org/10.5281/zenodo.19379995) |
 
 ## How to cite this Notebook
 

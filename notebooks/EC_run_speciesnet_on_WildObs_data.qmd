@@ -26,6 +26,12 @@ Date: July 2026
 
 This notebook, developed by the **EcoCommons** and **WildObs** team, demonstrates how to automatically identify wildlife in camera-trap images by combining two open tools: the **Atlas of Living Australia (ALA)** and Google's **SpeciesNet** model. We query ALA for camera-trap image records using the `galah-python` package, download a sample of images, run SpeciesNet to detect and classify the animals in each image, and visualise the predictions.
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Automated Wildlife Identification with SpeciesNet | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21522834-blue)](https://doi.org/10.5281/zenodo.21522834) |
+
 ## Introduction
 
 Wildlife monitoring at scale is one of ecology's most data-intensive challenges. Camera traps deployed across remote landscapes can accumulate thousands of images in a single survey season — far more than any team can manually review in a reasonable time. Automatically identifying the species in each photograph would free researchers to focus on analysis rather than image sorting, but doing this accurately requires a model trained on a large and diverse set of wildlife images.
@@ -587,12 +593,6 @@ To take this further, try:
 - [SpeciesNet GitHub repository](https://github.com/google/cameratrapai)
 - [Atlas of Living Australia](https://www.ala.org.au/)
 - [EcoCommons notebooks](https://www.ecocommons.org.au/notebooks/)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Automated Wildlife Identification with SpeciesNet | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_run_speciesnet_on_WildObs_data.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21522834-blue)](https://doi.org/10.5281/zenodo.21522834) |
 
 ## How to cite this Notebook
 
