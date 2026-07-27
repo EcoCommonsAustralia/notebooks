@@ -20,6 +20,12 @@ There are two notebooks about Single-Species Single-Season Occupancy Model, one 
 
 This notebook, developed by the EcoCommons and WildObs team, showcases how to build Single-Species Single-Season Occupancy Model with camera trapping data with "unmarked" R package ([click here to learn more](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.14123)).
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Single-Species Single-Season Occupancy Model - Practical | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_practical.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_practical.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_practical.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19552244-blue)](https://doi.org/10.5281/zenodo.19552244) |
+
 # Introduction
 
 Occupancy models provide a powerful framework for estimating where species occur while accounting for imperfect detection — a common challenge in wildlife research. Camera traps are particularly well suited to this task because they generate repeated detection–non-detection data that can be structured into the hierarchical models implemented in the **unmarked** R package.
@@ -1820,12 +1826,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Single-Species Single-Season Occupancy Model - Practical | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_practical.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_practical.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_Occupancy_practical.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19552244-blue)](https://doi.org/10.5281/zenodo.19552244) |
 
 ## How to cite this Notebook
 

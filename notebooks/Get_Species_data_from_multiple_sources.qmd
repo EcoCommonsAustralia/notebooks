@@ -18,6 +18,12 @@ Date: June 2025
 > -   This notebook may take a few minutes when downloading large datasets or installing missing packages.
 > -   Recommended to run in **RStudio** or **Posit Workbench/VS Code** with **Quarto** installed for best experience.
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Get Species Data from Multiple Sources | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19563699-blue)](https://doi.org/10.5281/zenodo.19563699) |
+
 # Introduction
 
 This notebook was developed by the EcoCommons team to support researchers and conservationists in gathering shorebird distribution data using open data sources. It demonstrates how to query, clean, visualise, and save species occurrence data using the `spocc` R package [@spocc] (Chamberlain et al., 2024), in R.
@@ -213,12 +219,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Get Species Data from Multiple Sources | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/Get_Species_data_from_multiple_sources.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19563699-blue)](https://doi.org/10.5281/zenodo.19563699) |
 
 ## How to cite this Notebook
 

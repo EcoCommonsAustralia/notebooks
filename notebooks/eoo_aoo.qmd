@@ -16,6 +16,12 @@ Date: March 2025
 
 This notebook, developed by the EcoCommons team, showcases how to determine the extent of occurrence (EOO) and area of occupancy (AOO) for a species.
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Extent and Area of Occurrence / Occupancy | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19552073-blue)](https://doi.org/10.5281/zenodo.19552073) |
+
 # Introduction
 
 ## A short explanation of the notebook
@@ -259,12 +265,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Extent and Area of Occurrence / Occupancy | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/eoo_aoo.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19552073-blue)](https://doi.org/10.5281/zenodo.19552073) |
 
 ## How to cite this Notebook
 

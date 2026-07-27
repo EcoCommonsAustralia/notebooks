@@ -16,6 +16,12 @@ Date: May 2025
 
 This notebook, developed by the EcoCommons team, showcases how to build Species Distribution Models (SDMs) using Random Forest algorithm. It also compares the SDMs generated for the same species using Random Forest and Generalised Linear Models, highlighting their differences in predictive performance and spatial output.
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Random Forest | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19363916-blue)](https://doi.org/10.5281/zenodo.19363916) |
+
 # Introduction
 
 Using **Mountain Ash** (*Eucalyptus regnans*), a very tall and straight tree species native to Victoria and Tasmania, we will guide you through a standard protocol developed by Zurell et al. (2020) for building species distribution models (SDMs) with one of the most widely used algorithms: the **Random Forest (RF)**. We will also demonstrate the performance differences of SDMs produced by Random Forest algorithm and **Generalised Linear Model** (GLM) algorithm.
@@ -1028,12 +1034,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Random Forest | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/EC_RF.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19363916-blue)](https://doi.org/10.5281/zenodo.19363916) |
 
 ## How to cite this Notebook
 

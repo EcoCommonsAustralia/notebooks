@@ -16,6 +16,12 @@ Date: March 2026
 
 This notebook provides a simple, reproducible example of converting a GeoTIFF raster (.tif) into a NetCDF (.nc) using the `terra` package in R. It is intended as a lightweight template that can be adapted to other raster-based spatial datasets and workflows requiring vector outputs.
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Converting  NetCDF (.nc) to GeoTIFF (.tif) Format | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_geotiff_to_netcd_notebook.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_geotiff_to_netcd_notebook.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_geotiff_to_netcd_notebook.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19548581-blue)](https://doi.org/10.5281/zenodo.19548581) |
+
 # Introduction
 
 Raster datasets are a common way to represent spatial information in environmental and ecological modelling. Formats such as **GeoTIFF (.tif)** store spatial data as a grid of cells, where each cell contains a value representing a variable such as temperature, precipitation, or population density. Another widely used raster format is **NetCDF (.nc)**, which is designed to store multidimensional scientific data and is commonly used for climate, oceanographic, and atmospheric datasets.
@@ -297,12 +303,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Converting  NetCDF (.nc) to GeoTIFF (.tif) Format | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_geotiff_to_netcd_notebook.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_geotiff_to_netcd_notebook.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/converting_geotiff_to_netcd_notebook.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19548581-blue)](https://doi.org/10.5281/zenodo.19548581) |
 
 ## How to cite this Notebook
 

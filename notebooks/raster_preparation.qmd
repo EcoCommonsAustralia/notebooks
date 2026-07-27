@@ -16,6 +16,12 @@ Date: January 2025
 
 This notebook, developed by the EcoCommons team, showcases how to download, and process both continuous and categorical environmental datasets. The datasets are in the raster format and these are generally used to build Species Distribution Models (SDMs)
 
+## Other file formats of this notebook
+
+| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
+|:---:|:---:|:---:|:---:|
+| Environmental Data Preparation (Raster) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19548970-blue)](https://doi.org/10.5281/zenodo.19548970) |
+
 # Introduction
 
 Raster data is a type of geo-spatial data represented by a grid of cells or pixels. Each cell contains a value representing information, such as temperature, elevation, land cover, or other spatially continuous variables. Raster data is commonly used in Geographic Information Systems (GIS) for analysing and visualizing spatial phenomena.
@@ -697,12 +703,6 @@ EcoCommons received investment (<https://doi.org/10.3565/chbq-mr75>) from the Au
 :::
 
 ![](https://raw.githubusercontent.com/EcoCommons-Australia-2024-2026/ec-notebook_site/main/images/updated_ourpartner_2025.png)
-
-## Other file formats of this notebook
-
-| Notebook | Files | Open in Colab / ARDC Jupyter | DOI |
-|:---:|:---:|:---:|:---:|
-| Environmental Data Preparation (Raster) | <a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/jupyter_notebook.png" width="40%"></a>&nbsp;&nbsp;<a href="https://github.com/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.qmd"><img src="https://github.com/ecocommonsaustralia/notebooks/raw/main/assets/quartomd.png" width="40%"></a> | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ecocommonsaustralia/notebooks/blob/main/notebooks/raster_preparation.ipynb) | [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19548970-blue)](https://doi.org/10.5281/zenodo.19548970) |
 
 ## How to cite this Notebook
 
