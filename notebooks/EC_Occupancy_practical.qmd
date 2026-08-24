@@ -2,6 +2,18 @@
 
 # Single-Species Single-Season Occupancy Model - Practical
 
+::: callout-important
+## Modifications made to run this notebook (2026-08-24)
+
+Updated to reflect **WildObsR 0.2.0** and the current Camtrap DP / WildObs
+observations schema. The observation timestamp columns were renamed from
+`observationStart`/`observationEnd` to **`eventStart`/`eventEnd`**; the old
+columns no longer exist in the downloaded data (and WildObsR 0.2.0 expects the
+new names internally). The `convert_time` chunk was updated accordingly.
+`frictionless` already returns these columns as `POSIXct`. No analytical logic
+was changed.
+:::
+
 Author details: Xiang Zhao, Dr Zachary Amir
 
 Editor details: Dr Zachary Amir
@@ -224,8 +236,9 @@ This function queries the WildObs MongoDB database for projects matching specifi
 library(WildObsR)   
 library(frictionless)  ## For working with data packages 
 
-# Use general API key
-api_key <- "f4b9126e87c44da98c0d1e29a671bb4ff39adcc65c8b92a0e7f4317a2b95de83"
+# Read your personal WildObs API key from the environment.
+# Set it before running, e.g. in ~/.Renviron:  WILDOBS_API_KEY=your-key
+api_key <- Sys.getenv("WILDOBS_API_KEY")
 
 # Query projects in Queensland from 2020-2024
 spatial_query <- list(xmin = 145.0, xmax = 154.0, ymin = -29.0, ymax = -10.0)
@@ -792,15 +805,15 @@ covariates = merge(deployments, covariates, by = names(covariates)[names(covaria
 
 ```
 
-Convert all datetime strings into POSIXct data class to ensure data is recognized in a date-time format. This is particularly critical for `deploymentStart` and `deploymentEnd` in the deployments and `observationStart` and `observationEnd` in the observations data resources.
+Convert all datetime strings into POSIXct data class to ensure data is recognized in a date-time format. This is particularly critical for `deploymentStart` and `deploymentEnd` in the deployments and `eventStart` and `eventEnd` in the observations data resources.
 
 ```{r convert_time}
 
 ## format date-time columns
 covariates$deploymentEnd = as.POSIXct(covariates$deploymentEnd, format = "%Y-%m-%dT%H:%M:%S%z")
 covariates$deploymentStart = as.POSIXct(covariates$deploymentStart, format = "%Y-%m-%dT%H:%M:%S%z")
-observations$observationStart = as.POSIXct(observations$observationStart, format = "%Y-%m-%dT%H:%M:%S%z")
-observations$observationEnd = as.POSIXct(observations$observationEnd, format = "%Y-%m-%dT%H:%M:%S%z")
+observations$eventStart = as.POSIXct(observations$eventStart, format = "%Y-%m-%dT%H:%M:%S%z")
+observations$eventEnd = as.POSIXct(observations$eventEnd, format = "%Y-%m-%dT%H:%M:%S%z")
 ```
 
 Inspect deployment covariates and standardise any inconsistencies. A common field with potentially inconsistent values is the [deploymentTags](https://camtrap-dp.tdwg.org/data/#deployments.deploymentTags) field that captures additional deployment related information beyond the camtrapDP standard. This field is formatted using `key:value` pairs that can be extracted to new columns.
